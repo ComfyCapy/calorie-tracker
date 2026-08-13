@@ -1,0 +1,17 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.IndexModel
+<h1>Foods</h1>
+
+@if (Model.Foods.Count == 0)
+{
+    <p>No foods available.</p>
+}
+else
+{
+    <ul>
+        @foreach (var food in Model.Foods)
+        {
+            <li>@food.Name - @food.Calories kcal</li>
+        }
+    </ul>
+}
