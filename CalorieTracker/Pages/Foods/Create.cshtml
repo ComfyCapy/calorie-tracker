@@ -1,0 +1,28 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.CreateModel
+
+<h1>Add Food</h1>
+
+<form method="post">
+    <div>
+    <label asp-for="Food.Name"></label>
+    <input asp-for="Food.Name" />
+    </div>
+    <div>
+    <label asp-for="Food.Calories"></label>
+    <input asp-for="Food.Calories" />
+    </div>
+    <div>
+    <label asp-for="Food.Protein"></label>
+    <input asp-for="Food.Protein" />
+    </div>
+    <div>
+    <label asp-for="Food.Carbohydrates"></label>
+    <input asp-for="Food.Carbohydrates" />
+    </div>
+    <div>
+    <label asp-for="Food.Fat"></label>
+    <input asp-for="Food.Fat" />
+    </div>
+    <button type="submit">Add Food</button>
+</form>
