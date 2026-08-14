@@ -1,0 +1,59 @@
+﻿@page
+@model CalorieTracker.Pages.Diary.IndexModel
+
+<h1>Daily Diary</h1>
+<div class="mb-4">
+    <h4>Daily Totals</h4>
+
+    <strong>@Model.TotalCalories.ToString("0") kcal</strong>
+    <span class="ms-3">@Model.TotalProtein.ToString("0.0") g protein</span>
+    <span class="ms-3">@Model.TotalCarbohydrates.ToString("0.0") g carbs</span>
+    <span class="ms-3">@Model.TotalFat.ToString("0.0") g fat</span>
+</div>
+<p>
+    <a asp-page="./Create" class="btn btn-primary">Add Diary Entry</a>
+</p>
+
+@if (Model.Entries.Count == 0)
+{
+    <p>No diary entries yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Meal</th>
+                <th>Food</th>
+                <th>Quantity</th>
+                <th>Calories</th>
+                <th>Protein</th>
+                <th>Carbs</th>
+                <th>Fat</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in Model.Entries)
+            {
+                <tr>
+                    <td>@entry.Date.ToShortDateString()</td>
+                    <td>@entry.MealType</td>
+                    <td>@entry.Food?.Name</td>
+                    <td>
+                        @entry.Quantity.ToString("0.##") @entry.Food?.ServingUnit
+                    </td>
+                    <td>@entry.CaloriesConsumed.ToString("0") kcal</td>
+                    <td>@entry.ProteinConsumed.ToString("0.0") g</td>
+                    <td>@entry.CarbohydratesConsumed.ToString("0.0") g</td>
+                    <td>@entry.FatConsumed.ToString("0.0") g</td>
+                    <td>
+                        <a asp-page="./Edit" asp-route-id="@entry.Id">Edit</a>
+                        <a asp-page="./Delete" asp-route-id="@entry.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
