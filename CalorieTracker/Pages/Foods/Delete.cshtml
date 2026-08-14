@@ -1,0 +1,21 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.DeleteModel
+
+<h1>Delete Food</h1>
+
+<h3> Are you sure you want to delete this food? </h3>
+
+<div class="mb-3">
+    <strong>Name:</strong> @Model.Food.Name
+</div>
+
+<div class="mb-3">
+    <strong>Calories:</strong> @Model.Food.Calories kcal
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="Food.Id" />
+    
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+</form>

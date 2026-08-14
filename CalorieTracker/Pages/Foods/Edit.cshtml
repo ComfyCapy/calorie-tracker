@@ -1,0 +1,58 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.EditModel
+
+<h1>Edit Food</h1>
+
+<form method="post">
+    <input type="hidden" asp-for="Food.Id" />
+    <div class="form-group">
+        <label asp-for="Food.Name" class="control-label"></label>
+        <input asp-for="Food.Name" class="form-control" />
+        <span asp-validation-for="Food.Name" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.Calories" class="control-label"></label>
+        <input asp-for="Food.Calories" class="form-control" />
+        <span asp-validation-for="Food.Calories" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.Protein" class="control-label"></label>
+        <input asp-for="Food.Protein" class="form-control" />
+        <span asp-validation-for="Food.Protein" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.Carbohydrates" class="control-label"></label>
+        <input asp-for="Food.Carbohydrates" class="form-control" />
+        <span asp-validation-for="Food.Carbohydrates" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.Fat" class="control-label"></label>
+        <input asp-for="Food.Fat" class="form-control" />
+        <span asp-validation-for="Food.Fat" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.ServingSize" class="control-label"></label>
+        <input asp-for="Food.ServingSize" class="form-control" />
+        <span asp-validation-for="Food.ServingSize" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.ServingUnit" class="control-label"></label>
+
+        <select asp-for="Food.ServingUnit" class="form-control">
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="oz">oz</option>
+            <option value="serving">serving</option>
+            <option value="piece">piece</option>
+            <option value="slice">slice</option>
+            <option value="cup">cup</option>
+            <option value="tbsp">tbsp</option>
+            <option value="tsp">tsp</option>
+        </select>
+
+        <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+</form>
