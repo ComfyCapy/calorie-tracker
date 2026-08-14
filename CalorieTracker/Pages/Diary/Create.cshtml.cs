@@ -17,8 +17,18 @@ namespace CalorieTracker.Pages.Diary
         [BindProperty]
         public DiaryEntry DiaryEntry { get; set; } = new();
         public List<Food> FoodOptions { get; set; } = [];
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(DateTime? date, string? meal)
         {
+            if (date.HasValue)
+            {
+                DiaryEntry.Date = date.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(meal))
+            {
+                DiaryEntry.MealType = meal;
+            }
+
             FoodOptions = await _context.Foods
                 .OrderBy(f => f.Name)
                 .ToListAsync();
@@ -34,7 +44,10 @@ namespace CalorieTracker.Pages.Diary
             }
             _context.DiaryEntries.Add(DiaryEntry);
             await _context.SaveChangesAsync();
-            return RedirectToPage("./Index");
+            return RedirectToPage("./Index", new
+            {
+                date = DiaryEntry.Date.ToString("yyyy-MM-dd")
+            });
         }
     }
 }

@@ -44,10 +44,15 @@ namespace CalorieTracker.Pages.Diary
                 return NotFound();
             }
 
+            var entryDate = diaryEntry.Date;
+
             _context.DiaryEntries.Remove(diaryEntry);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("./Index");
+            return RedirectToPage("./Index", new
+            {
+                date = entryDate.ToString("yyyy-MM-dd")
+            });
         }
     }
 }

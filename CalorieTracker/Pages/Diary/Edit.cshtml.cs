@@ -53,7 +53,10 @@ namespace CalorieTracker.Pages.Diary
             _context.DiaryEntries.Update(DiaryEntry);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("./Index");
+            return RedirectToPage("./Index", new
+            {
+                date = DiaryEntry.Date.ToString("yyyy-MM-dd")
+            });
         }
     }
 }
