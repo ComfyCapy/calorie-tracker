@@ -2,16 +2,36 @@
 @model CalorieTracker.Pages.Foods.IndexModel
 <h1>Foods</h1>
 
+<p>
+    <a asp-page="./Create" class="btn btn-primary">Add Food</a>
+</p>
+
 @if (Model.Foods.Count == 0)
 {
     <p>No foods available.</p>
 }
 else
 {
-    <ul>
-        @foreach (var food in Model.Foods)
-        {
-            <li>@food.Name - @food.Calories kcal</li>
-        }
-    </ul>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Calories</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var food in Model.Foods)
+            {
+                <tr>
+                    <td>@food.Name</td>
+                    <td>@food.Calories kcal </td>
+                    <td>
+                        <a asp-page="./Edit" asp-route-id="@food.Id">Edit</a>
+                        <a asp-page="./Delete" asp-route-id="@food.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
