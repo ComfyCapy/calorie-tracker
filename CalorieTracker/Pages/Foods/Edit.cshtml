@@ -16,6 +16,21 @@
         <span asp-validation-for="Food.Calories" class="text-danger"></span>
     </div>
     <div class="form-group">
+        <label asp-for="Food.Protein" class="control-label"></label>
+        <input asp-for="Food.Protein" class="form-control" />
+        <span asp-validation-for="Food.Protein" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.Carbohydrates" class="control-label"></label>
+        <input asp-for="Food.Carbohydrates" class="form-control" />
+        <span asp-validation-for="Food.Carbohydrates" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.Fat" class="control-label"></label>
+        <input asp-for="Food.Fat" class="form-control" />
+        <span asp-validation-for="Food.Fat" class="text-danger"></span>
+    </div>
+    <div class="form-group">
         <input type="submit" value="Save" class="btn btn-primary" />
     </div>
 </form>

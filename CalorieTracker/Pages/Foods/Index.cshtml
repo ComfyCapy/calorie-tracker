@@ -6,6 +6,24 @@
     <a asp-page="./Create" class="btn btn-primary">Add Food</a>
 </p>
 
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text"
+               name="searchTerm"
+               value="@Model.SearchTerm"
+               class="form-control"
+               placeholder="Search foods..." />
+        <button type="submit" class="btn btn-outline-primary">Search</button>
+     </div>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+{
+    
+<p>
+    Showing results for "<strong>@Model.SearchTerm</strong>"
+    <a asp-page="./Index">Clear Search</a></p> }
+
 @if (Model.Foods.Count == 0)
 {
     <p>No foods available.</p>
@@ -17,6 +35,9 @@ else
             <tr>
                 <th>Name</th>
                 <th>Calories</th>
+                <th>Protein</th>
+                <th>Carbs</th>
+                <th>Fat</th>
                 <th></th>
             </tr>
         </thead>
@@ -26,6 +47,9 @@ else
                 <tr>
                     <td>@food.Name</td>
                     <td>@food.Calories kcal </td>
+                    <td>@food.Protein g</td>
+                    <td>@food.Carbohydrates g</td>
+                    <td>@food.Fat g</td>
                     <td>
                         <a asp-page="./Edit" asp-route-id="@food.Id">Edit</a>
                         <a asp-page="./Delete" asp-route-id="@food.Id">Delete</a>

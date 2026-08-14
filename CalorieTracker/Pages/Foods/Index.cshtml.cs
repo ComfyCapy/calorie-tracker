@@ -13,12 +13,16 @@ namespace CalorieTracker.Pages.Foods
             _context = context;
         }
         public List<Food> Foods { get; set; } = [];
-        public async Task OnGetAsync()
+        public string SearchTerm { get; set; } = string.Empty;
+        public async Task OnGetAsync(string searchTerm)
         {
-
+            SearchTerm = searchTerm;
+            var query = _context.Foods.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                Foods = await _context.Foods.ToListAsync();
+                query = query.Where(food => food.Name.Contains(searchTerm));
             }
+            Foods = await query.ToListAsync();
         }
     }
 }
