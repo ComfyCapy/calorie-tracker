@@ -1,0 +1,30 @@
+﻿@page
+@model CalorieTracker.Pages.Diary.DeleteModel
+
+<h1>Delete Diary Entry</h1>
+
+<h3>Are you sure you want to delete this entry?</h3>
+
+<div class="mb-3">
+    <strong>Date:</strong> @Model.DiaryEntry.Date.ToShortDateString()
+</div>
+
+<div class="mb-3">
+    <strong>Meal:</strong> @Model.DiaryEntry.MealType
+</div>
+
+<div class="mb-3">
+    <strong>Food:</strong> @Model.DiaryEntry.Food?.Name
+</div>
+
+<div class="mb-3">
+    <strong>Quantity:</strong>
+    @Model.DiaryEntry.Quantity.ToString("0.##") @Model.DiaryEntry.Food?.ServingUnit
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="DiaryEntry.Id" />
+
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+</form>

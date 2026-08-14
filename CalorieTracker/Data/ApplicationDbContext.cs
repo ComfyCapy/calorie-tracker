@@ -11,6 +11,7 @@ namespace CalorieTracker.Data
         }
 
         public DbSet<Food> Foods { get; set; }
+        public DbSet<DiaryEntry> DiaryEntries { get; set; }
     }
 }
 
