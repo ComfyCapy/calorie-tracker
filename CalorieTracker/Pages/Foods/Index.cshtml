@@ -46,7 +46,11 @@ else
             {
                 <tr>
                     <td>@food.Name</td>
-                    <td>@food.Calories kcal </td>
+                    <td>@food.Calories kcal 
+                        <small class="text-muted">
+                            per @food.ServingSize.ToString("0.##") @food.ServingUnit
+                        </small>
+                    </td>
                     <td>@food.Protein g</td>
                     <td>@food.Carbohydrates g</td>
                     <td>@food.Fat g</td>

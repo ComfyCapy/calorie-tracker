@@ -31,6 +31,28 @@
         <span asp-validation-for="Food.Fat" class="text-danger"></span>
     </div>
     <div class="form-group">
+        <label asp-for="Food.ServingSize" class="control-label"></label>
+        <input asp-for="Food.ServingSize" class="form-control" />
+        <span asp-validation-for="Food.ServingSize" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Food.ServingUnit" class="control-label"></label>
+
+        <select asp-for="Food.ServingUnit" class="form-control">
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="oz">oz</option>
+            <option value="serving">serving</option>
+            <option value="piece">piece</option>
+            <option value="slice">slice</option>
+            <option value="cup">cup</option>
+            <option value="tbsp">tbsp</option>
+            <option value="tsp">tsp</option>
+        </select>
+
+        <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>
+    </div>
+    <div class="form-group">
         <input type="submit" value="Save" class="btn btn-primary" />
     </div>
 </form>
