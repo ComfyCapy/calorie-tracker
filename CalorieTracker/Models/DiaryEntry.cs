@@ -1,10 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CalorieTracker.Data;
 
 namespace CalorieTracker.Models
 {
     public class DiaryEntry
     {
         public int Id { get; set; }
+
+        public string UserId { get; set; } = string.Empty;
+
+        public ApplicationUser? User { get; set; }
 
         [Required]
         public DateTime Date { get; set; } = DateTime.Today;
