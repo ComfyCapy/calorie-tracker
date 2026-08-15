@@ -35,13 +35,67 @@
         </button>
     </form>
 </div>
-<div class="mb-4">
-    <h4>Daily Totals</h4>
+<div class="card mb-4">
+    <div class="card-body">
+        <h4 class="card-title">Daily Progress</h4>
 
-    <strong>@Model.TotalCalories.ToString("0") kcal</strong>
-    <span class="ms-3">@Model.TotalProtein.ToString("0.0") g protein</span>
-    <span class="ms-3">@Model.TotalCarbohydrates.ToString("0.0") g carbs</span>
-    <span class="ms-3">@Model.TotalFat.ToString("0.0") g fat</span>
+        @if (Model.DailyCalorieTarget > 0)
+        {
+            <div class="d-flex justify-content-between align-items-end mb-2">
+                <div>
+                    <span class="fs-3 fw-bold">
+                        @Model.TotalCalories.ToString("0")
+                    </span>
+
+                    <span class="text-muted">
+                        / @Model.DailyCalorieTarget.ToString("0") kcal
+                    </span>
+                </div>
+
+                <div class="text-end">
+                    @if (Model.CaloriesRemaining >= 0)
+                    {
+                        <strong>
+                            @Model.CaloriesRemaining.ToString("0") kcal remaining
+                        </strong>
+                    }
+                    else
+                    {
+                        <strong>
+                            @Math.Abs(Model.CaloriesRemaining).ToString("0") kcal over
+                        </strong>
+                    }
+                </div>
+            </div>
+
+            <div class="progress mb-3" style="height: 20px;">
+                <div class="progress-bar"
+                     role="progressbar"
+                     style="width: @Model.CalorieProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
+                     aria-valuenow="@Model.CalorieProgressPercent"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    @Model.CalorieProgressPercent.ToString("0")%
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">
+                Set up your profile and goals to see your daily calorie target.
+            </p>
+        }
+
+        <div>
+            <strong>@Model.TotalProtein.ToString("0.0") g</strong> protein
+            <span class="mx-2">·</span>
+
+            <strong>@Model.TotalCarbohydrates.ToString("0.0") g</strong> carbs
+            <span class="mx-2">·</span>
+
+            <strong>@Model.TotalFat.ToString("0.0") g</strong> fat
+        </div>
+    </div>
 </div>
 
 @foreach (var meal in new[] { "Breakfast", "Lunch", "Dinner", "Snack" })

@@ -1,0 +1,188 @@
+﻿@page
+@model CalorieTracker.Pages.Profile.IndexModel
+
+<h1>Profile & Goals</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success">
+        @Model.StatusMessage
+    </div>
+}
+
+<p class="text-muted">
+    Tell us a little about yourself so we can estimate your calorie needs.
+</p>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.DateOfBirth" class="form-label">
+            Date of Birth
+        </label>
+        <input asp-for="UserProfile.DateOfBirth"
+               type="date"
+               class="form-control" />
+        <span asp-validation-for="UserProfile.DateOfBirth"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.HeightCm" class="form-label">
+            Height (cm)
+        </label>
+        <input asp-for="UserProfile.HeightCm"
+               class="form-control" />
+        <span asp-validation-for="UserProfile.HeightCm"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.WeightKg" class="form-label">
+            Current Weight (kg)
+        </label>
+        <input asp-for="UserProfile.WeightKg"
+               class="form-control" />
+        <span asp-validation-for="UserProfile.WeightKg"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.CalculationSex" class="form-label">
+            Sex used for calorie calculation
+        </label>
+
+        <select asp-for="UserProfile.CalculationSex" class="form-select">
+            <option value="">Select...</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+
+        <div class="form-text">
+            Used to estimate your BMR and daily calorie needs.
+        </div>
+
+        <span asp-validation-for="UserProfile.CalculationSex"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.ActivityLevel" class="form-label">
+            Activity Level
+        </label>
+
+        <select asp-for="UserProfile.ActivityLevel" class="form-select">
+            <option value="">Select...</option>
+            <option value="Sedentary">Sedentary</option>
+            <option value="LightlyActive">Lightly active</option>
+            <option value="ModeratelyActive">Moderately active</option>
+            <option value="VeryActive">Very active</option>
+            <option value="ExtraActive">Extra active</option>
+        </select>
+
+        <span asp-validation-for="UserProfile.ActivityLevel"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.Goal" class="form-label">
+            Goal
+        </label>
+
+        <select asp-for="UserProfile.Goal" class="form-select">
+            <option value="">Select...</option>
+            <option value="Lose">Lose weight</option>
+            <option value="Maintain">Maintain weight</option>
+            <option value="Gain">Gain weight</option>
+        </select>
+
+        <span asp-validation-for="UserProfile.Goal"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.GoalWeightKg" class="form-label">
+            Goal Weight (kg)
+        </label>
+
+        <input asp-for="UserProfile.GoalWeightKg"
+               class="form-control" />
+
+        <div class="form-text">
+            Optional if you're maintaining your current weight.
+        </div>
+
+        <span asp-validation-for="UserProfile.GoalWeightKg"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UserProfile.WeeklyGoalKg" class="form-label">
+            Weekly Weight Change
+        </label>
+
+        <select asp-for="UserProfile.WeeklyGoalKg" class="form-select">
+            <option value="">Select...</option>
+            <option value="0.25">0.25 kg per week</option>
+            <option value="0.5">0.5 kg per week</option>
+            <option value="0.75">0.75 kg per week</option>
+            <option value="1.0">1.0 kg per week</option>
+        </select>
+
+        <div class="form-text">
+            Used to estimate your daily calorie target.
+        </div>
+
+        <span asp-validation-for="UserProfile.WeeklyGoalKg"
+              class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Save Profile
+    </button>
+</form>
+
+@if (Model.UserProfile.Id > 0)
+{
+    <div class="card mt-4">
+        <div class="card-body">
+            <h3 class="card-title">Your Estimates</h3>
+
+            <div class="row mt-3">
+                <div class="col-md">
+                    <strong>Age</strong>
+                    <p>@Model.UserProfile.Age years</p>
+                </div>
+
+                <div class="col-md">
+                    <strong>BMI</strong>
+                    <p>@Model.UserProfile.BMI.ToString("0.0")</p>
+                </div>
+
+                <div class="col-md">
+                    <strong>BMR</strong>
+                    <p>~@Model.UserProfile.BMR.ToString("0") kcal/day</p>
+                </div>
+
+                <div class="col-md">
+                    <strong>Maintenance</strong>
+                    <p>~@Model.UserProfile.TDEE.ToString("0") kcal/day</p>
+                </div>
+
+                <div class="col-md">
+                    <strong>Daily Calorie Target</strong>
+                    <p>~@Model.UserProfile.DailyCalorieTarget.ToString("0") kcal/day</p>
+                </div>
+            </div>
+
+            <small class="text-muted">
+                These values are estimates based on your profile information and activity level.
+            </small>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
