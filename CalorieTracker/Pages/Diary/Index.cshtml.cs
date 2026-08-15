@@ -8,19 +8,28 @@ namespace CalorieTracker.Pages.Diary
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+
         public IndexModel(ApplicationDbContext context)
         {
             _context = context;
         }
 
         public List<DiaryEntry> Entries { get; set; } = [];
+
         public decimal TotalCalories { get; set; }
         public decimal TotalProtein { get; set; }
         public decimal TotalCarbohydrates { get; set; }
         public decimal TotalFat { get; set; }
+
+        public decimal DailyCalorieTarget { get; set; }
+        public decimal CaloriesRemaining { get; set; }
+        public decimal CalorieProgressPercent { get; set; }
+
         public DateTime SelectedDate { get; set; }
+
         public DateTime PreviousDate => SelectedDate.AddDays(-1);
         public DateTime NextDate => SelectedDate.AddDays(1);
+
         public async Task OnGetAsync(DateTime? date)
         {
             SelectedDate = date?.Date ?? DateTime.Today;
@@ -34,6 +43,23 @@ namespace CalorieTracker.Pages.Diary
             TotalProtein = Entries.Sum(entry => entry.ProteinConsumed);
             TotalCarbohydrates = Entries.Sum(entry => entry.CarbohydratesConsumed);
             TotalFat = Entries.Sum(entry => entry.FatConsumed);
+
+            var profile = await _context.UserProfiles.FirstOrDefaultAsync();
+
+            if (profile != null)
+            {
+                DailyCalorieTarget = profile.DailyCalorieTarget;
+                CaloriesRemaining = DailyCalorieTarget - TotalCalories;
+
+                if (DailyCalorieTarget > 0)
+                {
+                    CalorieProgressPercent =
+                        (TotalCalories / DailyCalorieTarget) * 100;
+
+                    CalorieProgressPercent =
+                        Math.Min(CalorieProgressPercent, 100);
+                }
+            }
         }
     }
 }
