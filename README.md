@@ -1,6 +1,6 @@
 # Calorie Tracker
 
-A small calorie tracking app, intended to be quick and efficient without requesting exact food weights or brand from user
+A small lightweight calorie tracker, designed to be easily accessible and understandable
 
 # Planned Features
 
