@@ -2,16 +2,21 @@ using CalorieTracker.Data;
 using CalorieTracker.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace CalorieTracker.Pages.Diary
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public List<DiaryEntry> Entries { get; set; } = [];
@@ -32,11 +37,14 @@ namespace CalorieTracker.Pages.Diary
 
         public async Task OnGetAsync(DateTime? date)
         {
+            var userId = _userManager.GetUserId(User);
             SelectedDate = date?.Date ?? DateTime.Today;
 
             Entries = await _context.DiaryEntries
                 .Include(entry => entry.Food)
-                .Where(entry => entry.Date.Date == SelectedDate)
+                .Where(entry =>
+                    entry.UserId == userId &&
+                    entry.Date.Date == SelectedDate)
                 .ToListAsync();
 
             TotalCalories = Entries.Sum(entry => entry.CaloriesConsumed);
