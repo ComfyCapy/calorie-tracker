@@ -48,7 +48,7 @@ namespace CalorieTracker.Pages.Diary
 
             if (profile != null)
             {
-                DailyCalorieTarget = profile.DailyCalorieTarget;
+                DailyCalorieTarget = profile.EffectiveCalorieTarget;
                 CaloriesRemaining = DailyCalorieTarget - TotalCalories;
 
                 if (DailyCalorieTarget > 0)

@@ -32,6 +32,9 @@ namespace CalorieTracker.Models
         [Range(0.25, 1.0)]
         public decimal? WeeklyGoalKg { get; set; }
 
+        [Range(500, 10000)]
+        public decimal? CustomCalorieTarget { get; set; }
+
         [NotMapped]
         public int Age
         {
@@ -130,6 +133,14 @@ namespace CalorieTracker.Models
                     "Gain" => TDEE + dailyAdjustment,
                     _ => TDEE
                 };
+            }
+        }
+        [NotMapped]
+        public decimal EffectiveCalorieTarget
+        {
+            get
+            {
+                return CustomCalorieTarget ?? DailyCalorieTarget;
             }
         }
     }
