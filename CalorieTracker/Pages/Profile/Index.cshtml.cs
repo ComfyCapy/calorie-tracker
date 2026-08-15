@@ -54,6 +54,7 @@ namespace CalorieTracker.Pages.Profile
                 existingProfile.Goal = UserProfile.Goal;
                 existingProfile.GoalWeightKg = UserProfile.GoalWeightKg;
                 existingProfile.WeeklyGoalKg = UserProfile.WeeklyGoalKg;
+                existingProfile.CustomCalorieTarget = UserProfile.CustomCalorieTarget;
             }
 
             await _context.SaveChangesAsync();

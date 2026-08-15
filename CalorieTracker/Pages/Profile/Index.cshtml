@@ -138,6 +138,23 @@
               class="text-danger"></span>
     </div>
 
+    <div class="mb-3">
+        <label asp-for="UserProfile.CustomCalorieTarget" class="form-label">
+            Custom Daily Calorie Target
+        </label>
+
+        <input asp-for="UserProfile.CustomCalorieTarget"
+               class="form-control"
+               placeholder="Leave blank to use calculated target" />
+
+        <div class="form-text">
+            Optional. If set, this overrides your automatically calculated daily calorie target.
+        </div>
+
+        <span asp-validation-for="UserProfile.CustomCalorieTarget"
+              class="text-danger"></span>
+    </div>
+
     <button type="submit" class="btn btn-primary">
         Save Profile
     </button>
@@ -172,7 +189,20 @@
 
                 <div class="col-md">
                     <strong>Daily Calorie Target</strong>
-                    <p>~@Model.UserProfile.DailyCalorieTarget.ToString("0") kcal/day</p>
+
+                    @if (Model.UserProfile.CustomCalorieTarget.HasValue)
+                    {
+                        <p>
+                            @Model.UserProfile.EffectiveCalorieTarget.ToString("0") kcal/day
+                            <small class="text-muted">(custom)</small>
+                        </p>
+                    }
+                    else
+                    {
+                        <p>
+                            ~@Model.UserProfile.EffectiveCalorieTarget.ToString("0") kcal/day
+                        </p>
+                    }
                 </div>
             </div>
 
