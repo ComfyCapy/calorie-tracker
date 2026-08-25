@@ -55,8 +55,25 @@ else
                     <td>@food.Carbohydrates g</td>
                     <td>@food.Fat g</td>
                     <td>
-                        <a asp-page="./Edit" asp-route-id="@food.Id">Edit</a>
-                        <a asp-page="./Delete" asp-route-id="@food.Id">Delete</a>
+                        <div class="d-flex gap-1">
+                            <a asp-page="./Edit"
+                               asp-route-id="@food.Id"
+                               class="btn btn-sm btn-primary">
+                                Edit
+                            </a>
+
+                            <a asp-page="./Portions"
+                               asp-route-id="@food.Id"
+                               class="btn btn-sm btn-primary">
+                                Portions
+                            </a>
+
+                            <a asp-page="./Delete"
+                               asp-route-id="@food.Id"
+                               class="btn btn-sm btn-danger">
+                                Delete
+                            </a>
+                        </div>
                     </td>
                 </tr>
             }

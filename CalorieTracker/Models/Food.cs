@@ -9,9 +9,11 @@ namespace CalorieTracker.Models
         public decimal Protein { get; set; }
         public decimal Carbohydrates { get; set; }
         public decimal Fat { get; set; }
-        [Display(Name = "Serving Size")]
+        [Display(Name = "Nutrition Reference Amount")]
         public decimal ServingSize { get; set; } = 100;
-        [Display(Name = "Serving Unit")]
+
+        [Display(Name = "Nutrition Reference Unit")]
         public string ServingUnit { get; set; } = "g";
+        public List<FoodPortion> Portions { get; set; } = [];
     }
 }

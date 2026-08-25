@@ -47,6 +47,14 @@ namespace CalorieTracker.Pages.Diary
                     entry.Date.Date == SelectedDate)
                 .ToListAsync();
 
+            Entries = await _context.DiaryEntries
+                .Include(entry => entry.Food)
+                .Include(entry => entry.FoodPortion)
+                .Where(entry =>
+                    entry.UserId == userId &&
+                    entry.Date.Date == SelectedDate)
+                .ToListAsync();
+
             TotalCalories = Entries.Sum(entry => entry.CaloriesConsumed);
             TotalProtein = Entries.Sum(entry => entry.ProteinConsumed);
             TotalCarbohydrates = Entries.Sum(entry => entry.CarbohydratesConsumed);

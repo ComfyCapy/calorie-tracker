@@ -22,6 +22,12 @@ namespace CalorieTracker.Models
 
         public Food? Food { get; set; }
 
+        public int? FoodPortionId { get; set; }
+
+        public FoodPortion? FoodPortion { get; set; }
+
+        public decimal? PortionQuantity { get; set; }
+
         [Range(0.01, 100000, ErrorMessage = "Quantity must be between 0.01 and 100,000.")]
         public decimal Quantity { get; set; }
 
