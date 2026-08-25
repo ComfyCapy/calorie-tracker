@@ -10,6 +10,8 @@ namespace CalorieTracker.Models
 
         public string UserId { get; set; } = string.Empty;
         public ApplicationUser? User { get; set; }
+        [Required]
+        public string MeasurementSystem { get; set; } = "Metric";
 
         [Required]
         [DataType(DataType.Date)]
