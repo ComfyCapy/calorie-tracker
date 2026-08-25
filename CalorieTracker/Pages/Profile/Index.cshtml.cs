@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace CalorieTracker.Pages.Profile
 {
@@ -11,10 +12,12 @@ namespace CalorieTracker.Pages.Profile
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -25,7 +28,10 @@ namespace CalorieTracker.Pages.Profile
 
         public async Task OnGetAsync()
         {
-            var profile = await _context.UserProfiles.FirstOrDefaultAsync();
+            var userId = _userManager.GetUserId(User);
+
+            var profile = await _context.UserProfiles
+                .FirstOrDefaultAsync(profile => profile.UserId == userId);
 
             if (profile != null)
             {
@@ -39,11 +45,19 @@ namespace CalorieTracker.Pages.Profile
             {
                 return Page();
             }
+            var userId = _userManager.GetUserId(User);
 
-            var existingProfile = await _context.UserProfiles.FirstOrDefaultAsync();
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var existingProfile = await _context.UserProfiles
+                .FirstOrDefaultAsync(profile => profile.UserId == userId);
 
             if (existingProfile == null)
             {
+                UserProfile.UserId = userId;
                 _context.UserProfiles.Add(UserProfile);
             }
             else

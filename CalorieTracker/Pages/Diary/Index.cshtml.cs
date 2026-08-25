@@ -52,7 +52,8 @@ namespace CalorieTracker.Pages.Diary
             TotalCarbohydrates = Entries.Sum(entry => entry.CarbohydratesConsumed);
             TotalFat = Entries.Sum(entry => entry.FatConsumed);
 
-            var profile = await _context.UserProfiles.FirstOrDefaultAsync();
+            var profile = await _context.UserProfiles
+                .FirstOrDefaultAsync(profile => profile.UserId == userId);
 
             if (profile != null)
             {
