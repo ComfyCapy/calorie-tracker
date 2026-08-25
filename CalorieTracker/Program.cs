@@ -1,8 +1,7 @@
 using CalorieTracker.Data;
-using Microsoft.EntityFrameworkCore;
+using CalorieTracker.Services;
 using Microsoft.AspNetCore.Identity;
-
-
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +13,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
     .AddDefaultUI();
+builder.Services.AddHttpClient<IFoodSearchService, UsdaFoodService>();
 
 var app = builder.Build();
 

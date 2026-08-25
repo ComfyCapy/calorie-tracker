@@ -1,9 +1,13 @@
 ﻿@page
 @model CalorieTracker.Pages.Foods.IndexModel
-<h1>Foods</h1>
+
+<h1>My Foods</h1>
 
 <p>
-    <a asp-page="./Create" class="btn btn-primary">Add Food</a>
+    <a asp-page="./Create"
+       class="btn btn-primary">
+        Add Custom Food
+    </a>
 </p>
 
 <form method="get" class="mb-3">
@@ -12,25 +16,52 @@
                name="searchTerm"
                value="@Model.SearchTerm"
                class="form-control"
-               placeholder="Search foods..." />
-        <button type="submit" class="btn btn-outline-primary">Search</button>
-     </div>
+               placeholder="Search my foods..." />
+
+        <button type="submit"
+                class="btn btn-outline-primary">
+            Search
+        </button>
+    </div>
 </form>
 
 @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
 {
-    
-<p>
-    Showing results for "<strong>@Model.SearchTerm</strong>"
-    <a asp-page="./Index">Clear Search</a></p> }
+    <p>
+        Showing results for
+        "<strong>@Model.SearchTerm</strong>"
 
-@if (Model.Foods.Count == 0)
+        <a asp-page="./Index">
+            Clear Search
+        </a>
+    </p>
+}
+
+
+@* =========================
+   FAVOURITES
+   ========================= *@
+
+<h2 class="mt-4">Favourites</h2>
+
+@if (Model.FavouriteFoods.Count == 0)
 {
-    <p>No foods available.</p>
+    <p class="text-muted">
+        No favourite foods yet.
+    </p>
 }
 else
 {
-    <table class="table">
+    <table class="table" style="table-layout: fixed;">
+        <colgroup>
+            <col style="width: 32%;">
+            <col style="width: 20%;">
+            <col style="width: 12%;">
+            <col style="width: 10%;">
+            <col style="width: 10%;">
+            <col style="width: 16%;">
+        </colgroup>
+
         <thead>
             <tr>
                 <th>Name</th>
@@ -41,19 +72,110 @@ else
                 <th></th>
             </tr>
         </thead>
+
         <tbody>
-            @foreach (var food in Model.Foods)
+            @foreach (var food in Model.FavouriteFoods)
             {
                 <tr>
                     <td>@food.Name</td>
-                    <td>@food.Calories kcal 
+
+                    <td>
+                        @food.Calories kcal
+
                         <small class="text-muted">
-                            per @food.ServingSize.ToString("0.##") @food.ServingUnit
+                            per @food.ServingSize.ToString("0.##")
+                            @food.ServingUnit
                         </small>
                     </td>
-                    <td>@food.Protein g</td>
-                    <td>@food.Carbohydrates g</td>
-                    <td>@food.Fat g</td>
+
+                    <td>
+                        @food.Protein.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        @food.Carbohydrates.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        @food.Fat.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        <a asp-page="./ApiFood"
+                           asp-route-id="@food.ExternalId"
+                           class="btn btn-sm btn-primary">
+                            Add to Diary
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@* =========================
+   CUSTOM FOODS
+   ========================= *@
+
+<h2 class="mt-5">Custom Foods</h2>
+
+@if (Model.CustomFoods.Count == 0)
+{
+    <p class="text-muted">
+        No custom foods found.
+    </p>
+}
+else
+{
+    <table class="table" style="table-layout: fixed;">
+        <colgroup>
+            <col style="width: 32%;">
+            <col style="width: 20%;">
+            <col style="width: 12%;">
+            <col style="width: 10%;">
+            <col style="width: 10%;">
+            <col style="width: 16%;">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Calories</th>
+                <th>Protein</th>
+                <th>Carbs</th>
+                <th>Fat</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var food in Model.CustomFoods)
+            {
+                <tr>
+                    <td>@food.Name</td>
+
+                    <td>
+                        @food.Calories kcal
+
+                        <small class="text-muted">
+                            per @food.ServingSize.ToString("0.##")
+                            @food.ServingUnit
+                        </small>
+                    </td>
+
+                    <td>
+                        @food.Protein.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        @food.Carbohydrates.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        @food.Fat.ToString("0.##") g
+                    </td>
+
                     <td>
                         <div class="d-flex gap-1">
                             <a asp-page="./Edit"
@@ -74,6 +196,83 @@ else
                                 Delete
                             </a>
                         </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@* =========================
+   RECENT FOODS
+   ========================= *@
+
+<h2 class="mt-5">Recent Foods</h2>
+
+@if (Model.RecentFoods.Count == 0)
+{
+    <p class="text-muted">
+        Foods you've recently added from the food database
+        will appear here.
+    </p>
+}
+else
+{
+    <table class="table" style="table-layout: fixed;">
+        <colgroup>
+            <col style="width: 32%;">
+            <col style="width: 20%;">
+            <col style="width: 12%;">
+            <col style="width: 10%;">
+            <col style="width: 10%;">
+            <col style="width: 16%;">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Calories</th>
+                <th>Protein</th>
+                <th>Carbs</th>
+                <th>Fat</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var food in Model.RecentFoods)
+            {
+                <tr>
+                    <td>@food.Name</td>
+
+                    <td>
+                        @food.Calories kcal
+
+                        <small class="text-muted">
+                            per @food.ServingSize.ToString("0.##")
+                            @food.ServingUnit
+                        </small>
+                    </td>
+
+                    <td>
+                        @food.Protein.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        @food.Carbohydrates.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        @food.Fat.ToString("0.##") g
+                    </td>
+
+                    <td>
+                        <a asp-page="./ApiFood"
+                           asp-route-id="@food.ExternalId"
+                           class="btn btn-sm btn-primary">
+                            Add to Diary
+                        </a>
                     </td>
                 </tr>
             }

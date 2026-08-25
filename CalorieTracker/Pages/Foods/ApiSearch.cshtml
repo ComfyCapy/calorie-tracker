@@ -1,0 +1,70 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.ApiSearchModel
+
+@{
+    ViewData["Title"] = "Food Database";
+}
+
+<h1>Food Database</h1>
+
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input asp-for="SearchTerm"
+               class="form-control"
+               placeholder="Search food database..." />
+
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+    </div>
+</form>
+
+@if (Model.Results.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Food</th>
+                <th>
+                    Calories
+                    <small class="text-muted d-block">per 100 g</small>
+                </th>
+                <th>
+                    Protein
+                    <small class="text-muted d-block">per 100 g</small>
+                </th>
+                <th>
+                    Carbs
+                    <small class="text-muted d-block">per 100 g</small>
+                </th>
+                <th>
+                    Fat
+                    <small class="text-muted d-block">per 100 g</small>
+                </th>
+                <th>Source</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var food in Model.Results)
+            {
+                <tr>
+                    <td>@food.Name</td>
+                    <td>@food.Calories.ToString("0.#") kcal</td>
+                    <td>@food.Protein.ToString("0.##") g</td>
+                    <td>@food.Carbohydrates.ToString("0.##") g</td>
+                    <td>@food.Fat.ToString("0.##") g</td>
+                    <td>@food.Source</td>
+                    <td>
+                        <a asp-page="./ApiFood"
+                           asp-route-id="@food.ExternalId"
+                           class="btn btn-sm btn-primary">
+                            Select
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

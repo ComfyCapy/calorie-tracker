@@ -1,53 +1,124 @@
 ﻿@page
 @model CalorieTracker.Pages.Diary.CreateModel
 
+@using System.Text.Json
+
+@{
+    var foodsJson = JsonSerializer.Serialize(
+        Model.FoodOptions.Select(food => new
+        {
+            id = food.Id,
+            name = food.Name,
+            unit = food.ServingUnit,
+            isFavourite = food.IsFavourite,
+            isCustom = food.Source == null,
+            portions = food.Portions.Select(portion => new
+            {
+                id = portion.Id,
+                name = portion.Name,
+                amount = portion.Amount
+            })
+        })
+    );
+}
+
 <h1>Add Diary Entry</h1>
 
 <form method="post">
 
     <div class="form-group">
-        <label asp-for="DiaryEntry.Date" class="control-label"></label>
-        <input asp-for="DiaryEntry.Date" type="date" class="form-control" />
-        <span asp-validation-for="DiaryEntry.Date" class="text-danger"></span>
+        <label asp-for="DiaryEntry.Date"
+               class="control-label">
+        </label>
+
+        <input asp-for="DiaryEntry.Date"
+               type="date"
+               class="form-control" />
+
+        <span asp-validation-for="DiaryEntry.Date"
+              class="text-danger">
+        </span>
     </div>
 
     <div class="form-group">
-        <label asp-for="DiaryEntry.MealType" class="control-label">Meal</label>
-        <select asp-for="DiaryEntry.MealType" class="form-control">
+        <label asp-for="DiaryEntry.MealType"
+               class="control-label">
+            Meal
+        </label>
+
+        <select asp-for="DiaryEntry.MealType"
+                class="form-control">
             <option value="Breakfast">Breakfast</option>
             <option value="Lunch">Lunch</option>
             <option value="Dinner">Dinner</option>
             <option value="Snack">Snack</option>
         </select>
-        <span asp-validation-for="DiaryEntry.MealType" class="text-danger"></span>
-    </div>
 
-    <div class="form-group">
-        <label asp-for="DiaryEntry.FoodId" class="control-label">Food</label>
-        <select asp-for="DiaryEntry.FoodId"
-                id="foodSelect"
-                class="form-control">
-            @foreach (var food in Model.FoodOptions)
-            {
-                <option value="@food.Id"
-                        data-unit="@food.ServingUnit"
-                        data-portions='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                                    food.Portions.Select(p => new
-                                    {
-                                        id = p.Id,
-                                        name = p.Name,
-                                        amount = p.Amount
-                                    })
-                                ))'>
-                    @food.Name
-                </option>
-            }
-        </select>
-        <span asp-validation-for="DiaryEntry.FoodId" class="text-danger"></span>
+        <span asp-validation-for="DiaryEntry.MealType"
+              class="text-danger">
+        </span>
     </div>
 
     <div class="form-group mt-3">
-        <label class="control-label">How would you like to log this?</label>
+        <label class="control-label">
+            Food
+        </label>
+
+        <input type="hidden"
+               asp-for="DiaryEntry.FoodId"
+               id="foodId" />
+
+        <div class="position-relative">
+            <input type="text"
+                   id="foodSearch"
+                   class="form-control"
+                   placeholder="Search your foods..."
+                   autocomplete="off" />
+
+            <div id="foodResults"
+                 class="list-group position-absolute w-100 shadow-sm"
+                 style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+            </div>
+        </div>
+
+        <div id="selectedFoodDisplay"
+             class="mt-2"
+             style="display: none;">
+
+            <span class="text-muted">
+                Selected:
+            </span>
+
+            <strong id="selectedFoodName"></strong>
+
+            <button type="button"
+                    id="changeFoodButton"
+                    class="btn btn-sm btn-link">
+                Change
+            </button>
+        </div>
+
+        <span asp-validation-for="DiaryEntry.FoodId"
+              class="text-danger">
+        </span>
+
+        <div class="mt-2">
+            <small class="text-muted">
+                Can't find it?
+                <a asp-page="/Foods/ApiSearch">
+                    Search the food database
+                </a>
+            </small>
+        </div>
+    </div>
+
+    <div id="measurementModeSection"
+         class="form-group mt-3"
+         style="display: none;">
+
+        <label class="control-label">
+            How would you like to log this?
+        </label>
 
         <div class="mt-2">
             <div class="form-check form-check-inline">
@@ -57,7 +128,8 @@
                        value="Exact"
                        id="exactMode" />
 
-                <label class="form-check-label" for="exactMode">
+                <label class="form-check-label"
+                       for="exactMode">
                     Exact amount
                 </label>
             </div>
@@ -69,37 +141,53 @@
                        value="Portion"
                        id="portionMode" />
 
-                <label class="form-check-label" for="portionMode">
+                <label class="form-check-label"
+                       for="portionMode">
                     Portion
                 </label>
             </div>
         </div>
     </div>
 
-    <div id="exactQuantitySection" class="form-group">
+    <div id="exactQuantitySection"
+         class="form-group mt-3"
+         style="display: none;">
+
         <label asp-for="DiaryEntry.Quantity">
             Quantity (<span id="quantityUnit"></span>)
         </label>
 
         <input asp-for="DiaryEntry.Quantity"
-               class="form-control" />
+               class="form-control"
+               step="0.01"
+               min="0.01" />
 
         <span asp-validation-for="DiaryEntry.Quantity"
-              class="text-danger"></span>
+              class="text-danger">
+        </span>
     </div>
 
-    <div id="portionSection" class="form-group mt-3" style="display: none;">
-        <label asp-for="SelectedPortionId" class="control-label">
+    <div id="portionSection"
+         class="form-group mt-3"
+         style="display: none;">
+
+        <label asp-for="SelectedPortionId"
+               class="control-label">
             Portion
         </label>
 
         <select asp-for="SelectedPortionId"
                 id="portionSelect"
                 class="form-control">
-            <option value="">Select a portion...</option>
+
+            <option value="">
+                Select a portion...
+            </option>
         </select>
+
         <span asp-validation-for="SelectedPortionId"
-              class="text-danger"></span>
+              class="text-danger">
+        </span>
 
         <div class="mt-2">
             <label asp-for="PortionQuantity">
@@ -110,27 +198,65 @@
                    class="form-control"
                    step="0.01"
                    min="0.01" />
-            <span asp-validation-for="PortionQuantity" class="text-danger"></span>
+
+            <span asp-validation-for="PortionQuantity"
+                  class="text-danger">
+            </span>
         </div>
     </div>
 
     <div class="form-group mt-3">
-        <button type="submit" class="btn btn-primary">Add to Diary</button>
-        <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+        <button type="submit"
+                class="btn btn-primary">
+            Add to Diary
+        </button>
+
+        <a asp-page="./Index"
+           asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+           class="btn btn-secondary">
+            Cancel
+        </a>
     </div>
 
 </form>
-@section Scripts {
-    <script>
-        const selectedPortionId = "@Model.SelectedPortionId";
-    </script>
-    <script>
-        const foodSelect = document.getElementById("foodSelect");
-        const quantityUnit = document.getElementById("quantityUnit");
 
-        const exactMode = document.getElementById("exactMode");
-        const portionMode = document.getElementById("portionMode");
-        const portionSelect = document.getElementById("portionSelect");
+@section Scripts {
+
+    <script>
+        const foods = @Html.Raw(foodsJson);
+
+        const selectedPortionId =
+            "@Model.SelectedPortionId";
+
+        const foodId =
+            document.getElementById("foodId");
+
+        const foodSearch =
+            document.getElementById("foodSearch");
+
+        const foodResults =
+            document.getElementById("foodResults");
+
+        const selectedFoodDisplay =
+            document.getElementById("selectedFoodDisplay");
+
+        const selectedFoodName =
+            document.getElementById("selectedFoodName");
+
+        const changeFoodButton =
+            document.getElementById("changeFoodButton");
+
+        const quantityUnit =
+            document.getElementById("quantityUnit");
+
+        const measurementModeSection =
+            document.getElementById("measurementModeSection");
+
+        const exactMode =
+            document.getElementById("exactMode");
+
+        const portionMode =
+            document.getElementById("portionMode");
 
         const exactQuantitySection =
             document.getElementById("exactQuantitySection");
@@ -138,57 +264,332 @@
         const portionSection =
             document.getElementById("portionSection");
 
-        function updateQuantityUnit() {
-            const selectedOption =
-                foodSelect.options[foodSelect.selectedIndex];
+        const portionSelect =
+            document.getElementById("portionSelect");
 
-            quantityUnit.textContent = selectedOption.dataset.unit;
+
+        function getSelectedFood() {
+            const id =
+                parseInt(foodId.value);
+
+            if (!id) {
+                return null;
+            }
+
+            return foods.find(food =>
+                food.id === id
+            ) || null;
         }
 
-        function updateMeasurementMode() {
-            if (portionMode.checked) {
-                exactQuantitySection.style.display = "none";
-                portionSection.style.display = "block";
+
+        function getFoodCategory(food) {
+            if (food.isFavourite) {
+                return "Favourite";
             }
-            else {
-                exactQuantitySection.style.display = "block";
-                portionSection.style.display = "none";
+
+            if (food.isCustom) {
+                return "Custom";
             }
+
+            return "Recent";
         }
 
-        function updatePortionOptions() {
-            const selectedOption =
-                foodSelect.options[foodSelect.selectedIndex];
 
-            const portions =
-                JSON.parse(selectedOption.dataset.portions || "[]");
+        function renderFoodResults() {
+            const searchTerm =
+                foodSearch.value
+                    .trim()
+                    .toLowerCase();
+
+            foodResults.innerHTML = "";
+
+            const matches = foods
+                .filter(food =>
+                    food.name
+                        .toLowerCase()
+                        .includes(searchTerm))
+                .slice(0, 10);
+
+            if (matches.length === 0) {
+                const emptyResult =
+                    document.createElement("div");
+
+                emptyResult.className =
+                    "list-group-item text-muted";
+
+                emptyResult.textContent =
+                    "No foods found.";
+
+                foodResults.appendChild(
+                    emptyResult
+                );
+
+                foodResults.style.display =
+                    "block";
+
+                return;
+            }
+
+            matches.forEach(food => {
+                const button =
+                    document.createElement("button");
+
+                button.type = "button";
+
+                button.className =
+                    "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
+
+                const name =
+                    document.createElement("span");
+
+                name.textContent =
+                    food.name;
+
+                const category =
+                    document.createElement("small");
+
+                category.className =
+                    "text-muted";
+
+                category.textContent =
+                    getFoodCategory(food);
+
+                button.appendChild(name);
+                button.appendChild(category);
+
+                button.addEventListener(
+                    "click",
+                    () => selectFood(food)
+                );
+
+                foodResults.appendChild(
+                    button
+                );
+            });
+
+            foodResults.style.display =
+                "block";
+        }
+
+
+        function selectFood(food) {
+            foodId.value =
+                food.id;
+
+            foodSearch.value =
+                food.name;
+
+            selectedFoodName.textContent =
+                food.name;
+
+            selectedFoodDisplay.style.display =
+                "block";
+
+            foodResults.style.display =
+                "none";
+
+            foodSearch.style.display =
+                "none";
+
+            updateFood();
+        }
+
+
+        function clearSelectedFood() {
+            foodId.value = "";
+
+            foodSearch.value = "";
+
+            selectedFoodDisplay.style.display =
+                "none";
+
+            foodSearch.style.display =
+                "block";
+
+            measurementModeSection.style.display =
+                "none";
+
+            exactQuantitySection.style.display =
+                "none";
+
+            portionSection.style.display =
+                "none";
 
             portionSelect.innerHTML =
                 '<option value="">Select a portion...</option>';
 
-            portions.forEach(portion => {
-                const option = document.createElement("option");
+            foodSearch.focus();
 
-                option.value = portion.id;
-                if (portion.id.toString() === selectedPortionId) {
-                    option.selected = true;
-                }
-                option.textContent =
-                    `${portion.name} (${portion.amount} ${selectedOption.dataset.unit})`;
-
-                portionSelect.appendChild(option);
-            });
+            renderFoodResults();
         }
 
-        foodSelect.addEventListener("change", () => {updateQuantityUnit();updatePortionOptions();
-        });
 
-        exactMode.addEventListener("change", updateMeasurementMode);
-        portionMode.addEventListener("change", updateMeasurementMode);
+        function updateQuantityUnit() {
+            const selectedFood =
+                getSelectedFood();
 
-        updateQuantityUnit();
-        updatePortionOptions();
-        updateMeasurementMode();
+            quantityUnit.textContent =
+                selectedFood?.unit || "";
+        }
+
+
+        function updatePortionOptions() {
+            const selectedFood =
+                getSelectedFood();
+
+            portionSelect.innerHTML =
+                '<option value="">Select a portion...</option>';
+
+            if (!selectedFood) {
+                return;
+            }
+
+            selectedFood.portions.forEach(
+                portion => {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        portion.id;
+
+                    option.textContent =
+                        `${portion.name} (${portion.amount} ${selectedFood.unit})`;
+
+                    if (
+                        portion.id.toString() ===
+                        selectedPortionId
+                    ) {
+                        option.selected = true;
+                    }
+
+                    portionSelect.appendChild(
+                        option
+                    );
+                }
+            );
+        }
+
+
+        function updatePortionAvailability() {
+            const selectedFood =
+                getSelectedFood();
+
+            if (!selectedFood) {
+                measurementModeSection.style.display =
+                    "none";
+
+                return;
+            }
+
+            const hasPortions =
+                selectedFood.portions.length > 0;
+
+            if (hasPortions) {
+                measurementModeSection.style.display =
+                    "block";
+            }
+            else {
+                measurementModeSection.style.display =
+                    "none";
+
+                exactMode.checked = true;
+                portionMode.checked = false;
+            }
+        }
+
+
+        function updateMeasurementMode() {
+            const selectedFood =
+                getSelectedFood();
+
+            if (!selectedFood) {
+                exactQuantitySection.style.display =
+                    "none";
+
+                portionSection.style.display =
+                    "none";
+
+                return;
+            }
+
+            const hasPortions =
+                selectedFood.portions.length > 0;
+
+            if (
+                portionMode.checked &&
+                hasPortions
+            ) {
+                exactQuantitySection.style.display =
+                    "none";
+
+                portionSection.style.display =
+                    "block";
+            }
+            else {
+                exactQuantitySection.style.display =
+                    "block";
+
+                portionSection.style.display =
+                    "none";
+            }
+        }
+
+
+        function updateFood() {
+            updateQuantityUnit();
+            updatePortionOptions();
+            updatePortionAvailability();
+            updateMeasurementMode();
+        }
+
+
+        foodSearch.addEventListener(
+            "input",
+            renderFoodResults
+        );
+
+        foodSearch.addEventListener(
+            "focus",
+            renderFoodResults
+        );
+
+        changeFoodButton.addEventListener(
+            "click",
+            clearSelectedFood
+        );
+
+        exactMode.addEventListener(
+            "change",
+            updateMeasurementMode
+        );
+
+        portionMode.addEventListener(
+            "change",
+            updateMeasurementMode
+        );
+
+
+        document.addEventListener(
+            "click",
+            event => {
+                if (
+                    !foodSearch.contains(event.target) &&
+                    !foodResults.contains(event.target)
+                ) {
+                    foodResults.style.display =
+                        "none";
+                }
+            }
+        );
+
+
+        const initialFood =
+            getSelectedFood();
+
+        if (initialFood) {
+            selectFood(initialFood);
+        }
     </script>
 
     <partial name="_ValidationScriptsPartial" />

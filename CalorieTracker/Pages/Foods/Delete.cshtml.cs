@@ -37,7 +37,9 @@ namespace CalorieTracker.Pages.Foods
             var food = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.Id == id &&
-                    food.UserId == userId);
+                    food.UserId == userId &&
+                    food.Source == null &&
+                    !food.IsDeleted);
 
             if (food == null)
             {
@@ -61,14 +63,17 @@ namespace CalorieTracker.Pages.Foods
             var food = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.Id == Food.Id &&
-                    food.UserId == userId);
+                    food.UserId == userId &&
+                    food.Source == null &&
+                    !food.IsDeleted);
 
             if (food == null)
             {
                 return NotFound();
             }
 
-            _context.Foods.Remove(food);
+            food.IsDeleted = true;
+
             await _context.SaveChangesAsync();
 
             return RedirectToPage("./Index");

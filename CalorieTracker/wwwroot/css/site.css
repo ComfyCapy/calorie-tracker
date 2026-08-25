@@ -29,3 +29,13 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.navbar-nav .nav-item {
+    margin-right: 1.0rem;
+}
+
+.navbar-nav .dropdown-toggle,
+.navbar-nav .dropdown-toggle:hover,
+.navbar-nav .dropdown-toggle:focus {
+    color: #555 !important;
+}
