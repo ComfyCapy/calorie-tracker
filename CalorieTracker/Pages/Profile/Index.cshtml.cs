@@ -14,7 +14,9 @@ namespace CalorieTracker.Pages.Profile
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public IndexModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public IndexModel(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
@@ -142,6 +144,37 @@ namespace CalorieTracker.Pages.Profile
             StatusMessage = "Profile saved successfully.";
 
             return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostThemeAsync(string theme)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            if (theme != "System" &&
+                theme != "Light" &&
+                theme != "Dark")
+            {
+                return BadRequest();
+            }
+
+            var profile = await _context.UserProfiles
+                .FirstOrDefaultAsync(profile => profile.UserId == userId);
+
+            if (profile == null)
+            {
+                return new JsonResult(new { success = true, persisted = false });
+            }
+
+            profile.ThemePreference = theme;
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new { success = true });
         }
     }
 }

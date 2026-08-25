@@ -1,22 +1,58 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using CalorieTracker.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
+
+@{
+    string? accountTheme = null;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var userId = UserManager.GetUserId(User);
+
+        if (userId != null)
+        {
+            accountTheme = await DbContext.UserProfiles
+                .Where(profile => profile.UserId == userId)
+                .Select(profile => profile.ThemePreference)
+                .FirstOrDefaultAsync();
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CalorieTracker</title>
     <script type="importmap"></script>
-    <script>
+        <script>
             (() => {
-                const savedTheme = localStorage.getItem("theme") || "system";
-                let themeToApply = savedTheme;
+                const accountTheme = "@(accountTheme?.ToLowerInvariant() ?? "")";
 
-                if (savedTheme === "system") {
-                    themeToApply = window.matchMedia("(prefers-color-scheme: dark)").matches
-                        ? "dark"
-                        : "light";
+            const savedTheme =
+            accountTheme ||
+            localStorage.getItem("theme") ||
+            "system";
+
+            localStorage.setItem("theme", savedTheme);
+
+            let themeToApply = savedTheme;
+
+            if (savedTheme === "system") {
+                themeToApply =
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+                    ? "dark"
+                    : "light";
                 }
 
-                document.documentElement.setAttribute("data-bs-theme", themeToApply);
+            document.documentElement.setAttribute(
+            "data-bs-theme",
+            themeToApply
+            );
             })();
     </script>
 
@@ -145,22 +181,68 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
+    <form id="themeAntiForgeryForm" method="post" style="display: none;">
+        @Html.AntiForgeryToken()
+    </form>
+
     <script>
             document.querySelectorAll(".theme-option").forEach(button => {
-                button.addEventListener("click", () => {
+                button.addEventListener("click", async () => {
                     const selectedTheme = button.dataset.theme;
+
+                    // Apply and cache the theme immediately.
                     localStorage.setItem("theme", selectedTheme);
 
                     let themeToApply = selectedTheme;
 
                     if (selectedTheme === "system") {
-                        themeToApply = window.matchMedia("(prefers-color-scheme: dark)").matches
-                            ? "dark"
-                            : "light";
+                        themeToApply =
+                            window.matchMedia("(prefers-color-scheme: dark)").matches
+                                ? "dark"
+                                : "light";
                     }
 
-                    document.documentElement.setAttribute("data-bs-theme", themeToApply);
-                });
+                    document.documentElement.setAttribute(
+                        "data-bs-theme",
+                        themeToApply
+                    );
+
+                    // If logged in, also save the preference to the account.
+                    @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <text>
+                                    const antiForgeryToken =
+                                    document.querySelector(
+                                    '#themeAntiForgeryForm input[name="__RequestVerificationToken"]'
+                                    ).value;
+
+                                    const themeForServer =
+                                    selectedTheme.charAt(0).toUpperCase() +
+                                    selectedTheme.slice(1);
+
+                                    try {
+                                        await fetch('@Url.Page("/Profile/Index", "Theme")', {
+                                            method: "POST",
+                                            headers: {
+                                                "Content-Type":
+                                                    "application/x-www-form-urlencoded",
+                                                "RequestVerificationToken":
+                                                    antiForgeryToken
+                                            },
+                                            body: new URLSearchParams({
+                                                theme: themeForServer
+                                            })
+                                        });
+                                    }
+                                    catch (error) {
+                                        console.error(
+                                            "Unable to save theme preference.",
+                                            error
+                                        );
+                                    }
+                            </text>
+                    }
+                    });
             });
     </script>
 
