@@ -1,0 +1,121 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.ApiFoodModel
+
+@{
+    ViewData["Title"] = Model.Food?.Name ?? "Food";
+}
+
+@if (Model.Food != null)
+{
+    <h1>@Model.Food.Name</h1>
+
+    <p class="text-muted">
+        Nutrition per 100 g
+    </p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Calories</dt>
+        <dd class="col-sm-9">
+            @Model.Food.Calories.ToString("0.#") kcal
+        </dd>
+
+        <dt class="col-sm-3">Protein</dt>
+        <dd class="col-sm-9">
+            @Model.Food.Protein.ToString("0.##") g
+        </dd>
+
+        <dt class="col-sm-3">Carbs</dt>
+        <dd class="col-sm-9">
+            @Model.Food.Carbohydrates.ToString("0.##") g
+        </dd>
+
+        <dt class="col-sm-3">Fat</dt>
+        <dd class="col-sm-9">
+            @Model.Food.Fat.ToString("0.##") g
+        </dd>
+    </dl>
+
+    <hr />
+
+    <form method="post">
+        <input type="hidden"
+               asp-for="ExternalId" />
+
+        <div class="mb-3">
+            <label asp-for="Quantity"
+                   class="form-label">
+                Amount (g)
+            </label>
+
+            <input asp-for="Quantity"
+                   class="form-control"
+                   step="0.01"
+                   min="0.01" />
+
+            <span asp-validation-for="Quantity"
+                  class="text-danger">
+            </span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="MealType"
+                   class="form-label">
+                Meal
+            </label>
+
+            <select asp-for="MealType"
+                    class="form-select">
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Snack">Snack</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Date"
+                   class="form-label">
+                Date
+            </label>
+
+            <input asp-for="Date"
+                   type="date"
+                   class="form-control" />
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="submit"
+                    class="btn btn-primary">
+                Add to Diary
+            </button>
+
+            @if (Model.IsFavourite)
+            {
+                <button type="submit"
+                        asp-page-handler="Unfavourite"
+                        formnovalidate
+                        class="btn btn-outline-secondary">
+                    Remove from Favourites
+                </button>
+            }
+            else
+            {
+                <button type="submit"
+                        asp-page-handler="Favourite"
+                        formnovalidate
+                        class="btn btn-outline-primary">
+                    Add to Favourites
+                </button>
+            }
+
+            <a asp-page="./ApiSearch"
+               class="btn btn-secondary">
+                Back to Search
+            </a>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

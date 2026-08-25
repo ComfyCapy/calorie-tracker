@@ -45,7 +45,8 @@ namespace CalorieTracker.Pages.Foods
                 .Include(food => food.Portions)
                 .FirstOrDefaultAsync(food =>
                     food.Id == id &&
-                    food.UserId == userId);
+                    food.UserId == userId &&
+                    !food.IsDeleted);
 
             if (food == null)
             {
@@ -71,33 +72,56 @@ namespace CalorieTracker.Pages.Foods
             }
 
             var food = await _context.Foods
+                .Include(food => food.Portions)
                 .FirstOrDefaultAsync(food =>
                     food.Id == id &&
-                    food.UserId == userId);
+                    food.UserId == userId &&
+                    !food.IsDeleted);
 
             if (food == null)
             {
                 return NotFound();
             }
 
-            NewPortion.FoodId = id;
+            NewPortion.FoodId = food.Id;
+
+            if (string.IsNullOrWhiteSpace(NewPortion.Name))
+            {
+                ModelState.AddModelError(
+                    "NewPortion.Name",
+                    "Please enter a portion name.");
+            }
+
+            if (NewPortion.Amount <= 0)
+            {
+                ModelState.AddModelError(
+                    "NewPortion.Amount",
+                    "Amount must be greater than 0.");
+            }
 
             if (!ModelState.IsValid)
             {
                 Food = food;
 
-                Portions = await _context.FoodPortions
-                    .Where(portion => portion.FoodId == id)
+                Portions = food.Portions
                     .OrderBy(portion => portion.Amount)
-                    .ToListAsync();
+                    .ToList();
 
                 return Page();
             }
 
+            NewPortion.Name = NewPortion.Name.Trim();
+
             _context.FoodPortions.Add(NewPortion);
+
             await _context.SaveChangesAsync();
 
-            return RedirectToPage(new { id });
+            StatusMessage = "Portion added! ✨";
+
+            return RedirectToPage(new
+            {
+                id = food.Id
+            });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(
@@ -116,7 +140,9 @@ namespace CalorieTracker.Pages.Foods
                 .FirstOrDefaultAsync(portion =>
                     portion.Id == portionId &&
                     portion.FoodId == id &&
-                    portion.Food!.UserId == userId);
+                    portion.Food != null &&
+                    portion.Food.UserId == userId &&
+                    !portion.Food.IsDeleted);
 
             if (portion == null)
             {
@@ -124,9 +150,15 @@ namespace CalorieTracker.Pages.Foods
             }
 
             _context.FoodPortions.Remove(portion);
+
             await _context.SaveChangesAsync();
 
-            return RedirectToPage(new { id });
+            StatusMessage = "Portion deleted.";
+
+            return RedirectToPage(new
+            {
+                id
+            });
         }
 
         public async Task<IActionResult> OnPostEditAsync(
@@ -147,16 +179,35 @@ namespace CalorieTracker.Pages.Foods
                 .FirstOrDefaultAsync(portion =>
                     portion.Id == portionId &&
                     portion.FoodId == id &&
-                    portion.Food!.UserId == userId);
+                    portion.Food != null &&
+                    portion.Food.UserId == userId &&
+                    !portion.Food.IsDeleted);
 
             if (portion == null)
             {
                 return NotFound();
             }
 
-            if (string.IsNullOrWhiteSpace(name) || amount <= 0)
+            if (string.IsNullOrWhiteSpace(name))
             {
-                return RedirectToPage(new { id });
+                StatusMessage =
+                    "Portion name cannot be empty.";
+
+                return RedirectToPage(new
+                {
+                    id
+                });
+            }
+
+            if (amount <= 0)
+            {
+                StatusMessage =
+                    "Portion amount must be greater than 0.";
+
+                return RedirectToPage(new
+                {
+                    id
+                });
             }
 
             portion.Name = name.Trim();
@@ -166,7 +217,10 @@ namespace CalorieTracker.Pages.Foods
 
             StatusMessage = "Portion updated! ✨";
 
-            return RedirectToPage(new { id });
+            return RedirectToPage(new
+            {
+                id
+            });
         }
     }
 }

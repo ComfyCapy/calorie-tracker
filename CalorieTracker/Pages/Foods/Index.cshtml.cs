@@ -21,7 +21,11 @@ namespace CalorieTracker.Pages.Foods
             _userManager = userManager;
         }
 
-        public List<Food> Foods { get; set; } = [];
+        public List<Food> FavouriteFoods { get; set; } = [];
+
+        public List<Food> CustomFoods { get; set; } = [];
+
+        public List<Food> RecentFoods { get; set; } = [];
 
         public string SearchTerm { get; set; } = string.Empty;
 
@@ -33,22 +37,66 @@ namespace CalorieTracker.Pages.Foods
 
             if (userId == null)
             {
-                Foods = [];
+                FavouriteFoods = [];
+                CustomFoods = [];
+                RecentFoods = [];
                 return;
             }
 
-            var query = _context.Foods
-                .Where(food => food.UserId == userId);
+            // Database foods explicitly saved as favourites.
+            var favouritesQuery = _context.Foods
+                .Where(food =>
+                    food.UserId == userId &&
+                    food.Source != null &&
+                    food.IsFavourite &&
+                    !food.IsDeleted);
 
+            // Custom foods created by the user.
+            var customQuery = _context.Foods
+                .Where(food =>
+                    food.UserId == userId &&
+                    food.Source == null &&
+                    !food.IsDeleted);
+
+            // Search applies to favourites and custom foods.
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(food =>
-                    food.Name.Contains(searchTerm));
+                favouritesQuery = favouritesQuery
+                    .Where(food =>
+                        food.Name.Contains(searchTerm));
+
+                customQuery = customQuery
+                    .Where(food =>
+                        food.Name.Contains(searchTerm));
             }
 
-            Foods = await query
+            FavouriteFoods = await favouritesQuery
                 .OrderBy(food => food.Name)
                 .ToListAsync();
+
+            CustomFoods = await customQuery
+                .OrderBy(food => food.Name)
+                .ToListAsync();
+
+            // Database foods the user has recently logged.
+            var recentEntries = await _context.DiaryEntries
+                .Where(entry =>
+                    entry.UserId == userId &&
+                    entry.Food != null &&
+                    entry.Food.Source != null &&
+                    !entry.Food.IsDeleted)
+                .Include(entry => entry.Food)
+                .OrderByDescending(entry => entry.Date)
+                .ThenByDescending(entry => entry.Id)
+                .Take(100)
+                .ToListAsync();
+
+            RecentFoods = recentEntries
+                .Where(entry => entry.Food != null)
+                .GroupBy(entry => entry.FoodId)
+                .Select(group => group.First().Food!)
+                .Take(10)
+                .ToList();
         }
     }
 }

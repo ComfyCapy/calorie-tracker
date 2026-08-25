@@ -92,12 +92,30 @@
 
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-link"
-                                   asp-area=""
-                                   asp-page="/Foods/Index">
-                                    Foods
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    Food
                                 </a>
+
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-page="/Foods/Index">
+                                            My Foods
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-page="/Foods/ApiSearch">
+                                            Food Database
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
 
                             <li class="nav-item">
@@ -224,22 +242,20 @@
                                         await fetch('@Url.Page("/Profile/Index", "Theme")', {
                                             method: "POST",
                                             headers: {
-                                                "Content-Type":
-                                                    "application/x-www-form-urlencoded",
-                                                "RequestVerificationToken":
-                                                    antiForgeryToken
+                                                "Content-Type": "application/x-www-form-urlencoded",
+                                                "RequestVerificationToken": antiForgeryToken
                                             },
                                             body: new URLSearchParams({
                                                 theme: themeForServer
                                             })
                                         });
-                                    }
+                            }
                                     catch (error) {
                                         console.error(
                                             "Unable to save theme preference.",
                                             error
                                         );
-                                    }
+                            }
                             </text>
                     }
                     });

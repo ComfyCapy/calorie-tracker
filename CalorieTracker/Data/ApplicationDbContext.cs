@@ -6,7 +6,8 @@ namespace CalorieTracker.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public ApplicationDbContext(
+            DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
@@ -23,13 +24,14 @@ namespace CalorieTracker.Data
             builder.Entity<UserProfile>()
                 .HasOne(profile => profile.User)
                 .WithOne(user => user.UserProfile)
-                .HasForeignKey<UserProfile>(profile => profile.UserId);
+                .HasForeignKey<UserProfile>(
+                    profile => profile.UserId);
 
             builder.Entity<FoodPortion>()
                 .HasOne(portion => portion.Food)
                 .WithMany(food => food.Portions)
                 .HasForeignKey(portion => portion.FoodId)
-                .OnDelete(DeleteBehavior.Cascade);  
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
