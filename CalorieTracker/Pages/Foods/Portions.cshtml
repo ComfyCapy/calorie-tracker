@@ -1,0 +1,114 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.PortionsModel
+@{
+    ViewData["Title"] = "Food Portions";
+}
+
+<h1>Portions for @Model.Food.Name</h1>
+
+<p class="text-muted">
+    Base serving: @Model.Food.ServingSize @Model.Food.ServingUnit
+</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>@Model.StatusMessage</strong>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close">
+        </button>
+    </div>
+}
+
+@if (Model.Portions.Count == 0)
+{
+    <p>No portions have been added for this food yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Portion</th>
+                <th>Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var portion in Model.Portions)
+            {
+                <tr>
+                    <form method="post"
+                          asp-page-handler="Edit"
+                          asp-route-id="@Model.Food.Id"
+                          asp-route-portionId="@portion.Id">
+
+                        <td>
+                            <input type="text"
+                                   name="name"
+                                   value="@portion.Name"
+                                   class="form-control form-control-sm" />
+                        </td>
+
+                        <td>
+                            <input type="number"
+                                   name="amount"
+                                   value="@portion.Amount"
+                                   step="0.01"
+                                   min="0.01"
+                                   class="form-control form-control-sm" />
+                        </td>
+
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button type="submit"
+                                        class="btn btn-sm btn-primary">
+                                    Save
+                                </button>
+
+                                <button type="submit"
+                                        formaction="?handler=Delete&id=@Model.Food.Id&portionId=@portion.Id"
+                                        class="btn btn-sm btn-danger">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </form>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<hr />
+
+<h2>Add Portion</h2>
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="NewPortion.Name" class="form-label">Portion Name</label>
+        <input asp-for="NewPortion.Name"
+               class="form-control"
+               placeholder="e.g. Medium banana" />
+        <span asp-validation-for="NewPortion.Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="NewPortion.Amount" class="form-label">
+            Amount (@Model.Food.ServingUnit)
+        </label>
+        <input asp-for="NewPortion.Amount"
+               class="form-control"
+               step="0.01" />
+        <span asp-validation-for="NewPortion.Amount" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Portion</button>
+</form>
+
+<br />
+
+<a asp-page="./Index" class="btn btn-secondary">Back to Foods</a>

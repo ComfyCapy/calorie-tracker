@@ -3,6 +3,7 @@ using System;
 using CalorieTracker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CalorieTracker.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825114700_AddFoodPortions")]
+    partial class AddFoodPortions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
@@ -97,14 +100,8 @@ namespace CalorieTracker.Migrations
                     b.Property<int>("FoodId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("FoodPortionId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("MealType")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("PortionQuantity")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Quantity")
@@ -117,8 +114,6 @@ namespace CalorieTracker.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FoodId");
-
-                    b.HasIndex("FoodPortionId");
 
                     b.HasIndex("UserId");
 
@@ -367,10 +362,6 @@ namespace CalorieTracker.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CalorieTracker.Models.FoodPortion", "FoodPortion")
-                        .WithMany()
-                        .HasForeignKey("FoodPortionId");
-
                     b.HasOne("CalorieTracker.Data.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -378,8 +369,6 @@ namespace CalorieTracker.Migrations
                         .IsRequired();
 
                     b.Navigation("Food");
-
-                    b.Navigation("FoodPortion");
 
                     b.Navigation("User");
                 });

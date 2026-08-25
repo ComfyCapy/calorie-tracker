@@ -14,6 +14,7 @@ namespace CalorieTracker.Data
         public DbSet<Food> Foods { get; set; }
         public DbSet<DiaryEntry> DiaryEntries { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<FoodPortion> FoodPortions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -23,6 +24,12 @@ namespace CalorieTracker.Data
                 .HasOne(profile => profile.User)
                 .WithOne(user => user.UserProfile)
                 .HasForeignKey<UserProfile>(profile => profile.UserId);
+
+            builder.Entity<FoodPortion>()
+                .HasOne(portion => portion.Food)
+                .WithMany(food => food.Portions)
+                .HasForeignKey(portion => portion.FoodId)
+                .OnDelete(DeleteBehavior.Cascade);  
         }
     }
 }
