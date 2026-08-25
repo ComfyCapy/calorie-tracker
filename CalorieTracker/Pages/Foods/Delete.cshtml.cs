@@ -1,39 +1,76 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace CalorieTracker.Pages.Foods
 {
-    public class  DeleteModel : PageModel 
+    [Authorize]
+    public class DeleteModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-        public DeleteModel(ApplicationDbContext context)
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public DeleteModel(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
+
         [BindProperty]
-        public Food Food { get; set; } = new Food();
+        public Food Food { get; set; } = new();
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var food = await _context.Foods.FindAsync(id);
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var food = await _context.Foods
+                .FirstOrDefaultAsync(food =>
+                    food.Id == id &&
+                    food.UserId == userId);
+
             if (food == null)
             {
                 return NotFound();
             }
+
             Food = food;
+
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var food = await _context.Foods.FindAsync(Food.Id);
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var food = await _context.Foods
+                .FirstOrDefaultAsync(food =>
+                    food.Id == Food.Id &&
+                    food.UserId == userId);
+
             if (food == null)
             {
                 return NotFound();
             }
+
             _context.Foods.Remove(food);
             await _context.SaveChangesAsync();
+
             return RedirectToPage("./Index");
         }
     }

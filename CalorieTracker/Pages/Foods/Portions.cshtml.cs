@@ -1,33 +1,51 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace CalorieTracker.Pages.Foods
 {
+    [Authorize]
     public class PortionsModel : PageModel
     {
         [TempData]
         public string? StatusMessage { get; set; }
-        private readonly ApplicationDbContext _context;
 
-        public PortionsModel(ApplicationDbContext context)
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public PortionsModel(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public Food Food { get; set; } = new();
 
         public List<FoodPortion> Portions { get; set; } = [];
+
         [BindProperty]
         public FoodPortion NewPortion { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
             var food = await _context.Foods
                 .Include(food => food.Portions)
-                .FirstOrDefaultAsync(food => food.Id == id);
+                .FirstOrDefaultAsync(food =>
+                    food.Id == id &&
+                    food.UserId == userId);
 
             if (food == null)
             {
@@ -35,16 +53,27 @@ namespace CalorieTracker.Pages.Foods
             }
 
             Food = food;
+
             Portions = food.Portions
                 .OrderBy(portion => portion.Amount)
                 .ToList();
 
             return Page();
         }
+
         public async Task<IActionResult> OnPostAsync(int id)
         {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
             var food = await _context.Foods
-                .FirstOrDefaultAsync(food => food.Id == id);
+                .FirstOrDefaultAsync(food =>
+                    food.Id == id &&
+                    food.UserId == userId);
 
             if (food == null)
             {
@@ -70,12 +99,24 @@ namespace CalorieTracker.Pages.Foods
 
             return RedirectToPage(new { id });
         }
-        public async Task<IActionResult> OnPostDeleteAsync(int id, int portionId)
+
+        public async Task<IActionResult> OnPostDeleteAsync(
+            int id,
+            int portionId)
         {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
             var portion = await _context.FoodPortions
+                .Include(portion => portion.Food)
                 .FirstOrDefaultAsync(portion =>
                     portion.Id == portionId &&
-                    portion.FoodId == id);
+                    portion.FoodId == id &&
+                    portion.Food!.UserId == userId);
 
             if (portion == null)
             {
@@ -87,16 +128,26 @@ namespace CalorieTracker.Pages.Foods
 
             return RedirectToPage(new { id });
         }
+
         public async Task<IActionResult> OnPostEditAsync(
             int id,
             int portionId,
             string name,
             decimal amount)
         {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
             var portion = await _context.FoodPortions
+                .Include(portion => portion.Food)
                 .FirstOrDefaultAsync(portion =>
                     portion.Id == portionId &&
-                    portion.FoodId == id);
+                    portion.FoodId == id &&
+                    portion.Food!.UserId == userId);
 
             if (portion == null)
             {
@@ -112,6 +163,7 @@ namespace CalorieTracker.Pages.Foods
             portion.Amount = amount;
 
             await _context.SaveChangesAsync();
+
             StatusMessage = "Portion updated! ✨";
 
             return RedirectToPage(new { id });

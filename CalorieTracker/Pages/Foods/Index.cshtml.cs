@@ -1,8 +1,9 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CalorieTracker.Pages.Foods
 {
@@ -10,21 +11,44 @@ namespace CalorieTracker.Pages.Foods
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-        public IndexModel(ApplicationDbContext context)
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public IndexModel(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
+
         public List<Food> Foods { get; set; } = [];
+
         public string SearchTerm { get; set; } = string.Empty;
+
         public async Task OnGetAsync(string searchTerm)
         {
             SearchTerm = searchTerm;
-            var query = _context.Foods.AsQueryable();
+
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                Foods = [];
+                return;
+            }
+
+            var query = _context.Foods
+                .Where(food => food.UserId == userId);
+
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(food => food.Name.Contains(searchTerm));
+                query = query.Where(food =>
+                    food.Name.Contains(searchTerm));
             }
-            Foods = await query.ToListAsync();
+
+            Foods = await query
+                .OrderBy(food => food.Name)
+                .ToListAsync();
         }
     }
 }

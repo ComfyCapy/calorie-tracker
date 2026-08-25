@@ -1,19 +1,27 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CalorieTracker.Data;
+using System.ComponentModel.DataAnnotations;
 namespace CalorieTracker.Models
 {
     public class Food
     {
         public int Id { get; set; }
+
+        public string? UserId { get; set; }
+
+        public ApplicationUser? User { get; set; }
+
         public string Name { get; set; } = string.Empty;
         public int Calories { get; set; }
         public decimal Protein { get; set; }
         public decimal Carbohydrates { get; set; }
         public decimal Fat { get; set; }
-        [Display(Name = "Nutrition Reference Amount")]
+
+        [Display(Name = "Amount")]
         public decimal ServingSize { get; set; } = 100;
 
-        [Display(Name = "Nutrition Reference Unit")]
+        [Display(Name = "Unit")]
         public string ServingUnit { get; set; } = "g";
+
         public List<FoodPortion> Portions { get; set; } = [];
     }
 }
