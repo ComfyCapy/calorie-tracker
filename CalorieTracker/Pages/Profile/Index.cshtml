@@ -29,23 +29,96 @@
     </div>
 
     <div class="mb-3">
+        <label class="form-label">Measurement System</label>
+
+        <div>
+            <div class="form-check form-check-inline">
+                <input asp-for="UserProfile.MeasurementSystem"
+                       class="form-check-input"
+                       type="radio"
+                       value="Metric"
+                       id="metricSystem" />
+
+                <label class="form-check-label" for="metricSystem">
+                    Metric
+                </label>
+            </div>
+
+            <div class="form-check form-check-inline">
+                <input asp-for="UserProfile.MeasurementSystem"
+                       class="form-check-input"
+                       type="radio"
+                       value="Imperial"
+                       id="imperialSystem" />
+
+                <label class="form-check-label" for="imperialSystem">
+                    Imperial
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="metricHeightSection" class="mb-3">
         <label asp-for="UserProfile.HeightCm" class="form-label">
             Height (cm)
         </label>
+
         <input asp-for="UserProfile.HeightCm"
                class="form-control" />
+
         <span asp-validation-for="UserProfile.HeightCm"
               class="text-danger"></span>
     </div>
 
-    <div class="mb-3">
+    <div id="imperialHeightSection" class="mb-3" style="display: none;">
+        <label class="form-label">Height</label>
+
+        <div class="row g-2">
+            <div class="col">
+                <div class="input-group">
+                    <input asp-for="HeightFeet"
+                           class="form-control"
+                           min="1" />
+
+                    <span class="input-group-text">ft</span>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="input-group">
+                    <input asp-for="HeightInches"
+                           class="form-control"
+                           min="0"
+                           max="11.99"
+                           step="0.01" />
+
+                    <span class="input-group-text">in</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="metricWeightSection" class="mb-3">
         <label asp-for="UserProfile.WeightKg" class="form-label">
             Current Weight (kg)
         </label>
+
         <input asp-for="UserProfile.WeightKg"
                class="form-control" />
+
         <span asp-validation-for="UserProfile.WeightKg"
               class="text-danger"></span>
+    </div>
+
+    <div id="imperialWeightSection" class="mb-3" style="display: none;">
+        <label asp-for="WeightLb" class="form-label">
+            Current Weight (lb)
+        </label>
+
+        <input asp-for="WeightLb"
+               class="form-control"
+               min="1"
+               step="0.1" />
     </div>
 
     <div class="mb-3">
@@ -101,7 +174,7 @@
               class="text-danger"></span>
     </div>
 
-    <div class="mb-3">
+    <div id="metricGoalWeightSection" class="mb-3">
         <label asp-for="UserProfile.GoalWeightKg" class="form-label">
             Goal Weight (kg)
         </label>
@@ -117,17 +190,54 @@
               class="text-danger"></span>
     </div>
 
+    <div id="imperialGoalWeightSection" class="mb-3" style="display: none;">
+        <label asp-for="GoalWeightLb" class="form-label">
+            Goal Weight (lb)
+        </label>
+
+        <input asp-for="GoalWeightLb"
+               class="form-control"
+               min="1"
+               step="0.1" />
+
+        <div class="form-text">
+            Optional if you're maintaining your current weight.
+        </div>
+    </div>
+
     <div class="mb-3">
         <label asp-for="UserProfile.WeeklyGoalKg" class="form-label">
             Weekly Weight Change
         </label>
 
-        <select asp-for="UserProfile.WeeklyGoalKg" class="form-select">
+        <select asp-for="UserProfile.WeeklyGoalKg"
+                id="weeklyGoalSelect"
+                class="form-select">
             <option value="">Select...</option>
-            <option value="0.25">0.25 kg per week</option>
-            <option value="0.5">0.5 kg per week</option>
-            <option value="0.75">0.75 kg per week</option>
-            <option value="1.0">1.0 kg per week</option>
+
+            <option value="0.25"
+                    data-metric="0.25 kg per week"
+                    data-imperial="0.55 lb per week">
+                0.25 kg per week
+            </option>
+
+            <option value="0.5"
+                    data-metric="0.5 kg per week"
+                    data-imperial="1.1 lb per week">
+                0.5 kg per week
+            </option>
+
+            <option value="0.75"
+                    data-metric="0.75 kg per week"
+                    data-imperial="1.65 lb per week">
+                0.75 kg per week
+            </option>
+
+            <option value="1.0"
+                    data-metric="1.0 kg per week"
+                    data-imperial="2.2 lb per week">
+                1.0 kg per week
+            </option>
         </select>
 
         <div class="form-text">
@@ -214,5 +324,112 @@
 }
 
 @section Scripts {
+    <script>
+        const metricSystem = document.getElementById("metricSystem");
+        const imperialSystem = document.getElementById("imperialSystem");
+        const heightCmInput = document.getElementById("UserProfile_HeightCm");
+        const weightKgInput = document.getElementById("UserProfile_WeightKg");
+        const goalWeightKgInput = document.getElementById("UserProfile_GoalWeightKg");
+
+        const heightFeetInput = document.getElementById("HeightFeet");
+        const heightInchesInput = document.getElementById("HeightInches");
+        const weightLbInput = document.getElementById("WeightLb");
+        const goalWeightLbInput = document.getElementById("GoalWeightLb");
+        const weeklyGoalSelect = document.getElementById("weeklyGoalSelect");
+
+        const metricSections = [
+            document.getElementById("metricHeightSection"),
+            document.getElementById("metricWeightSection"),
+            document.getElementById("metricGoalWeightSection")
+        ];
+
+        const imperialSections = [
+            document.getElementById("imperialHeightSection"),
+            document.getElementById("imperialWeightSection"),
+            document.getElementById("imperialGoalWeightSection")
+        ];
+
+        function updateMeasurementSystem() {
+            const useImperial = imperialSystem.checked;
+
+            metricSections.forEach(section => {
+                section.style.display = useImperial ? "none" : "block";
+            });
+
+            imperialSections.forEach(section => {
+                section.style.display = useImperial ? "block" : "none";
+            });
+
+            updateWeeklyGoalLabels();
+        }
+
+        metricSystem.addEventListener("change", () => {
+            convertImperialToMetric();
+            updateMeasurementSystem();
+        });
+
+        imperialSystem.addEventListener("change", () => {
+            convertMetricToImperial();
+            updateMeasurementSystem();
+        });
+
+        updateMeasurementSystem();
+
+        function convertMetricToImperial() {
+            const heightCm = parseFloat(heightCmInput.value);
+            const weightKg = parseFloat(weightKgInput.value);
+            const goalWeightKg = parseFloat(goalWeightKgInput.value);
+
+            if (!isNaN(heightCm)) {
+                const totalInches = heightCm / 2.54;
+                const feet = Math.floor(totalInches / 12);
+                const inches = totalInches - (feet * 12);
+
+                heightFeetInput.value = feet;
+                heightInchesInput.value = inches.toFixed(1);
+            }
+
+            if (!isNaN(weightKg)) {
+                weightLbInput.value = (weightKg * 2.2046226218).toFixed(1);
+            }
+
+            if (!isNaN(goalWeightKg)) {
+                goalWeightLbInput.value = (goalWeightKg * 2.2046226218).toFixed(1);
+            }
+        }
+
+        function convertImperialToMetric() {
+            const feet = parseFloat(heightFeetInput.value);
+            const inches = parseFloat(heightInchesInput.value);
+            const weightLb = parseFloat(weightLbInput.value);
+            const goalWeightLb = parseFloat(goalWeightLbInput.value);
+
+            if (!isNaN(feet) && !isNaN(inches)) {
+                const totalInches = (feet * 12) + inches;
+                heightCmInput.value = (totalInches * 2.54).toFixed(1);
+            }
+
+            if (!isNaN(weightLb)) {
+                weightKgInput.value = (weightLb / 2.2046226218).toFixed(1);
+            }
+
+            if (!isNaN(goalWeightLb)) {
+                goalWeightKgInput.value = (goalWeightLb / 2.2046226218).toFixed(1);
+            }
+        }
+
+        function updateWeeklyGoalLabels() {
+            const useImperial = imperialSystem.checked;
+
+            Array.from(weeklyGoalSelect.options).forEach(option => {
+                if (option.dataset.metric && option.dataset.imperial) {
+                    option.textContent = useImperial
+                        ? option.dataset.imperial
+                        : option.dataset.metric;
+                }
+            });
+        }
+    </script>
+
     <partial name="_ValidationScriptsPartial" />
 }
