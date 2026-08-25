@@ -68,7 +68,7 @@ The idea is to make tracking easier without taking away the option to be precise
 You'll need the .NET SDK installed.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/SertraLDN/calorie-tracker
 cd calorie-tracker
 dotnet restore
 dotnet ef database update
