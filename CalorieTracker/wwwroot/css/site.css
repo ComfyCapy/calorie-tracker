@@ -37,5 +37,27 @@ body {
 .navbar-nav .dropdown-toggle,
 .navbar-nav .dropdown-toggle:hover,
 .navbar-nav .dropdown-toggle:focus {
-    color: #555 !important;
+    color: var(--bs-navbar-color) !important;
+}
+
+    .navbar-nav .dropdown-toggle:hover,
+    .navbar-nav .dropdown-toggle:focus {
+        color: var(--bs-navbar-hover-color) !important;
+    }
+
+.food-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+    .food-table tbody tr:hover > * {
+        background-color: rgba(0, 0, 0, 0.045);
+    }
+
+[data-bs-theme="dark"] .food-table tbody tr:hover > * {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.food-actions-button {
+    min-width: 2.25rem;
+    font-weight: 700;
 }

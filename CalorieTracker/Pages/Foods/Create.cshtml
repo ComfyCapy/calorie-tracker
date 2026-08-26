@@ -51,6 +51,16 @@
         <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>
     </div>
 
+    <div class="form-check mt-3">
+        <input asp-for="AddToFavourites"
+               class="form-check-input" />
+
+        <label asp-for="AddToFavourites"
+               class="form-check-label">
+            Add to Favourites
+        </label>
+    </div>
+
     <div class="form-group mt-3">
         <button type="submit" class="btn btn-primary">Add Food</button>
         <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
