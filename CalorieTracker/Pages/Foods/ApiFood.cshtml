@@ -83,30 +83,21 @@
                    class="form-control" />
         </div>
 
+        <div class="form-check mb-3">
+            <input asp-for="AddToFavourites"
+                   class="form-check-input" />
+
+            <label asp-for="AddToFavourites"
+                   class="form-check-label">
+                Add to Favourites
+            </label>
+        </div>
+
         <div class="d-flex gap-2 flex-wrap">
             <button type="submit"
                     class="btn btn-primary">
                 Add to Diary
             </button>
-
-            @if (Model.IsFavourite)
-            {
-                <button type="submit"
-                        asp-page-handler="Unfavourite"
-                        formnovalidate
-                        class="btn btn-outline-secondary">
-                    Remove from Favourites
-                </button>
-            }
-            else
-            {
-                <button type="submit"
-                        asp-page-handler="Favourite"
-                        formnovalidate
-                        class="btn btn-outline-primary">
-                    Add to Favourites
-                </button>
-            }
 
             <a asp-page="./ApiSearch"
                class="btn btn-secondary">

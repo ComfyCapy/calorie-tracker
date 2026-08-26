@@ -81,24 +81,9 @@
             </div>
         </div>
 
-        <div id="selectedFoodDisplay"
-             class="mt-2"
-             style="display: none;">
+    </div>
 
-            <span class="text-muted">
-                Selected:
-            </span>
-
-            <strong id="selectedFoodName"></strong>
-
-            <button type="button"
-                    id="changeFoodButton"
-                    class="btn btn-sm btn-link">
-                Change
-            </button>
-        </div>
-
-        <span asp-validation-for="DiaryEntry.FoodId"
+    <span asp-validation-for="DiaryEntry.FoodId"
               class="text-danger">
         </span>
 
@@ -110,7 +95,6 @@
                 </a>
             </small>
         </div>
-    </div>
 
     <div id="measurementModeSection"
          class="form-group mt-3"
@@ -236,15 +220,6 @@
 
         const foodResults =
             document.getElementById("foodResults");
-
-        const selectedFoodDisplay =
-            document.getElementById("selectedFoodDisplay");
-
-        const selectedFoodName =
-            document.getElementById("selectedFoodName");
-
-        const changeFoodButton =
-            document.getElementById("changeFoodButton");
 
         const quantityUnit =
             document.getElementById("quantityUnit");
@@ -379,48 +354,10 @@
             foodSearch.value =
                 food.name;
 
-            selectedFoodName.textContent =
-                food.name;
-
-            selectedFoodDisplay.style.display =
-                "block";
-
             foodResults.style.display =
                 "none";
 
-            foodSearch.style.display =
-                "none";
-
             updateFood();
-        }
-
-
-        function clearSelectedFood() {
-            foodId.value = "";
-
-            foodSearch.value = "";
-
-            selectedFoodDisplay.style.display =
-                "none";
-
-            foodSearch.style.display =
-                "block";
-
-            measurementModeSection.style.display =
-                "none";
-
-            exactQuantitySection.style.display =
-                "none";
-
-            portionSection.style.display =
-                "none";
-
-            portionSelect.innerHTML =
-                '<option value="">Select a portion...</option>';
-
-            foodSearch.focus();
-
-            renderFoodResults();
         }
 
 
@@ -546,17 +483,26 @@
 
         foodSearch.addEventListener(
             "input",
-            renderFoodResults
+            () => {
+                const selectedFood =
+                    getSelectedFood();
+
+                if (
+                    selectedFood &&
+                    foodSearch.value !== selectedFood.name
+                ) {
+                    foodId.value = "";
+
+                    updateFood();
+                }
+
+                renderFoodResults();
+            }
         );
 
         foodSearch.addEventListener(
             "focus",
             renderFoodResults
-        );
-
-        changeFoodButton.addEventListener(
-            "click",
-            clearSelectedFood
         );
 
         exactMode.addEventListener(

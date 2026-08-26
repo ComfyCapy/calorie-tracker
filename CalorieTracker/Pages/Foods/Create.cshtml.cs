@@ -24,6 +24,9 @@ namespace CalorieTracker.Pages.Foods
         [BindProperty]
         public Food Food { get; set; } = new Food();
 
+        [BindProperty]
+        public bool AddToFavourites { get; set; }
+
         public IActionResult OnGet()
         {
             return Page();
@@ -44,6 +47,7 @@ namespace CalorieTracker.Pages.Foods
             }
 
             Food.UserId = userId;
+            Food.IsFavourite = AddToFavourites;
 
             _context.Foods.Add(Food);
             await _context.SaveChangesAsync();

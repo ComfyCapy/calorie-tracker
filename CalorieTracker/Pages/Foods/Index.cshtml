@@ -3,13 +3,6 @@
 
 <h1>My Foods</h1>
 
-<p>
-    <a asp-page="./Create"
-       class="btn btn-primary">
-        Add Custom Food
-    </a>
-</p>
-
 <form method="get" class="mb-3">
     <div class="input-group">
         <input type="text"
@@ -25,6 +18,13 @@
     </div>
 </form>
 
+<p>
+    <a asp-page="./Create"
+       class="btn btn-primary">
+        Add Custom Food
+    </a>
+</p>
+
 @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
 {
     <p>
@@ -35,6 +35,16 @@
             Clear Search
         </a>
     </p>
+
+    @if (Model.FavouriteFoods.Count == 0 &&
+         Model.CustomFoods.Count == 0 &&
+         Model.RecentFoods.Count == 0)
+    {
+        <div class="alert alert-secondary">
+            No foods found matching
+            "<strong>@Model.SearchTerm</strong>".
+        </div>
+    }
 }
 
 
@@ -42,17 +52,11 @@
    FAVOURITES
    ========================= *@
 
-<h2 class="mt-4">Favourites</h2>
+@if (Model.FavouriteFoods.Count > 0)
+{
+    <h2 class="mt-4">Favourites</h2>
 
-@if (Model.FavouriteFoods.Count == 0)
-{
-    <p class="text-muted">
-        No favourite foods yet.
-    </p>
-}
-else
-{
-    <table class="table" style="table-layout: fixed;">
+    <table class="table food-table" style="table-layout: fixed;">
         <colgroup>
             <col style="width: 32%;">
             <col style="width: 20%;">
@@ -101,16 +105,119 @@ else
                     </td>
 
                     <td>
-                        <a asp-page="./ApiFood"
-                           asp-route-id="@food.ExternalId"
-                           class="btn btn-sm btn-primary">
-                            Add to Diary
-                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary food-actions-button"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                    aria-label="Food actions">
+                                ⋮
+                            </button>
+
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @if (food.Source != null)
+                                {
+                                    <li>
+                                        <a asp-page="./ApiFood"
+                                           asp-route-id="@food.ExternalId"
+                                           class="dropdown-item">
+                                            Add to Diary
+                                        </a>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li>
+                                        <a asp-page="../Diary/Create"
+                                           asp-route-foodId="@food.Id"
+                                           class="dropdown-item">
+                                            Add to Diary
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a asp-page="./Edit"
+                                           asp-route-id="@food.Id"
+                                           class="dropdown-item">
+                                            Edit
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a asp-page="./Portions"
+                                           asp-route-id="@food.Id"
+                                           class="dropdown-item">
+                                            Manage portions
+                                        </a>
+                                    </li>
+                                }
+
+                                <li>
+                                    <hr class="dropdown-divider" />
+                                </li>
+
+                                <li>
+                                    <form method="post"
+                                          asp-page-handler="Unfavourite"
+                                          asp-route-id="@food.Id">
+                                        <button type="submit"
+                                                class="dropdown-item text-danger">
+                                            Remove from Favourites
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+            Showing
+            @(((Model.FavouritesPage - 1) * Model.PageSize) + 1)
+            –
+            @Math.Min(
+                Model.FavouritesPage * Model.PageSize,
+                Model.FavouritesTotalCount)
+            of @Model.FavouritesTotalCount
+        </small>
+
+        @if (Model.FavouritesTotalPages > 1)
+        {
+            <nav aria-label="Favourites pages">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.FavouritesPage <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-favouritesPage="@(Model.FavouritesPage - 1)"
+                           asp-route-customPage="@Model.CustomPage"
+                           asp-route-recentPage="@Model.RecentPage">
+                            ‹
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page @Model.FavouritesPage of @Model.FavouritesTotalPages
+                        </span>
+                    </li>
+
+                    <li class="page-item @(Model.FavouritesPage >= Model.FavouritesTotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-favouritesPage="@(Model.FavouritesPage + 1)"
+                           asp-route-customPage="@Model.CustomPage"
+                           asp-route-recentPage="@Model.RecentPage">
+                            ›
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
 }
 
 
@@ -118,17 +225,11 @@ else
    CUSTOM FOODS
    ========================= *@
 
-<h2 class="mt-5">Custom Foods</h2>
+@if (Model.CustomFoods.Count > 0)
+{
+    <h2 class="mt-5">Custom Foods</h2>
 
-@if (Model.CustomFoods.Count == 0)
-{
-    <p class="text-muted">
-        No custom foods found.
-    </p>
-}
-else
-{
-    <table class="table" style="table-layout: fixed;">
+    <table class="table food-table" style="table-layout: fixed;">
         <colgroup>
             <col style="width: 32%;">
             <col style="width: 20%;">
@@ -177,30 +278,109 @@ else
                     </td>
 
                     <td>
-                        <div class="d-flex gap-1">
-                            <a asp-page="./Edit"
-                               asp-route-id="@food.Id"
-                               class="btn btn-sm btn-primary">
-                                Edit
-                            </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary food-actions-button"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                    aria-label="Food actions">
+                                ⋮
+                            </button>
 
-                            <a asp-page="./Portions"
-                               asp-route-id="@food.Id"
-                               class="btn btn-sm btn-primary">
-                                Portions
-                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a asp-page="./Edit"
+                                       asp-route-id="@food.Id"
+                                       class="dropdown-item">
+                                        Edit
+                                    </a>
+                                </li>
 
-                            <a asp-page="./Delete"
-                               asp-route-id="@food.Id"
-                               class="btn btn-sm btn-danger">
-                                Delete
-                            </a>
+                                <li>
+                                    <a asp-page="./Portions"
+                                       asp-route-id="@food.Id"
+                                       class="dropdown-item">
+                                        Manage portions
+                                    </a>
+                                </li>
+
+                                @if (!food.IsFavourite)
+                                {
+                                    <li>
+                                        <form method="post"
+                                              asp-page-handler="Favourite"
+                                              asp-route-id="@food.Id">
+                                            <button type="submit"
+                                                    class="dropdown-item">
+                                                Add to Favourites
+                                            </button>
+                                        </form>
+                                    </li>
+                                }
+
+                                <li>
+                                    <hr class="dropdown-divider" />
+                                </li>
+
+                                <li>
+                                    <a asp-page="./Delete"
+                                       asp-route-id="@food.Id"
+                                       class="dropdown-item text-danger">
+                                        Delete
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+            Showing
+            @(((Model.CustomPage - 1) * Model.PageSize) + 1)
+            –
+            @Math.Min(
+                Model.CustomPage * Model.PageSize,
+                Model.CustomTotalCount)
+            of @Model.CustomTotalCount
+        </small>
+
+        @if (Model.CustomTotalPages > 1)
+        {
+            <nav aria-label="Custom food pages">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.CustomPage <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-favouritesPage="@Model.FavouritesPage"
+                           asp-route-customPage="@(Model.CustomPage - 1)"
+                           asp-route-recentPage="@Model.RecentPage">
+                            ‹
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page @Model.CustomPage of @Model.CustomTotalPages
+                        </span>
+                    </li>
+
+                    <li class="page-item @(Model.CustomPage >= Model.CustomTotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-favouritesPage="@Model.FavouritesPage"
+                           asp-route-customPage="@(Model.CustomPage + 1)"
+                           asp-route-recentPage="@Model.RecentPage">
+                            ›
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
 }
 
 
@@ -208,18 +388,11 @@ else
    RECENT FOODS
    ========================= *@
 
-<h2 class="mt-5">Recent Foods</h2>
+@if (Model.RecentFoods.Count > 0)
+{
+    <h2 class="mt-5">Recent Foods</h2>
 
-@if (Model.RecentFoods.Count == 0)
-{
-    <p class="text-muted">
-        Foods you've recently added from the food database
-        will appear here.
-    </p>
-}
-else
-{
-    <table class="table" style="table-layout: fixed;">
+    <table class="table food-table" style="table-layout: fixed;">
         <colgroup>
             <col style="width: 32%;">
             <col style="width: 20%;">
@@ -268,14 +441,87 @@ else
                     </td>
 
                     <td>
-                        <a asp-page="./ApiFood"
-                           asp-route-id="@food.ExternalId"
-                           class="btn btn-sm btn-primary">
-                            Add to Diary
-                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary food-actions-button"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                    aria-label="Food actions">
+                                ⋮
+                            </button>
+
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a asp-page="./ApiFood"
+                                       asp-route-id="@food.ExternalId"
+                                       class="dropdown-item">
+                                        Add to Diary
+                                    </a>
+                                </li>
+
+                                @if (!food.IsFavourite)
+                                {
+                                    <li>
+                                        <form method="post"
+                                              asp-page-handler="Favourite"
+                                              asp-route-id="@food.Id">
+                                            <button type="submit"
+                                                    class="dropdown-item">
+                                                Add to Favourites
+                                            </button>
+                                        </form>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+            Showing
+            @(((Model.RecentPage - 1) * Model.PageSize) + 1)
+            –
+            @Math.Min(
+                Model.RecentPage * Model.PageSize,
+                Model.RecentTotalCount)
+            of @Model.RecentTotalCount
+        </small>
+
+        @if (Model.RecentTotalPages > 1)
+        {
+            <nav aria-label="Recent food pages">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.RecentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-favouritesPage="@Model.FavouritesPage"
+                           asp-route-customPage="@Model.CustomPage"
+                           asp-route-recentPage="@(Model.RecentPage - 1)">
+                            ‹
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Page @Model.RecentPage of @Model.RecentTotalPages
+                        </span>
+                    </li>
+
+                    <li class="page-item @(Model.RecentPage >= Model.RecentTotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-route-searchTerm="@Model.SearchTerm"
+                           asp-route-favouritesPage="@Model.FavouritesPage"
+                           asp-route-customPage="@Model.CustomPage"
+                           asp-route-recentPage="@(Model.RecentPage + 1)">
+                            ›
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
 }

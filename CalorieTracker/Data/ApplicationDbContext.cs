@@ -32,6 +32,12 @@ namespace CalorieTracker.Data
                 .WithMany(food => food.Portions)
                 .HasForeignKey(portion => portion.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<DiaryEntry>()
+                .HasOne(entry => entry.FoodPortion)
+                .WithMany()
+                .HasForeignKey(entry => entry.FoodPortionId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }
