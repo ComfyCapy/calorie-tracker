@@ -29,8 +29,10 @@ namespace CalorieTracker.Pages.Foods
 
         public FoodSearchResult? Food { get; set; }
 
-        [BindProperty]
-        public bool AddToFavourites { get; set; }
+        public bool IsFavourite { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string SearchTerm { get; set; } = string.Empty;
 
         [BindProperty]
         public string ExternalId { get; set; } = string.Empty;
@@ -48,7 +50,11 @@ namespace CalorieTracker.Pages.Foods
         [BindProperty]
         public DateTime Date { get; set; } = DateTime.Today;
 
-        public async Task<IActionResult> OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(
+            string id,
+            DateTime? date,
+            string? meal,
+            string? searchTerm)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -70,12 +76,23 @@ namespace CalorieTracker.Pages.Foods
             }
 
             ExternalId = id;
+            SearchTerm = searchTerm ?? string.Empty;
+
+            if (date.HasValue)
+            {
+                Date = date.Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(meal))
+            {
+                MealType = meal;
+            }
 
             var existingFood = await FindExistingFoodAsync(
                 userId,
                 Food);
 
-            AddToFavourites =
+            IsFavourite =
                 existingFood?.IsFavourite ?? false;
 
             return Page();
@@ -97,6 +114,14 @@ namespace CalorieTracker.Pages.Foods
 
             if (!ModelState.IsValid)
             {
+                var existingFood =
+                    await FindExistingFoodAsync(
+                        userId,
+                        Food!);
+
+                IsFavourite =
+                    existingFood?.IsFavourite ?? false;
+
                 return Page();
             }
 
@@ -104,9 +129,6 @@ namespace CalorieTracker.Pages.Foods
                 await GetOrCreateFoodAsync(
                     userId,
                     Food!);
-
-            databaseFood.IsFavourite =
-                AddToFavourites;
 
             var diaryEntry = new DiaryEntry
             {
@@ -126,6 +148,75 @@ namespace CalorieTracker.Pages.Foods
                 new
                 {
                     date = Date.ToString("yyyy-MM-dd")
+                });
+        }
+
+        public async Task<IActionResult> OnPostFavouriteAsync()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            if (!await LoadFoodAsync())
+            {
+                return NotFound();
+            }
+
+            var databaseFood =
+                await GetOrCreateFoodAsync(
+                    userId,
+                    Food!);
+
+            databaseFood.IsFavourite = true;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(
+            new
+            {
+                id = ExternalId,
+                date = Date.ToString("yyyy-MM-dd"),
+                meal = MealType,
+                searchTerm = SearchTerm
+            });
+        }
+
+        public async Task<IActionResult> OnPostUnfavouriteAsync()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            if (!await LoadFoodAsync())
+            {
+                return NotFound();
+            }
+
+            var existingFood =
+                await FindExistingFoodAsync(
+                    userId,
+                    Food!);
+
+            if (existingFood != null)
+            {
+                existingFood.IsFavourite = false;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToPage(
+                new
+                {
+                    id = ExternalId,
+                    date = Date.ToString("yyyy-MM-dd"),
+                    meal = MealType,
+                    searchTerm = SearchTerm
                 });
         }
 
@@ -164,8 +255,6 @@ namespace CalorieTracker.Pages.Foods
 
             if (existingFood != null)
             {
-                // If this database food was previously hidden,
-                // using it again restores it.
                 existingFood.IsDeleted = false;
 
                 return existingFood;

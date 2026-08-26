@@ -41,6 +41,9 @@
         <input type="hidden"
                asp-for="ExternalId" />
 
+        <input type="hidden"
+               asp-for="SearchTerm" />
+
         <div class="mb-3">
             <label asp-for="Quantity"
                    class="form-label">
@@ -83,23 +86,40 @@
                    class="form-control" />
         </div>
 
-        <div class="form-check mb-3">
-            <input asp-for="AddToFavourites"
-                   class="form-check-input" />
-
-            <label asp-for="AddToFavourites"
-                   class="form-check-label">
-                Add to Favourites
-            </label>
-        </div>
-
         <div class="d-flex gap-2 flex-wrap">
+            @if (Model.IsFavourite)
+            {
+                <button type="submit"
+                        asp-page-handler="Unfavourite"
+                        formnovalidate
+                        class="btn btn-warning"
+                        aria-label="Remove from Favourites"
+                        title="Remove from Favourites">
+                    ★
+                </button>
+            }
+            else
+            {
+                <button type="submit"
+                        asp-page-handler="Favourite"
+                        formnovalidate
+                        class="btn btn-outline-warning"
+                        aria-label="Add to Favourites"
+                        title="Add to Favourites">
+                    ☆
+                </button>
+            }
+
             <button type="submit"
                     class="btn btn-primary">
                 Add to Diary
             </button>
 
-            <a asp-page="./ApiSearch"
+            <a asp-page="./Index"
+               asp-route-searchTerm="@Model.SearchTerm"
+               asp-route-returnToDiary="true"
+               asp-route-diaryDate="@Model.Date.ToString("yyyy-MM-dd")"
+               asp-route-diaryMeal="@Model.MealType"
                class="btn btn-secondary">
                 Back to Search
             </a>

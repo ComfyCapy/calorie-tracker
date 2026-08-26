@@ -84,17 +84,36 @@
     </div>
 
     <span asp-validation-for="DiaryEntry.FoodId"
-              class="text-danger">
-        </span>
+          class="text-danger">
+    </span>
 
-        <div class="mt-2">
-            <small class="text-muted">
-                Can't find it?
-                <a asp-page="/Foods/ApiSearch">
-                    Search the food database
-                </a>
-            </small>
-        </div>
+    <div id="selectedFoodDisplay"
+         class="mt-2 text-muted"
+         style="display: none;">
+        Selected:
+        <strong id="selectedFoodName"
+                class="text-body">
+        </strong>
+    </div>
+
+    <div class="mt-2">
+        <small class="text-muted">
+            Can't find it?
+            <a asp-page="/Foods/Index"
+               asp-route-returnToDiary="true"
+               asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+               asp-route-diaryMeal="@Model.DiaryEntry.MealType">
+                Search all foods
+            </a>
+            or
+            <a asp-page="/Foods/Create"
+               asp-route-returnToDiary="true"
+               asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+               asp-route-diaryMeal="@Model.DiaryEntry.MealType">
+                create a custom food
+            </a>
+        </small>
+    </div>
 
     <div id="measurementModeSection"
          class="form-group mt-3"
@@ -220,6 +239,12 @@
 
         const foodResults =
             document.getElementById("foodResults");
+
+        const selectedFoodDisplay =
+            document.getElementById("selectedFoodDisplay");
+
+        const selectedFoodName =
+            document.getElementById("selectedFoodName");
 
         const quantityUnit =
             document.getElementById("quantityUnit");
@@ -360,6 +385,26 @@
             updateFood();
         }
 
+        function updateSelectedFoodDisplay() {
+            const selectedFood =
+                getSelectedFood();
+
+            if (!selectedFood) {
+                selectedFoodDisplay.style.display =
+                    "none";
+
+                selectedFoodName.textContent =
+                    "";
+
+                return;
+            }
+
+            selectedFoodName.textContent =
+                selectedFood.name;
+
+            selectedFoodDisplay.style.display =
+                "block";
+        }
 
         function updateQuantityUnit() {
             const selectedFood =
@@ -474,6 +519,7 @@
 
 
         function updateFood() {
+            updateSelectedFoodDisplay();
             updateQuantityUnit();
             updatePortionOptions();
             updatePortionAvailability();

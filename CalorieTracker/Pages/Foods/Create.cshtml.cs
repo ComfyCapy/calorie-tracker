@@ -27,6 +27,15 @@ namespace CalorieTracker.Pages.Foods
         [BindProperty]
         public bool AddToFavourites { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public bool ReturnToDiary { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? DiaryDate { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? DiaryMeal { get; set; }
+
         public IActionResult OnGet()
         {
             return Page();
@@ -51,6 +60,18 @@ namespace CalorieTracker.Pages.Foods
 
             _context.Foods.Add(Food);
             await _context.SaveChangesAsync();
+
+            if (ReturnToDiary)
+            {
+                return RedirectToPage(
+                    "/Diary/Create",
+                    new
+                    {
+                        date = DiaryDate?.ToString("yyyy-MM-dd"),
+                        meal = DiaryMeal,
+                        foodId = Food.Id
+                    });
+            }
 
             return RedirectToPage("./Index");
         }
