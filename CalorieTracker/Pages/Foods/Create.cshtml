@@ -4,6 +4,10 @@
 <h1>Add Food</h1>
 
 <form method="post">
+    <input type="hidden" asp-for="ReturnToDiary" />
+    <input type="hidden" asp-for="DiaryDate" />
+    <input type="hidden" asp-for="DiaryMeal" />
+
     <div class="form-group">
         <label asp-for="Food.Name" class="control-label"></label>
         <input asp-for="Food.Name" class="form-control" />
@@ -51,18 +55,81 @@
         <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>
     </div>
 
-    <div class="form-check mt-3">
-        <input asp-for="AddToFavourites"
-               class="form-check-input" />
+    <input type="hidden"
+           asp-for="AddToFavourites"
+           id="addToFavouritesInput" />
 
-        <label asp-for="AddToFavourites"
-               class="form-check-label">
-            Add to Favourites
-        </label>
-    </div>
+    <div class="form-group mt-3 d-flex gap-2 align-items-center">
+        <button type="button"
+                id="favouriteToggle"
+                class="btn btn-outline-warning"
+                aria-label="Add to Favourites"
+                title="Add to Favourites">
+            ☆
+        </button>
 
-    <div class="form-group mt-3">
-        <button type="submit" class="btn btn-primary">Add Food</button>
-        <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+        <button type="submit"
+                class="btn btn-primary">
+            Add Food
+        </button>
+
+        <a asp-page="./Index"
+           class="btn btn-secondary">
+            Cancel
+        </a>
     </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const favouriteInput =
+            document.getElementById("addToFavouritesInput");
+
+        const favouriteToggle =
+            document.getElementById("favouriteToggle");
+
+        function updateFavouriteButton() {
+            const isFavourite =
+                favouriteInput.value.toLowerCase() === "true";
+
+            favouriteToggle.textContent =
+                isFavourite ? "★" : "☆";
+
+            favouriteToggle.classList.toggle(
+                "btn-warning",
+                isFavourite);
+
+            favouriteToggle.classList.toggle(
+                "btn-outline-warning",
+                !isFavourite);
+
+            favouriteToggle.setAttribute(
+                "aria-label",
+                isFavourite
+                    ? "Remove from Favourites"
+                    : "Add to Favourites");
+
+            favouriteToggle.setAttribute(
+                "title",
+                isFavourite
+                    ? "Remove from Favourites"
+                    : "Add to Favourites");
+        }
+
+        favouriteToggle.addEventListener(
+            "click",
+            function() {
+                const isFavourite =
+                    favouriteInput.value.toLowerCase() === "true";
+
+                favouriteInput.value =
+                    (!isFavourite).toString();
+
+                updateFavouriteButton();
+            });
+
+        updateFavouriteButton();
+    </script>
+}

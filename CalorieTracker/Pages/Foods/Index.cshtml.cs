@@ -1,5 +1,6 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using CalorieTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,16 @@ namespace CalorieTracker.Pages.Foods
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IFoodSearchService _foodSearchService;
 
         public IndexModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IFoodSearchService foodSearchService)
         {
             _context = context;
             _userManager = userManager;
+            _foodSearchService = foodSearchService;
         }
 
         public List<Food> FavouriteFoods { get; set; } = [];
@@ -27,6 +31,19 @@ namespace CalorieTracker.Pages.Foods
         public List<Food> CustomFoods { get; set; } = [];
 
         public List<Food> RecentFoods { get; set; } = [];
+
+        public List<FoodSearchResult> DatabaseFoods { get; set; } = [];
+
+        public HashSet<string> FavouriteDatabaseKeys { get; set; } = [];
+
+        [BindProperty(SupportsGet = true)]
+        public bool ReturnToDiary { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? DiaryDate { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? DiaryMeal { get; set; }
 
         public string SearchTerm { get; set; } = string.Empty;
 
@@ -63,6 +80,8 @@ namespace CalorieTracker.Pages.Foods
                 FavouriteFoods = [];
                 CustomFoods = [];
                 RecentFoods = [];
+                DatabaseFoods = [];
+                FavouriteDatabaseKeys = [];
                 return;
             }
 
@@ -189,9 +208,41 @@ namespace CalorieTracker.Pages.Foods
                     PageSize)
                 .Take(PageSize)
                 .ToList();
+
+            // Only search the external database when
+            // the user has entered a search term.
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                DatabaseFoods =
+                    await _foodSearchService
+                        .SearchFoodsAsync(searchTerm);
+
+                FavouriteDatabaseKeys =
+                    (await _context.Foods
+                        .Where(food =>
+                            food.UserId == userId &&
+                            food.Source != null &&
+                            food.ExternalId != null &&
+                            food.IsFavourite &&
+                            !food.IsDeleted)
+                        .Select(food => new
+                        {
+                            food.Source,
+                            food.ExternalId
+                        })
+                        .ToListAsync())
+                    .Select(food =>
+                        $"{food.Source}|{food.ExternalId}")
+                    .ToHashSet();
+            }
         }
 
-        public async Task<IActionResult> OnPostFavouriteAsync(int id)
+        public async Task<IActionResult> OnPostFavouriteAsync(
+            int id,
+            string? searchTerm,
+            bool returnToDiary = false,
+            DateTime? diaryDate = null,
+            string? diaryMeal = null)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -215,10 +266,141 @@ namespace CalorieTracker.Pages.Foods
 
             await _context.SaveChangesAsync();
 
-            return RedirectToPage();
+            return RedirectToPage(
+                new
+                {
+                    searchTerm,
+                    returnToDiary,
+                    diaryDate = diaryDate?.ToString("yyyy-MM-dd"),
+                    diaryMeal
+                });
         }
 
-        public async Task<IActionResult> OnPostUnfavouriteAsync(int id)
+        public async Task<IActionResult> OnPostFavouriteDatabaseAsync(
+            string externalId,
+            string? searchTerm,
+            bool returnToDiary = false,
+            DateTime? diaryDate = null,
+            string? diaryMeal = null)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            if (string.IsNullOrWhiteSpace(externalId))
+            {
+                return BadRequest();
+            }
+
+            var result =
+                await _foodSearchService.GetFoodAsync(
+                    externalId);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            var existingFood = await _context.Foods
+                .FirstOrDefaultAsync(food =>
+                    food.UserId == userId &&
+                    food.Source == result.Source &&
+                    food.ExternalId == result.ExternalId);
+
+            if (existingFood != null)
+            {
+                existingFood.IsFavourite = true;
+                existingFood.IsDeleted = false;
+            }
+            else
+            {
+                var food = new Food
+                {
+                    UserId = userId,
+                    Source = result.Source,
+                    ExternalId = result.ExternalId,
+                    Name = result.Name,
+
+                    Calories =
+                        (int)Math.Round(result.Calories),
+
+                    Protein = result.Protein,
+                    Carbohydrates = result.Carbohydrates,
+                    Fat = result.Fat,
+
+                    ServingSize = result.ServingSize,
+                    ServingUnit = result.ServingUnit,
+
+                    IsFavourite = true,
+                    IsDeleted = false
+                };
+
+                _context.Foods.Add(food);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(
+                new
+                {
+                    searchTerm,
+                    returnToDiary,
+                    diaryDate = diaryDate?.ToString("yyyy-MM-dd"),
+                    diaryMeal
+                });
+        }
+
+        public async Task<IActionResult> OnPostUnfavouriteDatabaseAsync(
+            string source,
+            string externalId,
+            string? searchTerm,
+            bool returnToDiary = false,
+            DateTime? diaryDate = null,
+            string? diaryMeal = null)
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var food = await _context.Foods
+                .FirstOrDefaultAsync(food =>
+                    food.UserId == userId &&
+                    food.Source == source &&
+                    food.ExternalId == externalId &&
+                    food.IsFavourite &&
+                    !food.IsDeleted);
+
+            if (food == null)
+            {
+                return NotFound();
+            }
+
+            food.IsFavourite = false;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToPage(
+                new
+                {
+                    searchTerm,
+                    returnToDiary,
+                    diaryDate = diaryDate?.ToString("yyyy-MM-dd"),
+                    diaryMeal
+                });
+        }
+
+        public async Task<IActionResult> OnPostUnfavouriteAsync(
+            int id,
+            string? searchTerm,
+            bool returnToDiary = false,
+            DateTime? diaryDate = null,
+            string? diaryMeal = null)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -243,7 +425,14 @@ namespace CalorieTracker.Pages.Foods
 
             await _context.SaveChangesAsync();
 
-            return RedirectToPage();
+            return RedirectToPage(
+                new
+                {
+                    searchTerm,
+                    returnToDiary,
+                    diaryDate = diaryDate?.ToString("yyyy-MM-dd"),
+                    diaryMeal
+                });
         }
     }
 }

@@ -43,7 +43,8 @@ namespace CalorieTracker.Pages.Diary
 
         public async Task OnGetAsync(
             DateTime? date,
-            string? meal)
+            string? meal,
+            int? foodId)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -57,6 +58,11 @@ namespace CalorieTracker.Pages.Diary
             if (!string.IsNullOrWhiteSpace(meal))
             {
                 DiaryEntry.MealType = meal;
+            }
+
+            if (foodId.HasValue)
+            {
+                DiaryEntry.FoodId = foodId.Value;
             }
 
             await LoadFoodOptionsAsync(userId);
