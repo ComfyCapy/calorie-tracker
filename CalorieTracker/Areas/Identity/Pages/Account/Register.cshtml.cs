@@ -72,6 +72,9 @@ public class RegisterModel : PageModel
     {
         [Required]
         [StringLength(30)]
+        [RegularExpression(
+            @"^[a-zA-Z0-9._-]+$",
+            ErrorMessage = "Username can only contain letters, numbers, periods, underscores and hyphens.")]
         [Display(Name = "Username")]
         public string Username { get; set; } = string.Empty;
 

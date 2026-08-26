@@ -44,7 +44,17 @@ public class ConfirmEmailModel : PageModel
 
         code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
         var result = await _userManager.ConfirmEmailAsync(user, code);
-        StatusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
+        if (result.Succeeded)
+        {
+            return RedirectToPage(
+                "./Login",
+                new
+                {
+                    emailConfirmed = true
+                });
+        }
+
+        StatusMessage = "This email confirmation link is invalid or has expired.";
         return Page();
     }
 }

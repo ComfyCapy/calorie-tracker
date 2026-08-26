@@ -107,10 +107,26 @@ public class ResetPasswordModel : PageModel
             return RedirectToPage("./ResetPasswordConfirmation");
         }
 
-        foreach (var error in result.Errors)
+        var invalidToken =
+            result.Errors.Any(error =>
+                error.Code == "InvalidToken");
+
+        if (invalidToken)
         {
-            ModelState.AddModelError(string.Empty, error.Description);
+            ModelState.AddModelError(
+                string.Empty,
+                "This password reset link is invalid or has expired. Please request a new one.");
         }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    error.Description);
+            }
+        }
+
         return Page();
     }
 }
