@@ -1,8 +1,17 @@
 @page
 @model ConfirmEmailModel
 @{
-    ViewData["Title"] = "Confirm email";
+    ViewData["Title"] = "Email confirmed";
 }
 
 <h1>@ViewData["Title"]</h1>
-<partial name="_StatusMessage" model="Model.StatusMessage" />
+
+<div class="alert alert-success" role="alert">
+    Your email has been confirmed successfully.
+</div>
+
+<p>You can now log in to your account.</p>
+
+<a asp-page="./Login" class="btn btn-primary">
+    Log in
+</a>

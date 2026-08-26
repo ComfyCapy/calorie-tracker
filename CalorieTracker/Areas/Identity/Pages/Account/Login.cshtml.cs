@@ -21,11 +21,16 @@ namespace CalorieTracker.Areas.Identity.Pages.Account;
 public class LoginModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(
+        SignInManager<ApplicationUser> signInManager,
+        UserManager<ApplicationUser> userManager,
+        ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -48,6 +53,8 @@ public class LoginModel : PageModel
     /// </summary>
     public string? ReturnUrl { get; set; }
 
+    public bool EmailConfirmed { get; set; }
+
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
@@ -66,7 +73,7 @@ public class LoginModel : PageModel
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         [Required]
-        [Display(Name = "Username")]
+        [Display(Name = "Username or email")]
         public string Username { get; set; } = default!;
 
         /// <summary>
@@ -85,7 +92,7 @@ public class LoginModel : PageModel
         public bool RememberMe { get; set; }
     }
 
-    public async Task OnGetAsync(string? returnUrl = null)
+    public async Task OnGetAsync(string? returnUrl = null, bool emailConfirmed = false)
     {
         if (!string.IsNullOrEmpty(ErrorMessage))
         {
@@ -93,6 +100,8 @@ public class LoginModel : PageModel
         }
 
         returnUrl ??= Url.Content("~/");
+
+        EmailConfirmed = emailConfirmed;
 
         // Clear the existing external cookie to ensure a clean login process
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
@@ -110,13 +119,24 @@ public class LoginModel : PageModel
 
         if (ModelState.IsValid)
         {
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+            var user =
+                await _userManager.FindByNameAsync(Input.Username)
+                ?? await _userManager.FindByEmailAsync(Input.Username);
+
+            if (user == null)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Invalid username/email or password.");
+
+                return Page();
+            }
+
             var result = await _signInManager.PasswordSignInAsync(
-                Input.Username,
+                user.UserName!,
                 Input.Password,
                 Input.RememberMe,
-                lockoutOnFailure: false);
+                lockoutOnFailure: true);
             if (result.Succeeded)
             {
                 _logger.LogInformation("User logged in.");
@@ -126,6 +146,14 @@ public class LoginModel : PageModel
             {
                 return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
             }
+            if (result.IsNotAllowed)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Please confirm your email address before logging in.");
+                return Page();
+            }
+
             if (result.IsLockedOut)
             {
                 _logger.LogWarning("User account locked out.");
@@ -133,7 +161,7 @@ public class LoginModel : PageModel
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, "Invalid username/email or password.");
                 return Page();
             }
         }
