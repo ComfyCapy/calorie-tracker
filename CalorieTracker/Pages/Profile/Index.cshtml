@@ -1,29 +1,48 @@
 ﻿@page
 @model CalorieTracker.Pages.Profile.IndexModel
 
-<h1>Profile & Goals</h1>
+@if (Model.IsFirstTimeSetup)
+{
+    <h1>Set up your profile</h1>
 
-@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    <p class="text-muted">
+        Tell us a little about yourself so we can estimate your daily calorie needs.
+        You can change these settings at any time.
+    </p>
+}
+else
+{
+    <h1>Profile & Goals</h1>
+
+    <p class="text-muted">
+        Update your details, goals and calorie target.
+    </p>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ProfileStatusMessage))
 {
     <div class="alert alert-success">
-        @Model.StatusMessage
+        @Model.ProfileStatusMessage
     </div>
 }
 
-<p class="text-muted">
-    Tell us a little about yourself so we can estimate your calorie needs.
-</p>
-
 <form method="post">
-    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <input asp-for="UserProfile.ThemePreference"
+           type="hidden"
+           id="profileThemePreference" />
 
     <div class="mb-3">
         <label asp-for="UserProfile.DateOfBirth" class="form-label">
             Date of Birth
         </label>
+
         <input asp-for="UserProfile.DateOfBirth"
                type="date"
-               class="form-control" />
+               class="form-control"
+               max="@DateTime.Today.ToString("yyyy-MM-dd")"
+               data-msg-max="Date of birth cannot be in the future." />
+
         <span asp-validation-for="UserProfile.DateOfBirth"
               class="text-danger"></span>
     </div>
@@ -70,30 +89,36 @@
               class="text-danger"></span>
     </div>
 
-    <div id="imperialHeightSection" class="mb-3" style="display: none;">
+    <div id="imperialHeightSection"
+         class="mb-3"
+         style="display: none;">
+
         <label class="form-label">Height</label>
 
         <div class="row g-2">
             <div class="col">
                 <div class="input-group">
                     <input asp-for="HeightFeet"
-                           class="form-control"
-                           min="1" />
+                           class="form-control" />
 
                     <span class="input-group-text">ft</span>
                 </div>
+
+                <span asp-validation-for="HeightFeet"
+                      class="text-danger"></span>
             </div>
 
             <div class="col">
                 <div class="input-group">
                     <input asp-for="HeightInches"
                            class="form-control"
-                           min="0"
-                           max="11.99"
                            step="0.01" />
 
                     <span class="input-group-text">in</span>
                 </div>
+
+                <span asp-validation-for="HeightInches"
+                      class="text-danger"></span>
             </div>
         </div>
     </div>
@@ -110,15 +135,20 @@
               class="text-danger"></span>
     </div>
 
-    <div id="imperialWeightSection" class="mb-3" style="display: none;">
+    <div id="imperialWeightSection"
+         class="mb-3"
+         style="display: none;">
+
         <label asp-for="WeightLb" class="form-label">
             Current Weight (lb)
         </label>
 
         <input asp-for="WeightLb"
                class="form-control"
-               min="1"
                step="0.1" />
+
+        <span asp-validation-for="WeightLb"
+              class="text-danger"></span>
     </div>
 
     <div class="mb-3">
@@ -126,7 +156,9 @@
             Sex used for calorie calculation
         </label>
 
-        <select asp-for="UserProfile.CalculationSex" class="form-select">
+        <select asp-for="UserProfile.CalculationSex"
+                class="form-select">
+
             <option value="">Select...</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
@@ -145,14 +177,36 @@
             Activity Level
         </label>
 
-        <select asp-for="UserProfile.ActivityLevel" class="form-select">
+        <select asp-for="UserProfile.ActivityLevel"
+                class="form-select">
+
             <option value="">Select...</option>
-            <option value="Sedentary">Sedentary</option>
-            <option value="LightlyActive">Lightly active</option>
-            <option value="ModeratelyActive">Moderately active</option>
-            <option value="VeryActive">Very active</option>
-            <option value="ExtraActive">Extra active</option>
+
+            <option value="Sedentary">
+                Sedentary — little or no exercise
+            </option>
+
+            <option value="LightlyActive">
+                Lightly active — exercise 1–3 days/week
+            </option>
+
+            <option value="ModeratelyActive">
+                Moderately active — exercise 3–5 days/week
+            </option>
+
+            <option value="VeryActive">
+                Very active — hard exercise 6–7 days/week
+            </option>
+
+            <option value="ExtraActive">
+                Extra active — very hard exercise or physical job
+            </option>
         </select>
+
+        <div class="form-text">
+            Choose the option that best reflects your typical week.
+            This affects your estimated maintenance calories.
+        </div>
 
         <span asp-validation-for="UserProfile.ActivityLevel"
               class="text-danger"></span>
@@ -163,7 +217,10 @@
             Goal
         </label>
 
-        <select asp-for="UserProfile.Goal" class="form-select">
+        <select asp-for="UserProfile.Goal"
+                id="goalSelect"
+                class="form-select">
+
             <option value="">Select...</option>
             <option value="Lose">Lose weight</option>
             <option value="Maintain">Maintain weight</option>
@@ -174,8 +231,11 @@
               class="text-danger"></span>
     </div>
 
-    <div id="metricGoalWeightSection" class="mb-3">
-        <label asp-for="UserProfile.GoalWeightKg" class="form-label">
+    <div id="metricGoalWeightSection"
+         class="mb-3">
+
+        <label asp-for="UserProfile.GoalWeightKg"
+               class="form-label">
             Goal Weight (kg)
         </label>
 
@@ -183,36 +243,52 @@
                class="form-control" />
 
         <div class="form-text">
-            Optional if you're maintaining your current weight.
+            Used to track your progress towards your goal.
         </div>
 
         <span asp-validation-for="UserProfile.GoalWeightKg"
               class="text-danger"></span>
+
+        <span id="metricGoalConsistencyError"
+              class="text-danger"></span>
     </div>
 
-    <div id="imperialGoalWeightSection" class="mb-3" style="display: none;">
-        <label asp-for="GoalWeightLb" class="form-label">
+    <div id="imperialGoalWeightSection"
+         class="mb-3"
+         style="display: none;">
+
+        <label asp-for="GoalWeightLb"
+               class="form-label">
             Goal Weight (lb)
         </label>
 
         <input asp-for="GoalWeightLb"
                class="form-control"
-               min="1"
                step="0.1" />
 
+        <span asp-validation-for="GoalWeightLb"
+              class="text-danger"></span>
+
+        <span id="imperialGoalConsistencyError"
+              class="text-danger"></span>
+
         <div class="form-text">
-            Optional if you're maintaining your current weight.
+            Used to track your progress towards your goal.
         </div>
     </div>
 
-    <div class="mb-3">
-        <label asp-for="UserProfile.WeeklyGoalKg" class="form-label">
+    <div id="weeklyGoalSection"
+         class="mb-3">
+
+        <label asp-for="UserProfile.WeeklyGoalKg"
+               class="form-label">
             Weekly Weight Change
         </label>
 
         <select asp-for="UserProfile.WeeklyGoalKg"
                 id="weeklyGoalSelect"
                 class="form-select">
+
             <option value="">Select...</option>
 
             <option value="0.25"
@@ -249,23 +325,70 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="UserProfile.CustomCalorieTarget" class="form-label">
+        <label class="form-label">
+            Daily Calorie Target
+        </label>
+
+        <div class="form-check">
+            <input asp-for="UseCustomCalorieTarget"
+                   class="form-check-input"
+                   type="radio"
+                   value="false"
+                   id="calculatedTarget" />
+
+            <label class="form-check-label"
+                   for="calculatedTarget">
+                Use calculated target
+            </label>
+        </div>
+
+        <div class="form-text mb-2">
+            Estimated from your age, height, weight,
+            activity level and weight-change goal.
+        </div>
+
+        <div class="form-check">
+            <input asp-for="UseCustomCalorieTarget"
+                   class="form-check-input"
+                   type="radio"
+                   value="true"
+                   id="customTarget" />
+
+            <label class="form-check-label"
+                   for="customTarget">
+                Use custom target
+            </label>
+        </div>
+
+        <div class="form-text">
+            Choose this if you already know the daily
+            calorie target you want to use.
+        </div>
+    </div>
+
+    <div id="customCalorieTargetSection"
+         class="mb-3">
+
+        <label asp-for="UserProfile.CustomCalorieTarget"
+               class="form-label">
             Custom Daily Calorie Target
         </label>
 
-        <input asp-for="UserProfile.CustomCalorieTarget"
-               class="form-control"
-               placeholder="Leave blank to use calculated target" />
+        <div class="input-group">
+            <input asp-for="UserProfile.CustomCalorieTarget"
+                   class="form-control" />
 
-        <div class="form-text">
-            Optional. If set, this overrides your automatically calculated daily calorie target.
+            <span class="input-group-text">
+                kcal/day
+            </span>
         </div>
 
         <span asp-validation-for="UserProfile.CustomCalorieTarget"
               class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">
+    <button type="submit"
+            class="btn btn-primary">
         Save Profile
     </button>
 </form>
@@ -275,161 +398,499 @@
 {
     <div class="card mt-4">
         <div class="card-body">
-            <h3 class="card-title">Your Estimates</h3>
 
-            <div class="row mt-3">
-                <div class="col-md">
-                    <strong>Age</strong>
-                    <p>@Model.UserProfile.Age years</p>
-                </div>
+            <h3 class="card-title">
+                Your Estimates
+            </h3>
 
-                <div class="col-md">
-                    <strong>BMI</strong>
-                    <p>@Model.UserProfile.BMI.ToString("0.0")</p>
-                </div>
+            <p class="text-muted">
+                These estimates are based on the information in your profile.
+            </p>
 
-                <div class="col-md">
-                    <strong>BMR</strong>
-                    <p>~@Model.UserProfile.BMR.ToString("0") kcal/day</p>
-                </div>
+            <div class="border rounded p-3 mb-4">
+                <small class="text-muted">
+                    Daily Calorie Target
+                </small>
 
-                <div class="col-md">
-                    <strong>Maintenance</strong>
-                    <p>~@Model.UserProfile.TDEE.ToString("0") kcal/day</p>
-                </div>
+                <h2 class="mb-1">
+                    @Model.UserProfile.EffectiveCalorieTarget.ToString("0")
+                    <small class="fs-6 fw-normal">kcal/day</small>
+                </h2>
 
-                <div class="col-md">
-                    <strong>Daily Calorie Target</strong>
-
-                    @if (Model.UserProfile.CustomCalorieTarget.HasValue)
-                    {
-                        <p>
-                            @Model.UserProfile.EffectiveCalorieTarget.ToString("0") kcal/day
-                            <small class="text-muted">(custom)</small>
-                        </p>
-                    }
-                    else
-                    {
-                        <p>
-                            ~@Model.UserProfile.EffectiveCalorieTarget.ToString("0") kcal/day
-                        </p>
-                    }
-                </div>
+                @if (Model.UserProfile.CustomCalorieTarget.HasValue)
+                {
+                    <p class="text-muted mb-0">
+                        Your custom calorie target.
+                    </p>
+                }
+                else if (Model.UserProfile.Goal == "Maintain")
+                {
+                    <p class="text-muted mb-0">
+                        Calculated to maintain your current weight.
+                    </p>
+                }
+                else if (Model.UserProfile.Goal == "Lose")
+                {
+                    <p class="text-muted mb-0">
+                        Calculated for your selected rate of weight loss.
+                    </p>
+                }
+                else if (Model.UserProfile.Goal == "Gain")
+                {
+                    <p class="text-muted mb-0">
+                        Calculated for your selected rate of weight gain.
+                    </p>
+                }
             </div>
 
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <strong>Maintenance Calories</strong>
+
+                    <p class="mb-1">
+                        ~@Model.UserProfile.TDEE.ToString("0") kcal/day
+                    </p>
+
+                    <small class="text-muted">
+                        Estimated calories needed to maintain your current weight.
+                    </small>
+                </div>
+
+                <div class="col-md-3">
+                    <strong>BMR</strong>
+
+                    <p class="mb-1">
+                        ~@Model.UserProfile.BMR.ToString("0") kcal/day
+                    </p>
+
+                    <small class="text-muted">
+                        Estimated calories your body uses at rest.
+                    </small>
+                </div>
+
+                <div class="col-md-3">
+                    <strong>BMI</strong>
+
+                    <p class="mb-1">
+                        @Model.UserProfile.BMI.ToString("0.0")
+                    </p>
+
+                    <small class="text-muted">
+                        Calculated from your current height and weight.
+                    </small>
+                </div>
+
+                <div class="col-md-3">
+                    <strong>Age</strong>
+
+                    <p class="mb-1">
+                        @Model.UserProfile.Age years
+                    </p>
+
+                    <small class="text-muted">
+                        Used as part of your calorie estimate.
+                    </small>
+                </div>
+
+            </div>
+
+            <hr class="my-4" />
+
             <small class="text-muted">
-                These values are estimates based on your profile information and activity level.
+                Calorie needs vary between individuals and these figures are estimates,
+                not exact measurements. Your actual needs may change over time.
             </small>
+
         </div>
     </div>
 }
 
+
 @section Scripts {
+
     <script>
-        const metricSystem = document.getElementById("metricSystem");
-        const imperialSystem = document.getElementById("imperialSystem");
-        const heightCmInput = document.getElementById("UserProfile_HeightCm");
-        const weightKgInput = document.getElementById("UserProfile_WeightKg");
-        const goalWeightKgInput = document.getElementById("UserProfile_GoalWeightKg");
+        const profileThemePreference =
+            document.getElementById("profileThemePreference");
 
-        const heightFeetInput = document.getElementById("HeightFeet");
-        const heightInchesInput = document.getElementById("HeightInches");
-        const weightLbInput = document.getElementById("WeightLb");
-        const goalWeightLbInput = document.getElementById("GoalWeightLb");
-        const weeklyGoalSelect = document.getElementById("weeklyGoalSelect");
+        const metricSystem =
+            document.getElementById("metricSystem");
 
-        const metricSections = [
-            document.getElementById("metricHeightSection"),
-            document.getElementById("metricWeightSection"),
-            document.getElementById("metricGoalWeightSection")
-        ];
+        const imperialSystem =
+            document.getElementById("imperialSystem");
 
-        const imperialSections = [
-            document.getElementById("imperialHeightSection"),
-            document.getElementById("imperialWeightSection"),
-            document.getElementById("imperialGoalWeightSection")
-        ];
+        const heightCmInput =
+            document.getElementById("UserProfile_HeightCm");
 
-        function updateMeasurementSystem() {
-            const useImperial = imperialSystem.checked;
+        const weightKgInput =
+            document.getElementById("UserProfile_WeightKg");
 
-            metricSections.forEach(section => {
-                section.style.display = useImperial ? "none" : "block";
-            });
+        const goalWeightKgInput =
+            document.getElementById("UserProfile_GoalWeightKg");
 
-            imperialSections.forEach(section => {
-                section.style.display = useImperial ? "block" : "none";
-            });
+        const heightFeetInput =
+            document.getElementById("HeightFeet");
 
-            updateWeeklyGoalLabels();
-        }
+        const heightInchesInput =
+            document.getElementById("HeightInches");
 
-        metricSystem.addEventListener("change", () => {
-            convertImperialToMetric();
-            updateMeasurementSystem();
-        });
+        const weightLbInput =
+            document.getElementById("WeightLb");
 
-        imperialSystem.addEventListener("change", () => {
-            convertMetricToImperial();
-            updateMeasurementSystem();
-        });
+        const goalWeightLbInput =
+            document.getElementById("GoalWeightLb");
 
-        updateMeasurementSystem();
+        const goalSelect =
+            document.getElementById("goalSelect");
+
+        const weeklyGoalSelect =
+            document.getElementById("weeklyGoalSelect");
+
+        const weeklyGoalSection =
+            document.getElementById("weeklyGoalSection");
+
+        const calculatedTarget =
+            document.getElementById("calculatedTarget");
+
+        const customTarget =
+            document.getElementById("customTarget");
+
+        const customCalorieTargetSection =
+            document.getElementById(
+                "customCalorieTargetSection"
+            );
+
+        const metricHeightSection =
+            document.getElementById("metricHeightSection");
+
+        const imperialHeightSection =
+            document.getElementById("imperialHeightSection");
+
+        const metricWeightSection =
+            document.getElementById("metricWeightSection");
+
+        const imperialWeightSection =
+            document.getElementById("imperialWeightSection");
+
+        const metricGoalWeightSection =
+            document.getElementById("metricGoalWeightSection");
+
+        const imperialGoalWeightSection =
+            document.getElementById("imperialGoalWeightSection");
+
+        const metricGoalConsistencyError =
+            document.getElementById("metricGoalConsistencyError");
+
+        const imperialGoalConsistencyError =
+            document.getElementById("imperialGoalConsistencyError");
+
+
+        // Preserve the currently selected theme when a profile
+        // is created for the first time.
+        const savedTheme =
+            localStorage.getItem("theme") || "system";
+
+        profileThemePreference.value =
+            savedTheme.charAt(0).toUpperCase() +
+            savedTheme.slice(1);
+
 
         function convertMetricToImperial() {
-            const heightCm = parseFloat(heightCmInput.value);
-            const weightKg = parseFloat(weightKgInput.value);
-            const goalWeightKg = parseFloat(goalWeightKgInput.value);
+            const heightCm =
+                parseFloat(heightCmInput.value);
+
+            const weightKg =
+                parseFloat(weightKgInput.value);
+
+            const goalWeightKg =
+                parseFloat(goalWeightKgInput.value);
 
             if (!isNaN(heightCm)) {
-                const totalInches = heightCm / 2.54;
-                const feet = Math.floor(totalInches / 12);
-                const inches = totalInches - (feet * 12);
+                const totalInches =
+                    heightCm / 2.54;
 
-                heightFeetInput.value = feet;
-                heightInchesInput.value = inches.toFixed(1);
+                const feet =
+                    Math.floor(totalInches / 12);
+
+                const inches =
+                    totalInches - (feet * 12);
+
+                heightFeetInput.value =
+                    feet;
+
+                heightInchesInput.value =
+                    inches.toFixed(1);
             }
 
             if (!isNaN(weightKg)) {
-                weightLbInput.value = (weightKg * 2.2046226218).toFixed(1);
+                weightLbInput.value =
+                    (weightKg * 2.2046226218)
+                        .toFixed(1);
             }
 
             if (!isNaN(goalWeightKg)) {
-                goalWeightLbInput.value = (goalWeightKg * 2.2046226218).toFixed(1);
+                goalWeightLbInput.value =
+                    (goalWeightKg * 2.2046226218)
+                        .toFixed(1);
             }
         }
 
-        function convertImperialToMetric() {
-            const feet = parseFloat(heightFeetInput.value);
-            const inches = parseFloat(heightInchesInput.value);
-            const weightLb = parseFloat(weightLbInput.value);
-            const goalWeightLb = parseFloat(goalWeightLbInput.value);
 
-            if (!isNaN(feet) && !isNaN(inches)) {
-                const totalInches = (feet * 12) + inches;
-                heightCmInput.value = (totalInches * 2.54).toFixed(1);
+        function convertImperialToMetric() {
+            const feet =
+                parseFloat(heightFeetInput.value);
+
+            const inches =
+                parseFloat(heightInchesInput.value);
+
+            const weightLb =
+                parseFloat(weightLbInput.value);
+
+            const goalWeightLb =
+                parseFloat(goalWeightLbInput.value);
+
+            if (!isNaN(feet) &&
+                !isNaN(inches)) {
+
+                const totalInches =
+                    (feet * 12) + inches;
+
+                heightCmInput.value =
+                    (totalInches * 2.54)
+                        .toFixed(1);
             }
 
             if (!isNaN(weightLb)) {
-                weightKgInput.value = (weightLb / 2.2046226218).toFixed(1);
+                weightKgInput.value =
+                    (weightLb / 2.2046226218)
+                        .toFixed(1);
             }
 
             if (!isNaN(goalWeightLb)) {
-                goalWeightKgInput.value = (goalWeightLb / 2.2046226218).toFixed(1);
+                goalWeightKgInput.value =
+                    (goalWeightLb / 2.2046226218)
+                        .toFixed(1);
             }
         }
 
-        function updateWeeklyGoalLabels() {
-            const useImperial = imperialSystem.checked;
 
-            Array.from(weeklyGoalSelect.options).forEach(option => {
-                if (option.dataset.metric && option.dataset.imperial) {
-                    option.textContent = useImperial
-                        ? option.dataset.imperial
-                        : option.dataset.metric;
-                }
-            });
+        function updateWeeklyGoalLabels() {
+            const useImperial =
+                imperialSystem.checked;
+
+            Array.from(weeklyGoalSelect.options)
+                .forEach(option => {
+
+                    if (option.dataset.metric &&
+                        option.dataset.imperial) {
+
+                        option.textContent =
+                            useImperial
+                                ? option.dataset.imperial
+                                : option.dataset.metric;
+                    }
+                });
         }
+
+
+        function updateGoalFields() {
+            const hasWeightChangeGoal =
+                goalSelect.value === "Lose" ||
+                goalSelect.value === "Gain";
+
+            weeklyGoalSection.style.display =
+                hasWeightChangeGoal
+                    ? "block"
+                    : "none";
+
+            if (!hasWeightChangeGoal) {
+                metricGoalWeightSection.style.display =
+                    "none";
+
+                imperialGoalWeightSection.style.display =
+                    "none";
+
+                metricGoalConsistencyError.textContent =
+                    "";
+
+                imperialGoalConsistencyError.textContent =
+                    "";
+
+                return;
+            }
+
+            const useImperial =
+                imperialSystem.checked;
+
+            metricGoalWeightSection.style.display =
+                useImperial
+                    ? "none"
+                    : "block";
+
+            imperialGoalWeightSection.style.display =
+                useImperial
+                    ? "block"
+                    : "none";
+        }
+
+
+        function validateGoalWeight() {
+            metricGoalConsistencyError.textContent =
+                "";
+
+            imperialGoalConsistencyError.textContent =
+                "";
+
+            if (goalSelect.value !== "Lose" &&
+                goalSelect.value !== "Gain") {
+                return;
+            }
+
+            const useImperial =
+                imperialSystem.checked;
+
+            const currentWeightInput =
+                useImperial
+                    ? weightLbInput
+                    : weightKgInput;
+
+            const goalWeightInput =
+                useImperial
+                    ? goalWeightLbInput
+                    : goalWeightKgInput;
+
+            const errorElement =
+                useImperial
+                    ? imperialGoalConsistencyError
+                    : metricGoalConsistencyError;
+
+            const currentWeight =
+                parseFloat(currentWeightInput.value);
+
+            const goalWeight =
+                parseFloat(goalWeightInput.value);
+
+            if (isNaN(currentWeight) ||
+                isNaN(goalWeight)) {
+                return;
+            }
+
+            if (goalSelect.value === "Lose" &&
+                goalWeight >= currentWeight) {
+
+                errorElement.textContent =
+                    "Your goal weight must be lower than your current weight.";
+
+                return;
+            }
+
+            if (goalSelect.value === "Gain" &&
+                goalWeight <= currentWeight) {
+
+                errorElement.textContent =
+                    "Your goal weight must be higher than your current weight.";
+            }
+        }
+
+        function updateCalorieTargetMode() {
+            customCalorieTargetSection.style.display =
+                customTarget.checked
+                    ? "block"
+                    : "none";
+        }
+
+        function updateMeasurementSystem() {
+            const useImperial =
+                imperialSystem.checked;
+
+            metricHeightSection.style.display =
+                useImperial
+                    ? "none"
+                    : "block";
+
+            metricWeightSection.style.display =
+                useImperial
+                    ? "none"
+                    : "block";
+
+            imperialHeightSection.style.display =
+                useImperial
+                    ? "block"
+                    : "none";
+
+            imperialWeightSection.style.display =
+                useImperial
+                    ? "block"
+                    : "none";
+
+            updateWeeklyGoalLabels();
+            updateGoalFields();
+        }
+
+
+        metricSystem.addEventListener(
+            "change",
+            () => {
+                convertImperialToMetric();
+                updateMeasurementSystem();
+                validateGoalWeight();
+            }
+        );
+
+
+        imperialSystem.addEventListener(
+            "change",
+            () => {
+                convertMetricToImperial();
+                updateMeasurementSystem();
+                validateGoalWeight();
+            }
+        );
+
+
+        goalSelect.addEventListener(
+            "change",
+            () => {
+                updateGoalFields();
+                validateGoalWeight();
+            }
+        );
+
+
+        weightKgInput.addEventListener(
+            "input",
+            validateGoalWeight
+        );
+
+        goalWeightKgInput.addEventListener(
+            "input",
+            validateGoalWeight
+        );
+
+        weightLbInput.addEventListener(
+            "input",
+            validateGoalWeight
+        );
+
+        goalWeightLbInput.addEventListener(
+            "input",
+            validateGoalWeight
+        );
+
+        calculatedTarget.addEventListener(
+            "change",
+            updateCalorieTargetMode
+        );
+
+        customTarget.addEventListener(
+            "change",
+            updateCalorieTargetMode
+        );
+
+
+        updateMeasurementSystem();
+        updateCalorieTargetMode();
+        validateGoalWeight();
     </script>
 
     <partial name="_ValidationScriptsPartial" />
