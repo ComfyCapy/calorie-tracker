@@ -42,13 +42,6 @@ namespace CalorieTracker.Pages.Diary
 
             Entries = await _context.DiaryEntries
                 .Include(entry => entry.Food)
-                .Where(entry =>
-                    entry.UserId == userId &&
-                    entry.Date.Date == SelectedDate)
-                .ToListAsync();
-
-            Entries = await _context.DiaryEntries
-                .Include(entry => entry.Food)
                 .Include(entry => entry.FoodPortion)
                 .Where(entry =>
                     entry.UserId == userId &&
