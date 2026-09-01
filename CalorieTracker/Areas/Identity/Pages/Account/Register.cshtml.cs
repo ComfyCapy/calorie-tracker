@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using CalorieTracker.Data;
+using CalorieTracker.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace CalorieTracker.Areas.Identity.Pages.Account;
 
@@ -29,13 +31,15 @@ public class RegisterModel : PageModel
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
     private readonly ILogger<RegisterModel> _logger;
     private readonly IEmailSender _emailSender;
+    private readonly ApplicationDbContext _context;
 
     public RegisterModel(
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         SignInManager<ApplicationUser> signInManager,
         ILogger<RegisterModel> logger,
-        IEmailSender emailSender)
+        IEmailSender emailSender,
+        ApplicationDbContext context)
     {
         _userManager = userManager;
         _userStore = userStore;
@@ -43,6 +47,7 @@ public class RegisterModel : PageModel
         _signInManager = signInManager;
         _logger = logger;
         _emailSender = emailSender;
+        _context = context;
     }
 
     /// <summary>
@@ -137,8 +142,46 @@ public class RegisterModel : PageModel
             if (result.Succeeded)
             {
                 _logger.LogInformation("User created a new account with password.");
-
                 var userId = await _userManager.GetUserIdAsync(user);
+
+                var defaultExpression = await _context.CapyItems
+                    .FirstAsync(item =>
+                        item.Category == "Expression" &&
+                        item.IsDefault &&
+                        item.IsActive);
+
+                var defaultBackground = await _context.CapyItems
+                    .FirstAsync(item =>
+                        item.Category == "Background" &&
+                        item.IsDefault &&
+                        item.IsActive);
+
+                var capyAppearance = new UserCapyAppearance
+                {
+                    UserId = userId,
+                    ExpressionId = defaultExpression.Id,
+                    BackgroundId = defaultBackground.Id
+                };
+
+                _context.UserCapyAppearances.Add(capyAppearance);
+
+                var starterItems = await _context.CapyItems
+                    .Where(item =>
+                        item.IsActive &&
+                        item.IsStarter)
+                    .ToListAsync();
+
+                var starterInventory = starterItems
+                    .Select(item => new UserCapyItem
+                    {
+                        UserId = userId,
+                        CapyItemId = item.Id
+                    });
+
+                _context.UserCapyItems.AddRange(starterInventory);
+
+                await _context.SaveChangesAsync();
+
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                 var callbackUrl = Url.Page(

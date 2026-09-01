@@ -3,6 +3,7 @@ using System;
 using CalorieTracker.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CalorieTracker.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827172635_SeedCapyItems")]
+    partial class SeedCapyItems
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
@@ -105,9 +108,6 @@ namespace CalorieTracker.Migrations
                     b.Property<bool>("IsDefault")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsStarter")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -124,7 +124,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/expressions/Capy-Base.png",
                             IsActive = true,
                             IsDefault = true,
-                            IsStarter = true,
                             Name = "Base Capy"
                         },
                         new
@@ -134,7 +133,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/hats-hair/Capy-CowboyHat.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Cowboy Hat"
                         },
                         new
@@ -144,7 +142,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/hats-hair/PartyHat-BlueYellow.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Blue & Yellow Party Hat"
                         },
                         new
@@ -154,7 +151,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/face-accessories/Sunglasses-Cool.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Cool Sunglasses"
                         },
                         new
@@ -164,7 +160,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/neck-accessories/Scarf-GreenRed.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Green & Red Scarf"
                         },
                         new
@@ -174,7 +169,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/neck-accessories/Tie-RedAndWhite.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Red & White Tie"
                         },
                         new
@@ -184,7 +178,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/clothes/TShirt-Pink.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Pink T-Shirt"
                         },
                         new
@@ -194,7 +187,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/backgrounds/BG-Banana.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Banana"
                         },
                         new
@@ -204,7 +196,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/backgrounds/BG-Fields.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Fields"
                         },
                         new
@@ -214,7 +205,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/backgrounds/BG-PalePink.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Pale Pink"
                         },
                         new
@@ -224,7 +214,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/backgrounds/BG-PalePurple.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Pale Purple"
                         },
                         new
@@ -234,7 +223,6 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/backgrounds/BG-Sky.png",
                             IsActive = true,
                             IsDefault = false,
-                            IsStarter = true,
                             Name = "Sky"
                         },
                         new
@@ -244,18 +232,7 @@ namespace CalorieTracker.Migrations
                             ImagePath = "/images/capy/backgrounds/BG-White.png",
                             IsActive = true,
                             IsDefault = true,
-                            IsStarter = true,
                             Name = "White"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Category = "HatHair",
-                            ImagePath = "/images/capy/hats-hair/Capy-Crown-Gold.png",
-                            IsActive = true,
-                            IsDefault = false,
-                            IsStarter = false,
-                            Name = "Gold Crown"
                         });
                 });
 

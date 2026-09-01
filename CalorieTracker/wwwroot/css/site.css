@@ -62,3 +62,369 @@ body {
     font-weight: 700;
 }
 
+.capy-avatar {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+
+.capy-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+    .capy-layer img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+/* =========================
+   CAPY CUSTOMISATION
+   ========================= */
+
+.capy-customisation-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(500px, 1.6fr);
+    gap: 3rem;
+    align-items: start;
+}
+
+.capy-preview-panel {
+    text-align: center;
+    position: sticky;
+    top: 2rem;
+}
+
+.capy-preview-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.capy-preview {
+    width: min(100%, 380px);
+    margin: 0 auto;
+}
+
+
+/* Inventory */
+
+.capy-inventory {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.capy-inventory-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 0.75rem;
+    min-height: 90px;
+}
+
+.capy-category-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bs-border-color);
+    border-radius: 16px;
+    background: var(--bs-tertiary-bg);
+    padding: 0.75rem;
+}
+
+    .capy-category-icon img {
+        width: 100%;
+        height: 100%;
+        max-width: 65px;
+        max-height: 65px;
+        object-fit: contain;
+    }
+
+
+/* Item row */
+
+.capy-item-list {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 0.6rem;
+    border: 2px solid var(--bs-border-color);
+    border-radius: 16px;
+    background: var(--bs-tertiary-bg);
+}
+
+
+/* Individual inventory item */
+
+.capy-item-tile {
+    flex: 0 0 68px;
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bs-border-color);
+    border-radius: 14px;
+    background: var(--bs-body-bg);
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+    .capy-item-tile:hover {
+        transform: translateY(-2px);
+        border-color: var(--bs-primary);
+    }
+
+    .capy-item-tile img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+.capy-empty-category {
+    color: var(--bs-secondary-color);
+    font-size: 0.9rem;
+    padding: 0 0.5rem;
+}
+
+
+/* Responsive */
+
+@media (max-width: 900px) {
+
+    .capy-customisation-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .capy-preview-panel {
+        position: static;
+    }
+
+    .capy-preview {
+        width: min(100%, 300px);
+    }
+}
+
+@media (max-width: 600px) {
+
+    .capy-inventory-row {
+        grid-template-columns: 70px 1fr;
+        min-height: 70px;
+    }
+
+    .capy-category-icon {
+        border-radius: 12px;
+        padding: 0.5rem;
+    }
+
+        .capy-category-icon img {
+            max-width: 50px;
+            max-height: 50px;
+        }
+
+    .capy-item-tile {
+        flex-basis: 54px;
+        width: 54px;
+        height: 54px;
+        border-radius: 10px;
+    }
+}
+
+.capy-item-tile {
+    padding: 0;
+    color: inherit;
+}
+
+    .capy-item-tile.is-equipped {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.25), 0 3px 8px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .capy-item-tile:disabled {
+        opacity: 0.7;
+    }
+
+.capy-customisation-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.capy-secret-crown {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+    .capy-secret-crown:hover {
+        transform: scale(1.15) rotate(-5deg);
+        filter: brightness(1.1);
+    }
+
+    .capy-secret-crown:last-child:hover {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    .capy-secret-crown:active {
+        transform: scale(0.9);
+    }
+
+.capy-unlock-message {
+    width: fit-content;
+    margin: 0.75rem auto 0;
+}
+
+.capy-item-locked {
+    position: relative;
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.65);
+}
+
+    .capy-item-locked:hover {
+        transform: none;
+        border-color: var(--bs-border-color);
+        box-shadow: none;
+    }
+
+.capy-lock-icon {
+    position: absolute;
+    right: 4px;
+    bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 50%;
+}
+
+.capy-none-tile {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+}
+
+    .capy-none-tile span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+/* =========================
+   NAVBAR CAPY
+   ========================= */
+
+.navbar-capy {
+    display: block;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    background: var(--bs-body-bg);
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .navbar-capy:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .navbar-capy .capy-avatar {
+        width: 100%;
+        height: 100%;
+    }
+
+    .navbar-capy .capy-layer {
+        width: 100%;
+        height: 100%;
+    }
+
+/* =========================
+   THEME CUSTOMISATION
+   ========================= */
+
+.capy-theme-section {
+    max-width: 840px;
+    margin: 2.5rem auto 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.capy-theme-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.capy-theme-options {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.capy-theme-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 1rem;
+    text-align: left;
+    color: var(--bs-body-color);
+    background: var(--bs-tertiary-bg);
+    border: 2px solid var(--bs-border-color);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .capy-theme-option:hover {
+        transform: translateY(-2px);
+        border-color: var(--bs-secondary-color);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+.capy-theme-option-title {
+    font-weight: 700;
+}
+
+.capy-theme-option-description {
+    font-size: 0.85rem;
+    color: var(--bs-secondary-color);
+}
+
+.capy-theme-option.is-selected {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+    .capy-item-tile {
+        cursor: pointer;
+    }
+
+    .capy-item-tile:hover:not(.is-equipped) {
+        transform: translateY(-2px);
+        border-color: var(--bs-secondary-color);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
