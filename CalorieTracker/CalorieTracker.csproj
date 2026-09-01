@@ -22,4 +22,8 @@
     <PackageReference Include="Resend" Version="0.14.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\capy\ui\" />
+  </ItemGroup>
+
 </Project>

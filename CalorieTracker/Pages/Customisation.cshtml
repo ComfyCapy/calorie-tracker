@@ -1,0 +1,625 @@
+﻿@page
+@model CalorieTracker.Pages.CustomisationModel
+
+@{
+    ViewData["Title"] = "Customisation";
+
+    var categories = new[]
+    {
+        new
+        {
+            Key = "Background",
+            Name = "Background",
+            Icon = "Icon-Background.png",
+            Optional = false
+        },
+        new
+        {
+            Key = "Expression",
+            Name = "Expression",
+            Icon = "Icon-Expression.png",
+            Optional = false
+        },
+        new
+        {
+            Key = "Clothes",
+            Name = "Clothes",
+            Icon = "Icon-Clothes.png",
+            Optional = true
+        },
+        new
+        {
+            Key = "NeckAccessory",
+            Name = "Neck Accessories",
+            Icon = "Icon-NeckAccessory.png",
+            Optional = true
+        },
+        new
+        {
+            Key = "HatHair",
+            Name = "Hats & Hair",
+            Icon = "Icon-HatHair.png",
+            Optional = true
+        },
+        new
+        {
+            Key = "FaceAccessory",
+            Name = "Face Accessories",
+            Icon = "Icon-FaceAccessory.png",
+            Optional = true
+        }
+    };
+
+    Func<string, int?> getEquippedItemId = category =>
+        category switch
+        {
+            "Background" => Model.CapyAppearance?.BackgroundId,
+            "Expression" => Model.CapyAppearance?.ExpressionId,
+            "Clothes" => Model.CapyAppearance?.ClothesId,
+            "NeckAccessory" => Model.CapyAppearance?.NeckAccessoryId,
+            "HatHair" => Model.CapyAppearance?.HatHairId,
+            "FaceAccessory" => Model.CapyAppearance?.FaceAccessoryId,
+            _ => null
+        };
+        var ownsGoldCrown = Model.OwnedItems
+       .Any(item => item.Id == 14);
+}
+
+<div class="customisation-page">
+    <div class="text-center mb-4">
+
+    <h1 class="capy-customisation-title">
+
+        @if (!ownsGoldCrown)
+        {
+            <button type="button"
+                    class="capy-secret-crown"
+                    data-unlock-item-id="14"
+                    aria-label="Secret crown">
+                👑
+            </button>
+        }
+
+        <span>Customisation</span>
+
+        @if (!ownsGoldCrown)
+        {
+            <button type="button"
+                    class="capy-secret-crown"
+                    data-unlock-item-id="14"
+                    aria-label="Secret crown">
+                👑
+            </button>
+        }
+
+    </h1>
+        <p class="text-muted">
+            Make your Comfy Capy your own.
+        </p>
+        <div id="capy-unlock-message"
+             class="alert alert-success capy-unlock-message"
+             role="status"
+             hidden>
+        </div>
+    </div>
+
+    @if (Model.CapyAppearance == null)
+    {
+        <div class="alert alert-info">
+            Your Comfy Capy hasn't been set up yet.
+        </div>
+    }
+    else
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="capy-customisation-layout">
+
+            <section class="capy-preview-panel">
+
+                <h2 class="capy-preview-title">
+                    @(Model.Username)'s Comfy Capy
+                </h2>
+
+                <div class="capy-preview">
+                    <partial name="_CapyAvatar"
+                             model="Model.CapyAppearance" />
+                </div>
+
+            </section>
+
+            <section class="capy-inventory">
+
+                <div class="d-flex justify-content-end mb-2">
+                    <div class="btn-group btn-group-sm"
+                         role="group"
+                         aria-label="Capy inventory filter">
+
+                        <button type="button"
+                                class="btn btn-outline-secondary capy-inventory-filter"
+                                data-filter="owned">
+                            Owned only
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-primary capy-inventory-filter"
+                                data-filter="all">
+                            All items
+                        </button>
+
+                    </div>
+                </div>
+
+                @foreach (var category in categories)
+                {
+                    var equippedItemId =
+                        getEquippedItemId(category.Key);
+
+                    var categoryItems = Model.CatalogueItems
+                        .Where(item =>
+                            item.Category == category.Key)
+                        .ToList();
+
+                    var ownedItemIds = Model.OwnedItems
+                        .Select(item => item.Id)
+                        .ToHashSet();
+
+                    <div class="capy-inventory-row">
+
+                        <div class="capy-category-icon"
+                             title="@category.Name">
+
+                            <img src="/images/capy/ui/@category.Icon"
+                                 alt="@category.Name" />
+
+                        </div>
+
+                        <div class="capy-item-list">
+
+                            @if (category.Optional)
+                            {
+                                <button type="button"
+                                        class="capy-item-tile capy-none-tile @(equippedItemId == null ? "is-equipped" : "")"
+                                        data-category="@category.Key"
+                                        data-item-id=""
+                                        title="None">
+
+                                    <span>×</span>
+
+                                </button>
+                            }
+
+                            @foreach (var item in categoryItems)
+                            {
+                                var isOwned = ownedItemIds.Contains(item.Id);
+
+                                if (isOwned)
+                                {
+                                    <button type="button"
+                                            class="capy-item-tile @(equippedItemId == item.Id ? "is-equipped" : "")"
+                                            data-category="@category.Key"
+                                            data-item-id="@item.Id"
+                                            title="@item.Name">
+
+                                        <img src="@item.ImagePath"
+                                             alt="@item.Name" />
+
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="capy-item-tile capy-item-locked"
+                                         title="@item.Name — Locked">
+
+                                        <img src="@item.ImagePath"
+                                             alt="" />
+
+                                        <span class="capy-lock-icon"
+                                              aria-hidden="true">
+                                            🔒
+                                        </span>
+
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+            </section>
+
+        </div>
+
+        <section class="capy-theme-section">
+            <h3 class="capy-theme-title">Theme</h3>
+
+            <p class="text-muted mb-3">
+                Choose how CalorieTracker looks.
+            </p>
+
+            <div class="capy-theme-options">
+
+                <button type="button"
+                        class="capy-theme-option theme-option"
+                        data-theme="light">
+                    <span class="capy-theme-option-title">
+                        Light
+                    </span>
+
+                    <span class="capy-theme-option-description">
+                        Always use light mode
+                    </span>
+                </button>
+
+                <button type="button"
+                        class="capy-theme-option theme-option"
+                        data-theme="dark">
+                    <span class="capy-theme-option-title">
+                        Dark
+                    </span>
+
+                    <span class="capy-theme-option-description">
+                        Always use dark mode
+                    </span>
+                </button>
+
+                <button type="button"
+                        class="capy-theme-option theme-option"
+                        data-theme="system">
+                    <span class="capy-theme-option-title">
+                        System
+                    </span>
+
+                    <span class="capy-theme-option-description">
+                        Match your device setting
+                    </span>
+                </button>
+
+            </div>
+        </section>
+    }
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+        document.querySelectorAll(".capy-item-tile[data-category]")
+            .forEach(button => {
+
+                button.addEventListener("click", async () => {
+
+                    const category = button.dataset.category;
+                    const itemId = button.dataset.itemId;
+
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    ).value;
+
+                    button.disabled = true;
+
+                    try {
+                        const body = new URLSearchParams();
+
+                        body.append(
+                            "__RequestVerificationToken",
+                            token
+                        );
+
+                        body.append(
+                            "category",
+                            category
+                        );
+
+                        body.append(
+                            "itemId",
+                            itemId
+                        );
+
+                        const response = await fetch(
+                            `${window.location.pathname}?handler=Equip`,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded; charset=UTF-8"
+                                },
+
+                                body: body
+                            }
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `Could not save Capy appearance. Status: ${response.status}`
+                            );
+                        }
+
+                        const result = await response.json();
+
+
+                        // Move the equipped highlight.
+
+                        document.querySelectorAll(
+                            `.capy-item-tile[data-category="${category}"]`
+                        ).forEach(tile => {
+                            tile.classList.remove("is-equipped");
+                        });
+
+                        button.classList.add("is-equipped");
+
+
+                        // Update EVERY visible Capy renderer:
+                        // big customisation preview + navbar avatar.
+
+                        const layers = document.querySelectorAll(
+                            `[data-capy-layer="${result.category}"]`
+                        );
+
+                        layers.forEach(layer => {
+
+                            layer.innerHTML = "";
+
+                            if (result.imagePath) {
+
+                                const image =
+                                    document.createElement("img");
+
+                                image.src = result.imagePath;
+                                image.alt = "";
+
+                                layer.appendChild(image);
+                            }
+
+                        });
+
+                    }
+                    catch (error) {
+
+                        console.error(error);
+
+                        alert(
+                            "Your Capy refused to change clothes. Try again."
+                        );
+
+                    }
+                    finally {
+
+                        button.disabled = false;
+
+                    }
+
+                });
+
+            });
+
+        function updateSelectedTheme() {
+            const selectedTheme =
+                localStorage.getItem("theme") || "system";
+
+            document.querySelectorAll(".capy-theme-option")
+                .forEach(button => {
+
+                    button.classList.toggle(
+                        "is-selected",
+                        button.dataset.theme === selectedTheme
+                    );
+
+                });
+        }
+
+        updateSelectedTheme();
+
+        document.querySelectorAll(".capy-theme-option")
+            .forEach(button => {
+
+                button.addEventListener("click", () => {
+                    updateSelectedTheme();
+                });
+
+            });
+
+        document.querySelectorAll(".capy-inventory-filter")
+            .forEach(button => {
+
+                button.addEventListener("click", () => {
+
+                    const filter = button.dataset.filter;
+
+                    document.querySelectorAll(".capy-item-locked")
+                        .forEach(item => {
+
+                            item.style.display =
+                                filter === "owned"
+                                    ? "none"
+                                    : "";
+
+                        });
+
+                    document.querySelectorAll(".capy-inventory-filter")
+                        .forEach(filterButton => {
+
+                            const isSelected =
+                                filterButton.dataset.filter === filter;
+
+                            filterButton.classList.toggle(
+                                "btn-primary",
+                                isSelected
+                            );
+
+                            filterButton.classList.toggle(
+                                "btn-outline-secondary",
+                                !isSelected
+                            );
+
+                        });
+
+                });
+
+            });
+        document.querySelectorAll(".capy-secret-crown")
+            .forEach(crown => {
+
+                crown.addEventListener("click", async () => {
+
+                    const itemId = crown.dataset.unlockItemId;
+                    document.querySelectorAll(".capy-secret-crown")
+                        .forEach(secretCrown => {
+                            secretCrown.disabled = true;
+                        });
+
+                    const token = document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    ).value;
+
+                    const body = new URLSearchParams();
+
+                    body.append(
+                        "__RequestVerificationToken",
+                        token
+                    );
+
+                    body.append(
+                        "itemId",
+                        itemId
+                    );
+
+                    try {
+
+                        const response = await fetch(
+                            `${window.location.pathname}?handler=Unlock`,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded; charset=UTF-8"
+                                },
+
+                                body: body
+                            }
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `Could not unlock Capy item. Status: ${response.status}`
+                            );
+                        }
+
+                        const result = await response.json();
+
+                        // Turn the locked catalogue tile into an owned item.
+                        const lockedItem = document.querySelector(
+                            `.capy-item-locked img[src="${result.imagePath}"]`
+                        )?.closest(".capy-item-locked");
+
+                        if (lockedItem) {
+
+                            const button =
+                                document.createElement("button");
+
+                            button.type = "button";
+
+                            button.className =
+                                "capy-item-tile";
+
+                            button.dataset.category =
+                                result.category;
+
+                            button.dataset.itemId =
+                                result.itemId;
+
+                            button.title =
+                                result.name;
+
+                            const image =
+                                document.createElement("img");
+
+                            image.src =
+                                result.imagePath;
+
+                            image.alt =
+                                result.name;
+
+                            button.appendChild(image);
+
+                            lockedItem.replaceWith(button);
+                        }
+
+                        // Show our extremely serious royal announcement.
+                        const message =
+                            document.getElementById(
+                                "capy-unlock-message"
+                            );
+
+                        message.innerHTML =
+                            `👑 <strong>${result.name} Unlocked!</strong> Your Capy is now legally royalty.`;
+
+                        message.hidden = false;
+
+                        setTimeout(() => {
+
+                            message.hidden = true;
+
+                            document.querySelectorAll(
+                                ".capy-secret-crown"
+                            ).forEach(secretCrown => {
+
+                                secretCrown.remove();
+
+                            });
+
+                        }, 4000);
+
+                        // Mandatory celebratory crown boing.
+                        document.querySelectorAll(
+                            ".capy-secret-crown"
+                        ).forEach(secretCrown => {
+
+                            secretCrown.animate(
+                                [
+                                    {
+                                        transform:
+                                            "scale(1) rotate(0deg)"
+                                    },
+                                    {
+                                        transform:
+                                            "scale(1.45) rotate(-12deg)"
+                                    },
+                                    {
+                                        transform:
+                                            "scale(1.25) rotate(12deg)"
+                                    },
+                                    {
+                                        transform:
+                                            "scale(1) rotate(0deg)"
+                                    }
+                                ],
+                                {
+                                    duration: 550,
+                                    easing: "ease-out"
+                                }
+                            );
+
+                        });
+
+                    }
+                    catch (error) {
+
+                        console.error(error);
+
+                        alert(
+                            "The royal court has rejected your Capy. Try again."
+                        );
+
+                    }
+
+                });
+
+            });
+    </script>
+}

@@ -1,0 +1,53 @@
+﻿@model CalorieTracker.Models.UserCapyAppearance
+
+<div class="capy-avatar">
+
+    <div class="capy-layer" data-capy-layer="Background">
+        @if (Model.Background != null)
+        {
+            <img src="@Model.Background.ImagePath"
+                 alt="" />
+        }
+    </div>
+
+    <div class="capy-layer" data-capy-layer="Expression">
+        @if (Model.Expression != null)
+        {
+            <img src="@Model.Expression.ImagePath"
+                 alt="Capy avatar" />
+        }
+    </div>
+
+    <div class="capy-layer" data-capy-layer="Clothes">
+        @if (Model.Clothes != null)
+        {
+            <img src="@Model.Clothes.ImagePath"
+                 alt="" />
+        }
+    </div>
+
+    <div class="capy-layer" data-capy-layer="NeckAccessory">
+        @if (Model.NeckAccessory != null)
+        {
+            <img src="@Model.NeckAccessory.ImagePath"
+                 alt="" />
+        }
+    </div>
+
+    <div class="capy-layer" data-capy-layer="HatHair">
+        @if (Model.HatHair != null)
+        {
+            <img src="@Model.HatHair.ImagePath"
+                 alt="" />
+        }
+    </div>
+
+    <div class="capy-layer" data-capy-layer="FaceAccessory">
+        @if (Model.FaceAccessory != null)
+        {
+            <img src="@Model.FaceAccessory.ImagePath"
+                 alt="" />
+        }
+    </div>
+
+</div>
