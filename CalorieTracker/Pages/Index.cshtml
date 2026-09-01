@@ -1,10 +1,298 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    var caloriePercentage =
+        Model.CalorieTarget.HasValue &&
+        Model.CalorieTarget.Value > 0
+            ? Math.Min(
+                100,
+                (double)(Model.CaloriesConsumed /
+                    Model.CalorieTarget.Value * 100))
+            : 0;
+
+    <div class="dashboard-page">
+
+        <div class="dashboard-heading">
+            <div>
+                <h1 class="dashboard-title">Today</h1>
+
+                <p class="dashboard-date">
+                    @DateTime.Today.ToString("dddd, d MMMM")
+                </p>
+            </div>
+        </div>
+
+        @if (Model.UserProfile == null)
+        {
+            <div class="dashboard-setup-card">
+                <div>
+                    <h2>Finish setting up your profile</h2>
+
+                    <p>
+                        Add your details so we can calculate your
+                        personal daily calorie target.
+                    </p>
+                </div>
+
+                <a asp-page="/Profile/Index"
+                   class="btn btn-primary">
+                    Set up profile
+                </a>
+            </div>
+        }
+
+        <div class="dashboard-main-card">
+
+            <div class="dashboard-calorie-section">
+
+                <p class="dashboard-eyebrow">
+                    Daily calories
+                </p>
+
+                <div class="dashboard-calorie-total">
+                    <span class="dashboard-calorie-current">
+                        @Model.CaloriesConsumed.ToString("0")
+                    </span>
+
+                    @if (Model.CalorieTarget.HasValue)
+                    {
+                        <span class="dashboard-calorie-target">
+                            / @Model.CalorieTarget.Value.ToString("0") kcal
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="dashboard-calorie-target">
+                            kcal
+                        </span>
+                    }
+                </div>
+
+                @if (Model.CalorieTarget.HasValue)
+                {
+                    <div class="dashboard-progress"
+                         role="progressbar"
+                         aria-label="Daily calorie progress"
+                         aria-valuenow="@caloriePercentage.ToString("0")"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+
+                        <div class="dashboard-progress-bar"
+                             style="width: @caloriePercentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%">
+                        </div>
+
+                    </div>
+
+                    <div class="dashboard-progress-details">
+
+                        <span>
+                            @caloriePercentage.ToString("0")% of daily target
+                        </span>
+
+                        <strong>
+                            @Model.CaloriesRemaining?.ToString("0")
+                            kcal remaining
+                        </strong>
+
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">
+                        Set up your profile to see your daily target.
+                    </p>
+                }
+
+            </div>
+
+            @if (Model.CapyAppearance != null)
+            {
+                <div class="dashboard-capy-section">
+
+                    <a asp-page="/Customisation"
+                       class="dashboard-capy-frame"
+                       aria-label="Customise your Comfy Capy">
+
+                        <partial name="_CapyAvatar"
+                                 model="Model.CapyAppearance" />
+
+                    </a>
+
+                    <a asp-page="/Customisation"
+                       class="dashboard-capy-link">
+                        Customise Capy →
+                    </a>
+
+                </div>
+            }
+
+        </div>
+
+        <div class="dashboard-macro-grid">
+
+            <div class="dashboard-macro-card">
+
+                <div class="dashboard-macro-icon"
+                     aria-hidden="true">
+                    P
+                </div>
+
+                <div>
+                    <span class="dashboard-macro-label">
+                        Protein
+                    </span>
+
+                    <strong class="dashboard-macro-value">
+                        @Model.ProteinConsumed.ToString("0.0") g
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="dashboard-macro-card">
+
+                <div class="dashboard-macro-icon"
+                     aria-hidden="true">
+                    C
+                </div>
+
+                <div>
+                    <span class="dashboard-macro-label">
+                        Carbohydrates
+                    </span>
+
+                    <strong class="dashboard-macro-value">
+                        @Model.CarbohydratesConsumed.ToString("0.0") g
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="dashboard-macro-card">
+
+                <div class="dashboard-macro-icon"
+                     aria-hidden="true">
+                    F
+                </div>
+
+                <div>
+                    <span class="dashboard-macro-label">
+                        Fat
+                    </span>
+
+                    <strong class="dashboard-macro-value">
+                        @Model.FatConsumed.ToString("0.0") g
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="dashboard-actions">
+
+            <a asp-page="/Diary/Create"
+               asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")"
+               class="btn btn-primary dashboard-action-primary">
+                + Quick Add Food
+            </a>
+
+            <a asp-page="/Diary/Index"
+               asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")"
+               class="btn btn-outline-primary">
+                View Today's Diary
+            </a>
+
+        </div>
+
+    </div>
+}
+else
+{
+    <div class="home-landing">
+
+        <div class="home-hero">
+
+            <div class="home-hero-content">
+
+                <p class="home-hero-eyebrow">
+                    Calorie tracking, made comfy.
+                </p>
+
+                <h1 class="home-hero-title">
+                    Track your food without the faff.
+                </h1>
+
+                <p class="home-hero-description">
+                    Keep an eye on calories and macros, log food your way,
+                    and make the whole thing a little less boring with
+                    your own Comfy Capy.
+                </p>
+
+                <div class="home-hero-actions">
+
+                    <a asp-area="Identity"
+                       asp-page="/Account/Register"
+                       class="btn btn-primary">
+                        Get started
+                    </a>
+
+                    <a asp-area="Identity"
+                       asp-page="/Account/Login"
+                       class="btn btn-outline-primary">
+                        Log in
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="home-hero-capy"
+                 aria-hidden="true">
+
+                <div class="home-hero-capy-frame">
+
+                    <img src="/images/capy/backgrounds/BG-PalePurple.png"
+                         class="home-hero-capy-layer"
+                         alt="" />
+
+                    <img src="/images/capy/expressions/Capy-Base.png"
+                         class="home-hero-capy-layer"
+                         alt="" />
+
+                </div>
+
+                <span class="home-hero-capy-caption">
+                    Your Capy awaits.
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="home-feature-strip">
+
+            <div class="home-feature">
+                <strong>Flexible food logging</strong>
+                <span>Track foods and portions without the fuss.</span>
+            </div>
+
+            <div class="home-feature">
+                <strong>Calories & macros</strong>
+                <span>See the numbers that matter at a glance.</span>
+            </div>
+
+            <div class="home-feature">
+                <strong>Comfy Capy</strong>
+                <span>Because nutrition software needn't be miserable.</span>
+            </div>
+
+        </div>
+
+    </div>
+}
