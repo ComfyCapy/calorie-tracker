@@ -29,18 +29,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CalorieTracker</title>
     <script type="importmap"></script>
-        <script>
+    <script>
             (() => {
                 const accountTheme = "@(accountTheme?.ToLowerInvariant() ?? "")";
+                const isAuthenticated =
+                        @(User.Identity?.IsAuthenticated == true ? "true" : "false");
 
-            const savedTheme =
-            accountTheme ||
-            localStorage.getItem("theme") ||
-            "system";
+                const savedTheme =
+                    isAuthenticated
+                        ? accountTheme || "system"
+                        : "system";
 
-            localStorage.setItem("theme", savedTheme);
-
-            let themeToApply = savedTheme;
+                let themeToApply = savedTheme;
 
             if (savedTheme === "system") {
                 themeToApply =
@@ -149,7 +149,9 @@
                     const selectedTheme = button.dataset.theme;
 
                     // Apply and cache the theme immediately.
-                    localStorage.setItem("theme", selectedTheme);
+                    if (@(User.Identity?.IsAuthenticated == true ? "true" : "false")) {
+                        localStorage.setItem("theme", selectedTheme);
+                    }
 
                     let themeToApply = selectedTheme;
 
