@@ -150,7 +150,7 @@ public class LoginModel : PageModel
             {
                 ModelState.AddModelError(
                     string.Empty,
-                    "Please confirm your email address before logging in.");
+                    "Invalid username/email or password.");
                 return Page();
             }
 

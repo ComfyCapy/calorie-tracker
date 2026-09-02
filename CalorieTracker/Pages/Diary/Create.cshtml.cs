@@ -37,6 +37,14 @@ namespace CalorieTracker.Pages.Diary
         public decimal? PortionQuantity { get; set; }
 
         public List<Food> FoodOptions { get; set; } = [];
+        [BindProperty(SupportsGet = true)]
+        public bool ReturnToFoodSearch { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? FoodSearchTerm { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public bool ReturnToFoodsIndex { get; set; }
+
 
         public async Task<IActionResult> OnGetAsync(
             DateTime? date,

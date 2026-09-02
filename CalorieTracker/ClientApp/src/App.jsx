@@ -7,6 +7,7 @@ function App({
     diaryMeal,
     initialSearchTerm = '',
     embedded = false,
+    antiForgeryToken = '',
 }) {
     const initialQuery = initialSearchTerm.trim()
     const [searchTerm, setSearchTerm] = useState(initialQuery)
@@ -125,6 +126,9 @@ function App({
                 `/api/foods/favourites/${encodeURIComponent(food.externalId)}`,
                 {
                     method: food.isFavourite ? 'DELETE' : 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': antiForgeryToken,
+                    },
                 }
             )
 
@@ -165,6 +169,9 @@ function App({
                 `/api/foods/select/${encodeURIComponent(food.externalId)}`,
                 {
                     method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': antiForgeryToken,
+                    },
                 }
             )
 
@@ -183,6 +190,16 @@ function App({
 
             if (returnToDiary && diaryMeal) {
                 params.set('meal', diaryMeal)
+            }
+
+            params.set('returnToFoodSearch', 'true')
+
+            if (activeSearchTerm) {
+                params.set('foodSearchTerm', activeSearchTerm)
+            }
+
+            if (embedded) {
+                params.set('returnToFoodsIndex', 'true')
             }
 
             window.location.assign(`/Diary/Create?${params.toString()}`)

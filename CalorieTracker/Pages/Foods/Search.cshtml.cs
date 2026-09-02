@@ -16,6 +16,8 @@ namespace CalorieTracker.Pages.Foods
 
         [BindProperty(SupportsGet = true)]
         public string? DiaryMeal { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public string? SearchTerm { get; set; }
         public IActionResult OnGet()
         {
             if (!ModelState.IsValid ||

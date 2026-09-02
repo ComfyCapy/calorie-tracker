@@ -18,8 +18,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using CalorieTracker.Data;
-using CalorieTracker.Models;
-using Microsoft.EntityFrameworkCore;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Areas.Identity.Pages.Account;
 
@@ -31,7 +30,7 @@ public class RegisterModel : PageModel
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
     private readonly ILogger<RegisterModel> _logger;
     private readonly IEmailSender _emailSender;
-    private readonly ApplicationDbContext _context;
+    private readonly CapyProvisioningService _capyProvisioningService;
 
     public RegisterModel(
         UserManager<ApplicationUser> userManager,
@@ -39,7 +38,7 @@ public class RegisterModel : PageModel
         SignInManager<ApplicationUser> signInManager,
         ILogger<RegisterModel> logger,
         IEmailSender emailSender,
-        ApplicationDbContext context)
+        CapyProvisioningService capyProvisioningService)
     {
         _userManager = userManager;
         _userStore = userStore;
@@ -47,7 +46,7 @@ public class RegisterModel : PageModel
         _signInManager = signInManager;
         _logger = logger;
         _emailSender = emailSender;
-        _context = context;
+        _capyProvisioningService = capyProvisioningService;
     }
 
     /// <summary>
@@ -144,43 +143,7 @@ public class RegisterModel : PageModel
                 _logger.LogInformation("User created a new account with password.");
                 var userId = await _userManager.GetUserIdAsync(user);
 
-                var defaultExpression = await _context.CapyItems
-                    .FirstAsync(item =>
-                        item.Category == "Expression" &&
-                        item.IsDefault &&
-                        item.IsActive);
-
-                var defaultBackground = await _context.CapyItems
-                    .FirstAsync(item =>
-                        item.Category == "Background" &&
-                        item.IsDefault &&
-                        item.IsActive);
-
-                var capyAppearance = new UserCapyAppearance
-                {
-                    UserId = userId,
-                    ExpressionId = defaultExpression.Id,
-                    BackgroundId = defaultBackground.Id
-                };
-
-                _context.UserCapyAppearances.Add(capyAppearance);
-
-                var starterItems = await _context.CapyItems
-                    .Where(item =>
-                        item.IsActive &&
-                        item.IsStarter)
-                    .ToListAsync();
-
-                var starterInventory = starterItems
-                    .Select(item => new UserCapyItem
-                    {
-                        UserId = userId,
-                        CapyItemId = item.Id
-                    });
-
-                _context.UserCapyItems.AddRange(starterInventory);
-
-                await _context.SaveChangesAsync();
+                await _capyProvisioningService.ProvisionAsync(userId);
 
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -203,9 +166,22 @@ public class RegisterModel : PageModel
                     return LocalRedirect(returnUrl);
                 }
             }
-            foreach (var error in result.Errors)
+            if (result.Errors.Any(error =>
+                    error.Code is "DuplicateUserName" or "DuplicateEmail"))
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(
+                    string.Empty,
+                    "An account could not be created with those details. " +
+                    "Try logging in or resetting your password.");
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        error.Description);
+                }
             }
         }
 

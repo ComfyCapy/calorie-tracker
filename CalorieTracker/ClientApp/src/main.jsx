@@ -19,6 +19,10 @@ const initialSearchTerm =
 const embedded =
     rootElement?.dataset.embedded === 'true'
 
+const antiForgeryToken = document.querySelector(
+    'input[name="__RequestVerificationToken"]'
+)?.value || ''
+
 if (rootElement) {
     createRoot(rootElement).render(
         <StrictMode>
@@ -28,6 +32,7 @@ if (rootElement) {
                 diaryMeal={diaryMeal}
                 initialSearchTerm={initialSearchTerm}
                 embedded={embedded}
+                antiForgeryToken={antiForgeryToken}
             />
         </StrictMode>,
     )
