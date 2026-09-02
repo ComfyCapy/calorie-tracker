@@ -229,12 +229,24 @@ namespace CalorieTracker.Pages.Diary
                 .Take(10)
                 .ToList();
 
+            // Keep a food selected through the search page available,
+            // even before it has been favourited or logged.
+            var selectedFoods = await _context.Foods
+                .Where(food =>
+                    food.UserId == userId &&
+                    food.Id == DiaryEntry.FoodId &&
+                    !food.IsDeleted)
+                .Include(food => food.Portions)
+                .ToListAsync();
+
             // Build one searchable list:
-            // favourites first, then custom foods, then recent foods.
+            // favourites first, then custom foods, recent foods,
+            // and any food selected through the search page.
             // GroupBy prevents the same food appearing twice.
             FoodOptions = favouriteFoods
                 .Concat(customFoods)
                 .Concat(recentFoods)
+                .Concat(selectedFoods)
                 .GroupBy(food => food.Id)
                 .Select(group => group.First())
                 .ToList();

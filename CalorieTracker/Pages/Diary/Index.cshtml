@@ -1,7 +1,12 @@
 ﻿@page
 @model CalorieTracker.Pages.Diary.IndexModel
 
+<link rel="stylesheet"
+      href="~/react-food-search/assets/food-search.css"
+      asp-append-version="true" />
+
 <h1>Daily Diary</h1>
+
 <div class="d-flex align-items-center gap-3 mb-3">
     <a asp-page="./Index"
        asp-route-date="@Model.PreviousDate.ToString("yyyy-MM-dd")"
@@ -35,6 +40,7 @@
         </button>
     </form>
 </div>
+
 <div class="card mb-4">
     <div class="card-body">
         <h4 class="card-title">Daily Progress</h4>
@@ -109,19 +115,21 @@
     var mealCarbs = mealEntries.Sum(entry => entry.CarbohydratesConsumed);
     var mealFat = mealEntries.Sum(entry => entry.FatConsumed);
 
-    <div class="mb-4">
-        <div class="mb-3">
-            <h3 class="mb-0">@meal</h3>
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-end mb-2">
+            <div>
+                <h3 class="mb-0">@meal</h3>
 
-            @if (mealEntries.Count > 0)
-            {
-                <small class="text-muted d-block mb-2">
-                    @mealCalories.ToString("0") kcal ·
-                    @mealProtein.ToString("0.0")g protein ·
-                    @mealCarbs.ToString("0.0")g carbs ·
-                    @mealFat.ToString("0.0")g fat
-                </small>
-            }
+                @if (mealEntries.Count > 0)
+                {
+                    <small class="text-muted">
+                        @mealCalories.ToString("0") kcal ·
+                        @mealProtein.ToString("0.0")g protein ·
+                        @mealCarbs.ToString("0.0")g carbs ·
+                        @mealFat.ToString("0.0")g fat
+                    </small>
+                }
+            </div>
 
             <a asp-page="./Create"
                asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
@@ -133,78 +141,85 @@
 
         @if (mealEntries.Count == 0)
         {
-            <p class="text-muted">No entries.</p>
+            <div class="food-search-result">
+                <span class="text-muted">
+                    No foods logged yet.
+                </span>
+            </div>
         }
         else
         {
-            <table class="table" style="table-layout: fixed;">
-                <colgroup>
-                    <col style="width: 22%;">
-                    <col style="width: 23%;">
-                    <col style="width: 14%;">
-                    <col style="width: 13%;">
-                    <col style="width: 10%;">
-                    <col style="width: 10%;">
-                    <col style="width: 8%;">
-                </colgroup>
+            <div class="food-search-list">
+                @foreach (var entry in mealEntries)
+                {
+                    <article class="food-search-result">
+                        <div class="food-search-result-main">
+                            <div>
+                                <h3>@entry.Food?.Name</h3>
 
-                <thead>
-                    <tr>
-                        <th>Food</th>
-                        <th>Quantity</th>
-                        <th>Calories</th>
-                        <th>Protein</th>
-                        <th>Carbs</th>
-                        <th>Fat</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var entry in mealEntries)
-                    {
-                        <tr>
-                            <td>@entry.Food?.Name</td>
-                            <td>
-                                @if (entry.FoodPortion != null && entry.PortionQuantity.HasValue)
+                                @if (entry.FoodPortion != null &&
+                                     entry.PortionQuantity.HasValue)
                                 {
-                                    <span>
-                                        @entry.PortionQuantity.Value.ToString("0.##") × @entry.FoodPortion.Name
-                                    </span>
+                                    <p>
+                                        @entry.PortionQuantity.Value.ToString("0.##")
+                                        ×
+                                        @entry.FoodPortion.Name
+                                    </p>
 
-                                    <small class="text-muted d-block">
-                                        @entry.Quantity.ToString("0.##") @entry.Food?.ServingUnit
+                                    <small class="text-muted">
+                                        @entry.Quantity.ToString("0.##")
+                                        @entry.Food?.ServingUnit
                                     </small>
                                 }
                                 else
                                 {
-                                    <span>
-                                        @entry.Quantity.ToString("0.##") @entry.Food?.ServingUnit
-                                    </span>
+                                    <p>
+                                        @entry.Quantity.ToString("0.##")
+                                        @entry.Food?.ServingUnit
+                                    </p>
                                 }
-                            </td>
-                            <td>@entry.CaloriesConsumed.ToString("0") kcal</td>
-                            <td>@entry.ProteinConsumed.ToString("0.0") g</td>
-                            <td>@entry.CarbohydratesConsumed.ToString("0.0") g</td>
-                            <td>@entry.FatConsumed.ToString("0.0") g</td>
-                            <td>
-                                <div class="d-flex justify-content-end gap-1">
-                                    <a asp-page="./Edit"
-                                       asp-route-id="@entry.Id"
-                                       class="btn btn-sm btn-primary">
-                                        Edit
-                                    </a>
+                            </div>
 
-                                    <a asp-page="./Delete"
-                                       asp-route-id="@entry.Id"
-                                       class="btn btn-sm btn-danger">
-                                        Delete
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                            <strong class="food-search-calories">
+                                @entry.CaloriesConsumed.ToString("0") kcal
+                            </strong>
+                        </div>
+
+                        <div class="food-search-result-bottom">
+                            <div class="food-search-macros">
+                                <span>
+                                    <strong>P</strong>
+                                    @entry.ProteinConsumed.ToString("0.0")g
+                                </span>
+
+                                <span>
+                                    <strong>C</strong>
+                                    @entry.CarbohydratesConsumed.ToString("0.0")g
+                                </span>
+
+                                <span>
+                                    <strong>F</strong>
+                                    @entry.FatConsumed.ToString("0.0")g
+                                </span>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-page="./Edit"
+                                   asp-route-id="@entry.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
+
+                                <a asp-page="./Delete"
+                                   asp-route-id="@entry.Id"
+                                   class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
         }
-    </div>
+    </section>
 }

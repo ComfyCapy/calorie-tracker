@@ -19,9 +19,22 @@ namespace CalorieTracker.Services
         public async Task<List<FoodSearchResult>> SearchFoodsAsync(
             string searchTerm)
         {
+            var page = await SearchFoodsPageAsync(
+                searchTerm,
+                1,
+                20);
+
+            return page.Foods;
+        }
+
+        public async Task<FoodSearchPage> SearchFoodsPageAsync(
+            string searchTerm,
+            int pageNumber,
+            int pageSize)
+        {
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                return [];
+                return new FoodSearchPage();
             }
 
             var apiKey = _configuration["FoodDataCentral:ApiKey"];
@@ -35,7 +48,8 @@ namespace CalorieTracker.Services
             var request = new UsdaSearchRequest
             {
                 Query = searchTerm,
-                PageSize = 20,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 DataType =
                 [
                     "Foundation",
@@ -58,10 +72,14 @@ namespace CalorieTracker.Services
 
             if (result == null)
             {
-                return [];
+                return new FoodSearchPage
+                {
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
             }
 
-            return result.Foods
+            var foods = result.Foods
                 .Select(food => new FoodSearchResult
                 {
                     ExternalId = food.FdcId.ToString(),
@@ -82,6 +100,17 @@ namespace CalorieTracker.Services
                     food.Carbohydrates > 0 ||
                     food.Fat > 0)
                 .ToList();
+
+            return new FoodSearchPage
+            {
+                Foods = foods,
+                PageNumber = result.CurrentPage > 0
+                    ? result.CurrentPage
+                    : pageNumber,
+                PageSize = pageSize,
+                TotalResults = result.TotalHits,
+                TotalPages = result.TotalPages
+            };
         }
 
         public async Task<FoodSearchResult?> GetFoodAsync(string externalId)
@@ -162,12 +191,20 @@ namespace CalorieTracker.Services
 
             public int PageSize { get; set; }
 
+            public int PageNumber { get; set; }
+
             public List<string> DataType { get; set; } = [];
         }
 
         private class UsdaSearchResponse
         {
             public List<UsdaFood> Foods { get; set; } = [];
+
+            public int CurrentPage { get; set; }
+
+            public int TotalHits { get; set; }
+
+            public int TotalPages { get; set; }
         }
 
         private class UsdaFood
