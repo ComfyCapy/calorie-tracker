@@ -629,6 +629,19 @@ body {
     border-radius: 14px;
     background: var(--bs-tertiary-bg);
     font-weight: 800;
+    color: #212529;
+}
+
+.dashboard-macro-card:nth-child(1) .dashboard-macro-icon {
+    background: #f8cdd8;
+}
+
+.dashboard-macro-card:nth-child(2) .dashboard-macro-icon {
+    background: #f8e3ad;
+}
+
+.dashboard-macro-card:nth-child(3) .dashboard-macro-icon {
+    background: #cce8e3;
 }
 
 .dashboard-macro-label {

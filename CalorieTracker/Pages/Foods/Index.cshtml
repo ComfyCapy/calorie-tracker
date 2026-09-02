@@ -1,6 +1,10 @@
 ﻿@page
 @model CalorieTracker.Pages.Foods.IndexModel
 
+<link rel="stylesheet"
+      href="~/react-food-search/assets/food-search.css"
+      asp-append-version="true" />
+
 <h1>My Foods</h1>
 
 <form method="get" class="mb-3">
@@ -47,17 +51,6 @@
             Clear Search
         </a>
     </p>
-
-    @if (Model.FavouriteFoods.Count == 0 &&
-         Model.CustomFoods.Count == 0 &&
-         Model.RecentFoods.Count == 0 &&
-         Model.DatabaseFoods.Count == 0)
-    {
-        <div class="alert alert-secondary">
-            No foods found matching
-            "<strong>@Model.SearchTerm</strong>".
-        </div>
-    }
 }
 
 
@@ -67,58 +60,46 @@
 
 @if (Model.FavouriteFoods.Count > 0)
 {
-    <h2 class="mt-4">Favourites</h2>
+    <section class="mt-4">
+        <h2>Favourites</h2>
 
-    <table class="table food-table" style="table-layout: fixed;">
-        <colgroup>
-            <col style="width: 32%;">
-            <col style="width: 20%;">
-            <col style="width: 12%;">
-            <col style="width: 10%;">
-            <col style="width: 10%;">
-            <col style="width: 16%;">
-        </colgroup>
-
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Calories</th>
-                <th>Protein</th>
-                <th>Carbs</th>
-                <th>Fat</th>
-                <th></th>
-            </tr>
-        </thead>
-
-        <tbody>
+        <div class="food-search-list">
             @foreach (var food in Model.FavouriteFoods)
             {
-                <tr>
-                    <td>@food.Name</td>
+                <article class="food-search-result">
+                    <div class="food-search-result-main">
+                        <div>
+                            <h3>@food.Name</h3>
 
-                    <td>
-                        @food.Calories kcal
+                            <p>
+                                Per @food.ServingSize.ToString("0.##")@food.ServingUnit
+                            </p>
+                        </div>
 
-                        <small class="text-muted">
-                            per @food.ServingSize.ToString("0.##")
-                            @food.ServingUnit
-                        </small>
-                    </td>
+                        <strong class="food-search-calories">
+                            @food.Calories kcal
+                        </strong>
+                    </div>
 
-                    <td>
-                        @food.Protein.ToString("0.##") g
-                    </td>
+                    <div class="food-search-result-bottom">
+                        <div class="food-search-macros">
+                            <span>
+                                <strong>P</strong>
+                                @food.Protein.ToString("0.##")g
+                            </span>
 
-                    <td>
-                        @food.Carbohydrates.ToString("0.##") g
-                    </td>
+                            <span>
+                                <strong>C</strong>
+                                @food.Carbohydrates.ToString("0.##")g
+                            </span>
 
-                    <td>
-                        @food.Fat.ToString("0.##") g
-                    </td>
+                            <span>
+                                <strong>F</strong>
+                                @food.Fat.ToString("0.##")g
+                            </span>
+                        </div>
 
-                    <td>
-                        <div class="d-flex gap-2 align-items-center">
+                        <div class="food-search-actions">
                             <form method="post"
                                   asp-page-handler="Unfavourite"
                                   asp-route-id="@food.Id"
@@ -128,48 +109,44 @@
                                   asp-route-diaryMeal="@Model.DiaryMeal">
 
                                 <button type="submit"
-                                        class="btn btn-sm btn-warning"
+                                        class="food-search-favourite-button is-favourite"
                                         aria-label="Remove from Favourites"
                                         title="Remove from Favourites">
                                     ★
                                 </button>
                             </form>
 
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary food-actions-button"
-                                        type="button"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false"
-                                        aria-label="Food actions">
-                                    ⋮
-                                </button>
+                            @if (food.Source != null)
+                            {
+                                <a asp-page="./ApiFood"
+                                   asp-route-id="@food.ExternalId"
+                                   asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
+                                   asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   class="btn btn-primary btn-sm">
+                                    Add to Diary
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-page="../Diary/Create"
+                                   asp-route-foodId="@food.Id"
+                                   asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
+                                   asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
+                                   class="btn btn-primary btn-sm">
+                                    Add to Diary
+                                </a>
 
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    @if (food.Source != null)
-                                    {
-                                        <li>
-                                            <a asp-page="./ApiFood"
-                                               asp-route-id="@food.ExternalId"
-                                               asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
-                                               asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                                               asp-route-searchTerm="@Model.SearchTerm"
-                                               class="dropdown-item">
-                                                Add to Diary
-                                            </a>
-                                        </li>
-                                    }
-                                    else
-                                    {
-                                        <li>
-                                            <a asp-page="../Diary/Create"
-                                               asp-route-foodId="@food.Id"
-                                               asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
-                                               asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                                               class="dropdown-item">
-                                                Add to Diary
-                                            </a>
-                                        </li>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary food-actions-button"
+                                            type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                            aria-label="Food actions">
+                                        ⋮
+                                    </button>
 
+                                    <ul class="dropdown-menu dropdown-menu-end">
                                         <li>
                                             <a asp-page="./Edit"
                                                asp-route-id="@food.Id"
@@ -185,66 +162,78 @@
                                                 Manage portions
                                             </a>
                                         </li>
-                                    }
-                                </ul>
-                            </div>
+
+                                        <li>
+                                            <hr class="dropdown-divider" />
+                                        </li>
+
+                                        <li>
+                                            <a asp-page="./Delete"
+                                               asp-route-id="@food.Id"
+                                               class="dropdown-item text-danger">
+                                                Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
                         </div>
-                    </td>
-                </tr>
+                    </div>
+                </article>
             }
-        </tbody>
-    </table>
+        </div>
 
-    <div class="d-flex justify-content-between align-items-center">
-        <small class="text-muted">
-            Showing
-            @(((Model.FavouritesPage - 1) * Model.PageSize) + 1)
-            –
-            @Math.Min(
-                Model.FavouritesPage * Model.PageSize,
-                Model.FavouritesTotalCount)
-            of @Model.FavouritesTotalCount
-        </small>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">
+                Showing
+                @(((Model.FavouritesPage - 1) * Model.PageSize) + 1)
+                –
+                @Math.Min(
+                    Model.FavouritesPage * Model.PageSize,
+                    Model.FavouritesTotalCount)
+                of @Model.FavouritesTotalCount
+            </small>
 
-        @if (Model.FavouritesTotalPages > 1)
-        {
-            <nav aria-label="Favourites pages">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item @(Model.FavouritesPage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-route-searchTerm="@Model.SearchTerm"
-                           asp-route-returnToDiary="@Model.ReturnToDiary"
-                           asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                           asp-route-diaryMeal="@Model.DiaryMeal"
-                           asp-route-favouritesPage="@(Model.FavouritesPage - 1)"
-                           asp-route-customPage="@Model.CustomPage"
-                           asp-route-recentPage="@Model.RecentPage">
-                            ‹
-                        </a>
-                    </li>
+            @if (Model.FavouritesTotalPages > 1)
+            {
+                <nav aria-label="Favourites pages">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.FavouritesPage <= 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-returnToDiary="@Model.ReturnToDiary"
+                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                               asp-route-diaryMeal="@Model.DiaryMeal"
+                               asp-route-favouritesPage="@(Model.FavouritesPage - 1)"
+                               asp-route-customPage="@Model.CustomPage"
+                               asp-route-recentPage="@Model.RecentPage">
+                                ‹
+                            </a>
+                        </li>
 
-                    <li class="page-item disabled">
-                        <span class="page-link">
-                            Page @Model.FavouritesPage of @Model.FavouritesTotalPages
-                        </span>
-                    </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Page @Model.FavouritesPage of @Model.FavouritesTotalPages
+                            </span>
+                        </li>
 
-                    <li class="page-item @(Model.FavouritesPage >= Model.FavouritesTotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-route-searchTerm="@Model.SearchTerm"
-                           asp-route-returnToDiary="@Model.ReturnToDiary"
-                           asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                           asp-route-diaryMeal="@Model.DiaryMeal"
-                           asp-route-favouritesPage="@(Model.FavouritesPage + 1)"
-                           asp-route-customPage="@Model.CustomPage"
-                           asp-route-recentPage="@Model.RecentPage">
-                            ›
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-    </div>
+                        <li class="page-item @(Model.FavouritesPage >= Model.FavouritesTotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-returnToDiary="@Model.ReturnToDiary"
+                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                               asp-route-diaryMeal="@Model.DiaryMeal"
+                               asp-route-favouritesPage="@(Model.FavouritesPage + 1)"
+                               asp-route-customPage="@Model.CustomPage"
+                               asp-route-recentPage="@Model.RecentPage">
+                                ›
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </section>
 }
 
 
@@ -254,58 +243,46 @@
 
 @if (Model.CustomFoods.Count > 0)
 {
-    <h2 class="mt-5">Custom Foods</h2>
+    <section class="mt-5">
+        <h2>Custom Foods</h2>
 
-    <table class="table food-table" style="table-layout: fixed;">
-        <colgroup>
-            <col style="width: 32%;">
-            <col style="width: 20%;">
-            <col style="width: 12%;">
-            <col style="width: 10%;">
-            <col style="width: 10%;">
-            <col style="width: 16%;">
-        </colgroup>
-
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Calories</th>
-                <th>Protein</th>
-                <th>Carbs</th>
-                <th>Fat</th>
-                <th></th>
-            </tr>
-        </thead>
-
-        <tbody>
+        <div class="food-search-list">
             @foreach (var food in Model.CustomFoods)
             {
-                <tr>
-                    <td>@food.Name</td>
+                <article class="food-search-result">
+                    <div class="food-search-result-main">
+                        <div>
+                            <h3>@food.Name</h3>
 
-                    <td>
-                        @food.Calories kcal
+                            <p>
+                                Per @food.ServingSize.ToString("0.##")@food.ServingUnit
+                            </p>
+                        </div>
 
-                        <small class="text-muted">
-                            per @food.ServingSize.ToString("0.##")
-                            @food.ServingUnit
-                        </small>
-                    </td>
+                        <strong class="food-search-calories">
+                            @food.Calories kcal
+                        </strong>
+                    </div>
 
-                    <td>
-                        @food.Protein.ToString("0.##") g
-                    </td>
+                    <div class="food-search-result-bottom">
+                        <div class="food-search-macros">
+                            <span>
+                                <strong>P</strong>
+                                @food.Protein.ToString("0.##")g
+                            </span>
 
-                    <td>
-                        @food.Carbohydrates.ToString("0.##") g
-                    </td>
+                            <span>
+                                <strong>C</strong>
+                                @food.Carbohydrates.ToString("0.##")g
+                            </span>
 
-                    <td>
-                        @food.Fat.ToString("0.##") g
-                    </td>
+                            <span>
+                                <strong>F</strong>
+                                @food.Fat.ToString("0.##")g
+                            </span>
+                        </div>
 
-                    <td>
-                        <div class="d-flex gap-2 align-items-center">
+                        <div class="food-search-actions">
                             <form method="post"
                                   asp-page-handler="@(food.IsFavourite ? "Unfavourite" : "Favourite")"
                                   asp-route-id="@food.Id"
@@ -315,12 +292,20 @@
                                   asp-route-diaryMeal="@Model.DiaryMeal">
 
                                 <button type="submit"
-                                        class="btn btn-sm @(food.IsFavourite ? "btn-warning" : "btn-outline-warning")"
+                                        class="food-search-favourite-button @(food.IsFavourite ? "is-favourite" : "")"
                                         aria-label="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")"
                                         title="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")">
                                     @(food.IsFavourite ? "★" : "☆")
                                 </button>
                             </form>
+
+                            <a asp-page="../Diary/Create"
+                               asp-route-foodId="@food.Id"
+                               asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
+                               asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
+                               class="btn btn-primary btn-sm">
+                                Add to Diary
+                            </a>
 
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary food-actions-button"
@@ -332,16 +317,6 @@
                                 </button>
 
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a asp-page="../Diary/Create"
-                                           asp-route-foodId="@food.Id"
-                                           asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
-                                           asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                                           class="dropdown-item">
-                                            Add to Diary
-                                        </a>
-                                    </li>
-
                                     <li>
                                         <a asp-page="./Edit"
                                            asp-route-id="@food.Id"
@@ -372,62 +347,62 @@
                                 </ul>
                             </div>
                         </div>
-                    </td>
-                </tr>
+                    </div>
+                </article>
             }
-        </tbody>
-    </table>
+        </div>
 
-    <div class="d-flex justify-content-between align-items-center">
-        <small class="text-muted">
-            Showing
-            @(((Model.CustomPage - 1) * Model.PageSize) + 1)
-            –
-            @Math.Min(
-                Model.CustomPage * Model.PageSize,
-                Model.CustomTotalCount)
-            of @Model.CustomTotalCount
-        </small>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">
+                Showing
+                @(((Model.CustomPage - 1) * Model.PageSize) + 1)
+                –
+                @Math.Min(
+                    Model.CustomPage * Model.PageSize,
+                    Model.CustomTotalCount)
+                of @Model.CustomTotalCount
+            </small>
 
-        @if (Model.CustomTotalPages > 1)
-        {
-            <nav aria-label="Custom food pages">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item @(Model.CustomPage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-route-searchTerm="@Model.SearchTerm"
-                           asp-route-returnToDiary="@Model.ReturnToDiary"
-                           asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                           asp-route-diaryMeal="@Model.DiaryMeal"
-                           asp-route-favouritesPage="@Model.FavouritesPage"
-                           asp-route-customPage="@(Model.CustomPage - 1)"
-                           asp-route-recentPage="@Model.RecentPage">
-                            ‹
-                        </a>
-                    </li>
+            @if (Model.CustomTotalPages > 1)
+            {
+                <nav aria-label="Custom food pages">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.CustomPage <= 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-returnToDiary="@Model.ReturnToDiary"
+                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                               asp-route-diaryMeal="@Model.DiaryMeal"
+                               asp-route-favouritesPage="@Model.FavouritesPage"
+                               asp-route-customPage="@(Model.CustomPage - 1)"
+                               asp-route-recentPage="@Model.RecentPage">
+                                ‹
+                            </a>
+                        </li>
 
-                    <li class="page-item disabled">
-                        <span class="page-link">
-                            Page @Model.CustomPage of @Model.CustomTotalPages
-                        </span>
-                    </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Page @Model.CustomPage of @Model.CustomTotalPages
+                            </span>
+                        </li>
 
-                    <li class="page-item @(Model.CustomPage >= Model.CustomTotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-route-searchTerm="@Model.SearchTerm"
-                           asp-route-returnToDiary="@Model.ReturnToDiary"
-                           asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                           asp-route-diaryMeal="@Model.DiaryMeal"
-                           asp-route-favouritesPage="@Model.FavouritesPage"
-                           asp-route-customPage="@(Model.CustomPage + 1)"
-                           asp-route-recentPage="@Model.RecentPage">
-                            ›
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-    </div>
+                        <li class="page-item @(Model.CustomPage >= Model.CustomTotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-returnToDiary="@Model.ReturnToDiary"
+                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                               asp-route-diaryMeal="@Model.DiaryMeal"
+                               asp-route-favouritesPage="@Model.FavouritesPage"
+                               asp-route-customPage="@(Model.CustomPage + 1)"
+                               asp-route-recentPage="@Model.RecentPage">
+                                ›
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </section>
 }
 
 
@@ -437,58 +412,46 @@
 
 @if (Model.RecentFoods.Count > 0)
 {
-    <h2 class="mt-5">Recent Foods</h2>
+    <section class="mt-5">
+        <h2>Recent Foods</h2>
 
-    <table class="table food-table" style="table-layout: fixed;">
-        <colgroup>
-            <col style="width: 32%;">
-            <col style="width: 20%;">
-            <col style="width: 12%;">
-            <col style="width: 10%;">
-            <col style="width: 10%;">
-            <col style="width: 16%;">
-        </colgroup>
-
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Calories</th>
-                <th>Protein</th>
-                <th>Carbs</th>
-                <th>Fat</th>
-                <th></th>
-            </tr>
-        </thead>
-
-        <tbody>
+        <div class="food-search-list">
             @foreach (var food in Model.RecentFoods)
             {
-                <tr>
-                    <td>@food.Name</td>
+                <article class="food-search-result">
+                    <div class="food-search-result-main">
+                        <div>
+                            <h3>@food.Name</h3>
 
-                    <td>
-                        @food.Calories kcal
+                            <p>
+                                Per @food.ServingSize.ToString("0.##")@food.ServingUnit
+                            </p>
+                        </div>
 
-                        <small class="text-muted">
-                            per @food.ServingSize.ToString("0.##")
-                            @food.ServingUnit
-                        </small>
-                    </td>
+                        <strong class="food-search-calories">
+                            @food.Calories kcal
+                        </strong>
+                    </div>
 
-                    <td>
-                        @food.Protein.ToString("0.##") g
-                    </td>
+                    <div class="food-search-result-bottom">
+                        <div class="food-search-macros">
+                            <span>
+                                <strong>P</strong>
+                                @food.Protein.ToString("0.##")g
+                            </span>
 
-                    <td>
-                        @food.Carbohydrates.ToString("0.##") g
-                    </td>
+                            <span>
+                                <strong>C</strong>
+                                @food.Carbohydrates.ToString("0.##")g
+                            </span>
 
-                    <td>
-                        @food.Fat.ToString("0.##") g
-                    </td>
+                            <span>
+                                <strong>F</strong>
+                                @food.Fat.ToString("0.##")g
+                            </span>
+                        </div>
 
-                    <td>
-                        <div class="d-flex gap-2 align-items-center">
+                        <div class="food-search-actions">
                             <form method="post"
                                   asp-page-handler="@(food.IsFavourite ? "Unfavourite" : "Favourite")"
                                   asp-route-id="@food.Id"
@@ -498,92 +461,78 @@
                                   asp-route-diaryMeal="@Model.DiaryMeal">
 
                                 <button type="submit"
-                                        class="btn btn-sm @(food.IsFavourite ? "btn-warning" : "btn-outline-warning")"
+                                        class="food-search-favourite-button @(food.IsFavourite ? "is-favourite" : "")"
                                         aria-label="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")"
                                         title="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")">
                                     @(food.IsFavourite ? "★" : "☆")
                                 </button>
                             </form>
 
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary food-actions-button"
-                                        type="button"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false"
-                                        aria-label="Food actions">
-                                    ⋮
-                                </button>
-
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a asp-page="./ApiFood"
-                                           asp-route-id="@food.ExternalId"
-                                           asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
-                                           asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                                           asp-route-searchTerm="@Model.SearchTerm"
-                                           class="dropdown-item">
-                                            Add to Diary
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+                            <a asp-page="./ApiFood"
+                               asp-route-id="@food.ExternalId"
+                               asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
+                               asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               class="btn btn-primary btn-sm">
+                                Add to Diary
+                            </a>
                         </div>
-                    </td>
-                </tr>
+                    </div>
+                </article>
             }
-        </tbody>
-    </table>
+        </div>
 
-    <div class="d-flex justify-content-between align-items-center">
-        <small class="text-muted">
-            Showing
-            @(((Model.RecentPage - 1) * Model.PageSize) + 1)
-            –
-            @Math.Min(
-                Model.RecentPage * Model.PageSize,
-                Model.RecentTotalCount)
-            of @Model.RecentTotalCount
-        </small>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">
+                Showing
+                @(((Model.RecentPage - 1) * Model.PageSize) + 1)
+                –
+                @Math.Min(
+                    Model.RecentPage * Model.PageSize,
+                    Model.RecentTotalCount)
+                of @Model.RecentTotalCount
+            </small>
 
-        @if (Model.RecentTotalPages > 1)
-        {
-            <nav aria-label="Recent food pages">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item @(Model.RecentPage <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-route-searchTerm="@Model.SearchTerm"
-                           asp-route-returnToDiary="@Model.ReturnToDiary"
-                           asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                           asp-route-diaryMeal="@Model.DiaryMeal"
-                           asp-route-favouritesPage="@Model.FavouritesPage"
-                           asp-route-customPage="@Model.CustomPage"
-                           asp-route-recentPage="@(Model.RecentPage - 1)">
-                            ‹
-                        </a>
-                    </li>
+            @if (Model.RecentTotalPages > 1)
+            {
+                <nav aria-label="Recent food pages">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.RecentPage <= 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-returnToDiary="@Model.ReturnToDiary"
+                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                               asp-route-diaryMeal="@Model.DiaryMeal"
+                               asp-route-favouritesPage="@Model.FavouritesPage"
+                               asp-route-customPage="@Model.CustomPage"
+                               asp-route-recentPage="@(Model.RecentPage - 1)">
+                                ‹
+                            </a>
+                        </li>
 
-                    <li class="page-item disabled">
-                        <span class="page-link">
-                            Page @Model.RecentPage of @Model.RecentTotalPages
-                        </span>
-                    </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Page @Model.RecentPage of @Model.RecentTotalPages
+                            </span>
+                        </li>
 
-                    <li class="page-item @(Model.RecentPage >= Model.RecentTotalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-route-searchTerm="@Model.SearchTerm"
-                           asp-route-returnToDiary="@Model.ReturnToDiary"
-                           asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                           asp-route-diaryMeal="@Model.DiaryMeal"
-                           asp-route-favouritesPage="@Model.FavouritesPage"
-                           asp-route-customPage="@Model.CustomPage"
-                           asp-route-recentPage="@(Model.RecentPage + 1)">
-                            ›
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-    </div>
+                        <li class="page-item @(Model.RecentPage >= Model.RecentTotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-returnToDiary="@Model.ReturnToDiary"
+                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                               asp-route-diaryMeal="@Model.DiaryMeal"
+                               asp-route-favouritesPage="@Model.FavouritesPage"
+                               asp-route-customPage="@Model.CustomPage"
+                               asp-route-recentPage="@(Model.RecentPage + 1)">
+                                ›
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </section>
 }
 
 
@@ -591,112 +540,19 @@
    FOOD DATABASE
    ========================= *@
 
-@if (!string.IsNullOrWhiteSpace(Model.SearchTerm) &&
-     Model.DatabaseFoods.Count > 0)
+@if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
 {
-    <h2 class="mt-5">Food Database</h2>
+    <div id="react-food-search"
+         data-return-to-diary="@Model.ReturnToDiary.ToString().ToLowerInvariant()"
+         data-diary-date="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+         data-diary-meal="@Model.DiaryMeal"
+         data-initial-search-term="@Model.SearchTerm"
+         data-embedded="true">
+    </div>
+}
 
-    <table class="table food-table" style="table-layout: fixed;">
-        <colgroup>
-            <col style="width: 32%;">
-            <col style="width: 20%;">
-            <col style="width: 12%;">
-            <col style="width: 10%;">
-            <col style="width: 10%;">
-            <col style="width: 16%;">
-        </colgroup>
-
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Calories</th>
-                <th>Protein</th>
-                <th>Carbs</th>
-                <th>Fat</th>
-                <th></th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var food in Model.DatabaseFoods)
-            {
-                <tr>
-                    <td>@food.Name</td>
-
-                    <td>
-                        @food.Calories.ToString("0.#") kcal
-
-                        <small class="text-muted">
-                            per @food.ServingSize.ToString("0.##")
-                            @food.ServingUnit
-                        </small>
-                    </td>
-
-                    <td>
-                        @food.Protein.ToString("0.##") g
-                    </td>
-
-                    <td>
-                        @food.Carbohydrates.ToString("0.##") g
-                    </td>
-
-                    <td>
-                        @food.Fat.ToString("0.##") g
-                    </td>
-
-                    <td>
-                        <div class="d-flex gap-2 align-items-center">
-                            @if (Model.FavouriteDatabaseKeys.Contains(
-                                $"{food.Source}|{food.ExternalId}"))
-                            {
-                                <form method="post"
-                                      asp-page-handler="UnfavouriteDatabase"
-                                      asp-route-source="@food.Source"
-                                      asp-route-externalId="@food.ExternalId"
-                                      asp-route-searchTerm="@Model.SearchTerm"
-                                      asp-route-returnToDiary="@Model.ReturnToDiary"
-                                      asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                                      asp-route-diaryMeal="@Model.DiaryMeal">
-
-                                    <button type="submit"
-                                            class="btn btn-sm btn-warning"
-                                            aria-label="Remove from Favourites"
-                                            title="Remove from Favourites">
-                                        ★
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <form method="post"
-                                      asp-page-handler="FavouriteDatabase"
-                                      asp-route-externalId="@food.ExternalId"
-                                      asp-route-searchTerm="@Model.SearchTerm"
-                                      asp-route-returnToDiary="@Model.ReturnToDiary"
-                                      asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                                      asp-route-diaryMeal="@Model.DiaryMeal">
-
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-warning"
-                                            aria-label="Add to Favourites"
-                                            title="Add to Favourites">
-                                        ☆
-                                    </button>
-                                </form>
-                            }
-
-                            <a asp-page="./ApiFood"
-                               asp-route-id="@food.ExternalId"
-                               asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
-                               asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               class="btn btn-sm btn-primary">
-                                Add to Diary
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+@section Scripts {
+    <script type="module"
+            src="~/react-food-search/assets/food-search.js"
+            asp-append-version="true"></script>
 }

@@ -1,0 +1,22 @@
+﻿@page
+@model CalorieTracker.Pages.Foods.SearchModel
+
+@{
+    ViewData["Title"] = "Food Search";
+}
+
+<link rel="stylesheet"
+      href="~/react-food-search/assets/food-search.css"
+      asp-append-version="true" />
+
+<div id="react-food-search"
+     data-return-to-diary="@Model.ReturnToDiary.ToString().ToLowerInvariant()"
+     data-diary-date="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+     data-diary-meal="@Model.DiaryMeal">
+</div>
+
+@section Scripts {
+    <script type="module"
+            src="~/react-food-search/assets/food-search.js"
+            asp-append-version="true"></script>
+}

@@ -6,6 +6,8 @@
 
         public string Source { get; set; } = string.Empty;
 
+        public bool IsFavourite { get; set; }
+
         public string Name { get; set; } = string.Empty;
 
         public decimal Calories { get; set; }
