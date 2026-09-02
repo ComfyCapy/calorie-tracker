@@ -586,17 +586,6 @@ else
         const imperialGoalConsistencyError =
             document.getElementById("imperialGoalConsistencyError");
 
-
-        // Preserve the currently selected theme when a profile
-        // is created for the first time.
-        const savedTheme =
-            localStorage.getItem("theme") || "system";
-
-        profileThemePreference.value =
-            savedTheme.charAt(0).toUpperCase() +
-            savedTheme.slice(1);
-
-
         function convertMetricToImperial() {
             const heightCm =
                 parseFloat(heightCmInput.value);

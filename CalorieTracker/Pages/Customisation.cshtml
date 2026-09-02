@@ -243,7 +243,8 @@
 
                 <button type="button"
                         class="capy-theme-option theme-option"
-                        data-theme="light">
+                        data-theme="light"
+                        disabled="@(!Model.HasUserProfile)">
                     <span class="capy-theme-option-title">
                         Light
                     </span>
@@ -255,7 +256,8 @@
 
                 <button type="button"
                         class="capy-theme-option theme-option"
-                        data-theme="dark">
+                        data-theme="dark"
+                        disabled="@(!Model.HasUserProfile)">
                     <span class="capy-theme-option-title">
                         Dark
                     </span>
@@ -267,7 +269,8 @@
 
                 <button type="button"
                         class="capy-theme-option theme-option"
-                        data-theme="system">
+                        data-theme="system"
+                        disabled="@(!Model.HasUserProfile)">
                     <span class="capy-theme-option-title">
                         System
                     </span>
@@ -278,6 +281,12 @@
                 </button>
 
             </div>
+            @if (!Model.HasUserProfile)
+            {
+                <p class="text-body-secondary small mt-2 mb-0">
+                    Complete your profile to choose and save an account theme.
+                </p>
+            }
         </section>
     }
 
@@ -428,8 +437,8 @@
             });
 
         function updateSelectedTheme() {
-            const selectedTheme =
-                localStorage.getItem("theme") || "system";
+        const selectedTheme =
+        document.documentElement.dataset.themePreference || "system";
 
             document.querySelectorAll(".capy-theme-option")
                 .forEach(button => {
