@@ -60,7 +60,6 @@ namespace CalorieTracker.Pages
             var today = DateTime.Today;
 
             var todaysEntries = await _context.DiaryEntries
-                .Include(entry => entry.Food)
                 .Where(entry =>
                     entry.UserId == userId &&
                     entry.Date.Date == today)
@@ -68,25 +67,10 @@ namespace CalorieTracker.Pages
 
             foreach (var entry in todaysEntries)
             {
-                if (entry.Food == null || entry.Food.ServingSize <= 0)
-                {
-                    continue;
-                }
-
-                var servingMultiplier =
-                    entry.Quantity / entry.Food.ServingSize;
-
-                CaloriesConsumed +=
-                    entry.Food.Calories * servingMultiplier;
-
-                ProteinConsumed +=
-                    entry.Food.Protein * servingMultiplier;
-
-                CarbohydratesConsumed +=
-                    entry.Food.Carbohydrates * servingMultiplier;
-
-                FatConsumed +=
-                    entry.Food.Fat * servingMultiplier;
+                CaloriesConsumed += entry.CaloriesConsumed;
+                ProteinConsumed += entry.ProteinConsumed;
+                CarbohydratesConsumed += entry.CarbohydratesConsumed;
+                FatConsumed += entry.FatConsumed;
             }
 
 

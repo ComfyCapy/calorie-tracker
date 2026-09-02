@@ -32,6 +32,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultUI();
 
 builder.Services.AddHttpClient<IFoodSearchService, UsdaFoodService>();
+builder.Services.AddScoped<ExternalFoodResolver>();
 
 // Resend email service.
 builder.Services.AddOptions();
@@ -49,6 +50,8 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
+
+app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

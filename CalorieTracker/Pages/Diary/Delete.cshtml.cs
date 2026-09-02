@@ -3,6 +3,7 @@ using CalorieTracker.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using CalorieTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -27,6 +28,11 @@ namespace CalorieTracker.Pages.Diary
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -50,8 +56,13 @@ namespace CalorieTracker.Pages.Diary
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(int id)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -61,7 +72,7 @@ namespace CalorieTracker.Pages.Diary
 
             var diaryEntry = await _context.DiaryEntries
                 .FirstOrDefaultAsync(entry =>
-                    entry.Id == DiaryEntry.Id &&
+                    entry.Id == id &&
                     entry.UserId == userId);
 
             if (diaryEntry == null)

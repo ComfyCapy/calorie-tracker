@@ -28,6 +28,8 @@ else
 
 <form method="post">
 
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
     <input asp-for="UserProfile.ThemePreference"
            type="hidden"
            id="profileThemePreference" />

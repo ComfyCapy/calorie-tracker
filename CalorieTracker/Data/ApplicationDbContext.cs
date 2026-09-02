@@ -38,11 +38,29 @@ namespace CalorieTracker.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<DiaryEntry>()
+                .HasOne(entry => entry.Food)
+                .WithMany()
+                .HasForeignKey(entry => entry.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<DiaryEntry>()
                 .HasOne(entry => entry.FoodPortion)
                 .WithMany()
                 .HasForeignKey(entry => entry.FoodPortionId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<Food>()
+                .HasIndex(food => new
+                {
+                    food.UserId,
+                    food.Source,
+                    food.ExternalId
+                })
+                .IsUnique()
+                .HasFilter(
+                    "\"UserId\" IS NOT NULL AND " +
+                    "\"Source\" IS NOT NULL AND " +
+                    "\"ExternalId\" IS NOT NULL");
 
             // A user should only own each Capy item once.
             builder.Entity<UserCapyItem>()

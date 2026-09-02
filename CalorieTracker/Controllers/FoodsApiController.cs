@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using CalorieTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace CalorieTracker.Controllers
 {
@@ -16,15 +17,18 @@ namespace CalorieTracker.Controllers
         private readonly IFoodSearchService _foodSearchService;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ExternalFoodResolver _externalFoodResolver;
 
         public FoodsApiController(
             IFoodSearchService foodSearchService,
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            ExternalFoodResolver externalFoodResolver)
         {
             _foodSearchService = foodSearchService;
             _context = context;
             _userManager = userManager;
+            _externalFoodResolver = externalFoodResolver;
         }
 
         [HttpGet("search")]
@@ -58,11 +62,26 @@ namespace CalorieTracker.Controllers
                 });
             }
 
-            var results =
-                await _foodSearchService.SearchFoodsPageAsync(
+            FoodSearchPage results;
+
+            try
+            {
+                results = await _foodSearchService.SearchFoodsPageAsync(
                     query,
                     page,
                     pageSize);
+            }
+            catch (Exception exception)
+                when (exception is HttpRequestException or
+                    TaskCanceledException or
+                    JsonException or
+                    NotSupportedException or
+                    InvalidOperationException)
+            {
+                return Problem(
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "The USDA food database is temporarily unavailable.");
+            }
 
             var externalIds = results.Foods
                 .Select(food => food.ExternalId)
@@ -100,23 +119,35 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
-            if (string.IsNullOrWhiteSpace(externalId))
+            var resolution = await _externalFoodResolver
+                .ResolveAsync(userId, externalId);
+
+            if (resolution.Failure == ExternalFoodFailure.InvalidId)
             {
-                return BadRequest();
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The USDA food ID is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
             }
 
-            var result =
-                await _foodSearchService.GetFoodAsync(
-                    externalId);
-
-            if (result == null)
+            if (resolution.Failure == ExternalFoodFailure.Missing)
             {
-                return NotFound();
+                return NotFound(new ProblemDetails
+                {
+                    Title = "The USDA food could not be found.",
+                    Status = StatusCodes.Status404NotFound
+                });
             }
 
-            var food = await GetOrCreateFoodAsync(
-                userId,
-                result);
+            if (resolution.Failure == ExternalFoodFailure.Unavailable)
+            {
+                return Problem(
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "The USDA food database is temporarily unavailable.");
+            }
+
+            var food = resolution.Food!;
 
             await _context.SaveChangesAsync();
 
@@ -137,22 +168,35 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
-            if (string.IsNullOrWhiteSpace(externalId))
+            var resolution = await _externalFoodResolver
+                .ResolveAsync(userId, externalId);
+
+            if (resolution.Failure == ExternalFoodFailure.InvalidId)
             {
-                return BadRequest();
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The USDA food ID is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
             }
 
-            var result = await _foodSearchService
-                .GetFoodAsync(externalId);
-
-            if (result == null)
+            if (resolution.Failure == ExternalFoodFailure.Missing)
             {
-                return NotFound();
+                return NotFound(new ProblemDetails
+                {
+                    Title = "The USDA food could not be found.",
+                    Status = StatusCodes.Status404NotFound
+                });
             }
 
-            var food = await GetOrCreateFoodAsync(
-                userId,
-                result);
+            if (resolution.Failure == ExternalFoodFailure.Unavailable)
+            {
+                return Problem(
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "The USDA food database is temporarily unavailable.");
+            }
+
+            var food = resolution.Food!;
 
             food.IsFavourite = true;
 
@@ -175,11 +219,22 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
+            if (!MeasurementUnits.IsPositiveUsdaId(
+                    externalId,
+                    out var normalizedId))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The USDA food ID is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
             var food = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.UserId == userId &&
                     food.Source == "USDA" &&
-                    food.ExternalId == externalId &&
+                    food.ExternalId == normalizedId &&
                     food.IsFavourite &&
                     !food.IsDeleted);
 
@@ -198,47 +253,5 @@ namespace CalorieTracker.Controllers
             });
         }
 
-        private async Task<Food> GetOrCreateFoodAsync(
-            string userId,
-            FoodSearchResult result)
-        {
-            var food = await _context.Foods
-                .FirstOrDefaultAsync(food =>
-                    food.UserId == userId &&
-                    food.Source == result.Source &&
-                    food.ExternalId == result.ExternalId);
-
-            if (food != null)
-            {
-                food.IsDeleted = false;
-
-                return food;
-            }
-
-            food = new Food
-            {
-                UserId = userId,
-                Source = result.Source,
-                ExternalId = result.ExternalId,
-                Name = result.Name,
-
-                Calories =
-                    (int)Math.Round(result.Calories),
-
-                Protein = result.Protein,
-                Carbohydrates = result.Carbohydrates,
-                Fat = result.Fat,
-
-                ServingSize = result.ServingSize,
-                ServingUnit = result.ServingUnit,
-
-                IsFavourite = false,
-                IsDeleted = false
-            };
-
-            _context.Foods.Add(food);
-
-            return food;
-        }
     }
 }

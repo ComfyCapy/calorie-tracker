@@ -80,6 +80,9 @@ namespace CalorieTracker.Services
             }
 
             var foods = result.Foods
+                .Where(food =>
+                    food.FdcId > 0 &&
+                    !string.IsNullOrWhiteSpace(food.Description))
                 .Select(food => new FoodSearchResult
                 {
                     ExternalId = food.FdcId.ToString(),
@@ -94,11 +97,6 @@ namespace CalorieTracker.Services
                     ServingSize = 100,
                     ServingUnit = "g"
                 })
-                .Where(food =>
-                    food.Calories > 0 ||
-                    food.Protein > 0 ||
-                    food.Carbohydrates > 0 ||
-                    food.Fat > 0)
                 .ToList();
 
             return new FoodSearchPage
@@ -115,7 +113,9 @@ namespace CalorieTracker.Services
 
         public async Task<FoodSearchResult?> GetFoodAsync(string externalId)
         {
-            if (string.IsNullOrWhiteSpace(externalId))
+            if (!MeasurementUnits.IsPositiveUsdaId(
+                    externalId,
+                    out var normalizedId))
             {
                 return null;
             }
@@ -129,7 +129,7 @@ namespace CalorieTracker.Services
             }
 
             var url =
-                $"https://api.nal.usda.gov/fdc/v1/food/{externalId}?api_key={apiKey}";
+                $"https://api.nal.usda.gov/fdc/v1/food/{normalizedId}?api_key={apiKey}";
 
             var food =
                 await _httpClient.GetFromJsonAsync<UsdaFoodDetails>(url);

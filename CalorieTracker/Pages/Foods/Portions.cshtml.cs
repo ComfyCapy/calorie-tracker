@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Pages.Foods
 {
@@ -34,6 +35,11 @@ namespace CalorieTracker.Pages.Foods
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -56,6 +62,7 @@ namespace CalorieTracker.Pages.Foods
             Food = food;
 
             Portions = food.Portions
+                .Where(portion => !portion.IsDeleted)
                 .OrderBy(portion => portion.Amount)
                 .ToList();
 
@@ -64,6 +71,11 @@ namespace CalorieTracker.Pages.Foods
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -85,6 +97,8 @@ namespace CalorieTracker.Pages.Foods
 
             NewPortion.FoodId = food.Id;
 
+            decimal canonicalAmount = 0;
+
             if (string.IsNullOrWhiteSpace(NewPortion.Name))
             {
                 ModelState.AddModelError(
@@ -99,11 +113,24 @@ namespace CalorieTracker.Pages.Foods
                     "Amount must be greater than 0.");
             }
 
+            if (!MeasurementUnits.TryToCanonical(
+                    NewPortion.Amount,
+                    food.ServingUnit,
+                    out canonicalAmount,
+                    out _,
+                    out _))
+            {
+                ModelState.AddModelError(
+                    "NewPortion.Amount",
+                    "The portion amount could not be converted.");
+            }
+
             if (!ModelState.IsValid)
             {
                 Food = food;
 
                 Portions = food.Portions
+                    .Where(portion => !portion.IsDeleted)
                     .OrderBy(portion => portion.Amount)
                     .ToList();
 
@@ -111,6 +138,8 @@ namespace CalorieTracker.Pages.Foods
             }
 
             NewPortion.Name = NewPortion.Name.Trim();
+            NewPortion.Amount = canonicalAmount;
+            NewPortion.IsDeleted = false;
 
             _context.FoodPortions.Add(NewPortion);
 
@@ -128,6 +157,12 @@ namespace CalorieTracker.Pages.Foods
             int id,
             int portionId)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(portionId)))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -142,6 +177,7 @@ namespace CalorieTracker.Pages.Foods
                     portion.FoodId == id &&
                     portion.Food != null &&
                     portion.Food.UserId == userId &&
+                    !portion.IsDeleted &&
                     !portion.Food.IsDeleted);
 
             if (portion == null)
@@ -149,7 +185,7 @@ namespace CalorieTracker.Pages.Foods
                 return NotFound();
             }
 
-            _context.FoodPortions.Remove(portion);
+            portion.IsDeleted = true;
 
             await _context.SaveChangesAsync();
 
@@ -167,6 +203,12 @@ namespace CalorieTracker.Pages.Foods
             string name,
             decimal amount)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(portionId)))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -181,6 +223,7 @@ namespace CalorieTracker.Pages.Foods
                     portion.FoodId == id &&
                     portion.Food != null &&
                     portion.Food.UserId == userId &&
+                    !portion.IsDeleted &&
                     !portion.Food.IsDeleted);
 
             if (portion == null)
@@ -199,6 +242,17 @@ namespace CalorieTracker.Pages.Foods
                 });
             }
 
+            if (name.Trim().Length > 50)
+            {
+                StatusMessage =
+                    "Portion name must be 50 characters or fewer.";
+
+                return RedirectToPage(new
+                {
+                    id
+                });
+            }
+
             if (amount <= 0)
             {
                 StatusMessage =
@@ -210,8 +264,24 @@ namespace CalorieTracker.Pages.Foods
                 });
             }
 
+            if (!MeasurementUnits.TryToCanonical(
+                    amount,
+                    portion.Food!.ServingUnit,
+                    out var canonicalAmount,
+                    out _,
+                    out _))
+            {
+                StatusMessage =
+                    "The portion amount could not be converted.";
+
+                return RedirectToPage(new
+                {
+                    id
+                });
+            }
+
             portion.Name = name.Trim();
-            portion.Amount = amount;
+            portion.Amount = canonicalAmount;
 
             await _context.SaveChangesAsync();
 

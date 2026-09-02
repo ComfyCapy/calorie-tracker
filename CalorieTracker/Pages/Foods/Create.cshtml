@@ -49,7 +49,12 @@
 
         <select asp-for="Food.ServingUnit" class="form-control">
             <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="oz">oz</option>
+            <option value="lb">lb</option>
             <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="fl oz">fl oz</option>
         </select>
 
         <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>

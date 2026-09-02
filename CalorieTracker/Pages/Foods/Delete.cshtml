@@ -14,7 +14,7 @@
 </div>
 
 <form method="post">
-    <input type="hidden" asp-for="Food.Id" />
+    <input type="hidden" name="id" value="@Model.Food.Id" />
     
     <button type="submit" class="btn btn-danger">Delete</button>
     <a asp-page="./Index" class="btn btn-secondary">Cancel</a>

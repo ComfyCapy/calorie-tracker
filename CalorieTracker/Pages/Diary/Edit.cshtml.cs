@@ -1,5 +1,6 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using CalorieTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -33,16 +34,19 @@ namespace CalorieTracker.Pages.Diary
         public int? SelectedPortionId { get; set; }
 
         [BindProperty]
-        [Range(
-            0.01,
-            100000,
-            ErrorMessage = "Portion quantity must be greater than 0.")]
         public decimal? PortionQuantity { get; set; }
 
         public List<Food> FoodOptions { get; set; } = [];
 
+        public int? OriginalPortionId { get; set; }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -63,6 +67,21 @@ namespace CalorieTracker.Pages.Diary
             }
 
             DiaryEntry = diaryEntry;
+            OriginalPortionId = diaryEntry.FoodPortionId;
+
+            if (diaryEntry.Food != null &&
+                MeasurementUnits.TryToCanonical(
+                    1,
+                    diaryEntry.Food.ServingUnit,
+                    out _,
+                    out _,
+                    out _))
+            {
+                DiaryEntry.Quantity =
+                    MeasurementUnits.FromCanonical(
+                        diaryEntry.Quantity,
+                        diaryEntry.Food.ServingUnit);
+            }
 
             if (diaryEntry.FoodPortionId.HasValue &&
                 diaryEntry.PortionQuantity.HasValue)
@@ -83,8 +102,13 @@ namespace CalorieTracker.Pages.Diary
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(int id)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -94,12 +118,35 @@ namespace CalorieTracker.Pages.Diary
 
             var existingEntry = await _context.DiaryEntries
                 .FirstOrDefaultAsync(entry =>
-                    entry.Id == DiaryEntry.Id &&
+                    entry.Id == id &&
                     entry.UserId == userId);
 
             if (existingEntry == null)
             {
                 return NotFound();
+            }
+
+            OriginalPortionId = existingEntry.FoodPortionId;
+
+            ValidationRules.ValidateDiaryDate(
+                DiaryEntry.Date,
+                ModelState,
+                "DiaryEntry.Date");
+
+            if (!ValidationRules.MealTypes.Contains(
+                    DiaryEntry.MealType))
+            {
+                ModelState.AddModelError(
+                    "DiaryEntry.MealType",
+                    "Please select a valid meal.");
+            }
+
+            if (!ValidationRules.MeasurementModes.Contains(
+                    MeasurementMode))
+            {
+                ModelState.AddModelError(
+                    nameof(MeasurementMode),
+                    "Please select a valid measurement mode.");
             }
 
             var selectedFood = await _context.Foods
@@ -116,6 +163,8 @@ namespace CalorieTracker.Pages.Diary
                     "DiaryEntry.FoodId",
                     "Please select a valid food.");
             }
+
+            FoodPortion? selectedPortion = null;
 
             if (MeasurementMode == "Portion")
             {
@@ -140,7 +189,10 @@ namespace CalorieTracker.Pages.Diary
                 {
                     var portion = selectedFood.Portions
                         .FirstOrDefault(portion =>
-                            portion.Id == SelectedPortionId);
+                            portion.Id == SelectedPortionId &&
+                            (!portion.IsDeleted ||
+                             (selectedFood.Id == existingEntry.FoodId &&
+                              portion.Id == existingEntry.FoodPortionId)));
 
                     if (portion == null)
                     {
@@ -150,9 +202,28 @@ namespace CalorieTracker.Pages.Diary
                     }
                     else
                     {
-                        DiaryEntry.Quantity =
-                            portion.Amount *
-                            PortionQuantity.Value;
+                        selectedPortion = portion;
+
+                        var canonicalAmount =
+                            selectedFood.Id == existingEntry.FoodId &&
+                            portion.Id == existingEntry.FoodPortionId &&
+                            existingEntry.PortionQuantity > 0
+                                ? existingEntry.Quantity /
+                                  existingEntry.PortionQuantity.Value
+                                : portion.Amount;
+
+                        try
+                        {
+                            DiaryEntry.Quantity = checked(
+                                canonicalAmount *
+                                PortionQuantity.Value);
+                        }
+                        catch (OverflowException)
+                        {
+                            ModelState.AddModelError(
+                                nameof(PortionQuantity),
+                                "The resulting quantity is too large.");
+                        }
 
                         ModelState.Remove(
                             "DiaryEntry.Quantity");
@@ -161,6 +232,8 @@ namespace CalorieTracker.Pages.Diary
             }
             else
             {
+                decimal canonicalQuantity = 0;
+
                 ModelState.Remove(
                     nameof(SelectedPortionId));
 
@@ -173,16 +246,39 @@ namespace CalorieTracker.Pages.Diary
                         "DiaryEntry.Quantity",
                         "Quantity must be greater than 0.");
                 }
+                else if (selectedFood != null &&
+                    !MeasurementUnits.TryToCanonical(
+                        DiaryEntry.Quantity,
+                        selectedFood.ServingUnit,
+                        out canonicalQuantity,
+                        out _,
+                        out _))
+                {
+                    ModelState.AddModelError(
+                        "DiaryEntry.Quantity",
+                        "The quantity could not be converted.");
+                }
+                else if (selectedFood != null)
+                {
+                    DiaryEntry.Quantity = canonicalQuantity;
+                }
             }
 
             if (!ModelState.IsValid)
             {
+                DiaryEntry.Id = existingEntry.Id;
                 await LoadFoodOptionsAsync(
                     userId,
                     DiaryEntry.FoodId);
 
                 return Page();
             }
+
+            var foodChanged =
+                existingEntry.FoodId != DiaryEntry.FoodId;
+
+            var portionChanged =
+                existingEntry.FoodPortionId != SelectedPortionId;
 
             existingEntry.Date =
                 DiaryEntry.Date;
@@ -196,6 +292,14 @@ namespace CalorieTracker.Pages.Diary
             existingEntry.Quantity =
                 DiaryEntry.Quantity;
 
+            if (foodChanged)
+            {
+                ValidationRules.CaptureSnapshot(
+                    existingEntry,
+                    selectedFood!,
+                    selectedPortion);
+            }
+
             if (MeasurementMode == "Portion")
             {
                 existingEntry.FoodPortionId =
@@ -203,11 +307,21 @@ namespace CalorieTracker.Pages.Diary
 
                 existingEntry.PortionQuantity =
                     PortionQuantity;
+
+                if (foodChanged ||
+                    portionChanged ||
+                    string.IsNullOrWhiteSpace(
+                        existingEntry.PortionNameSnapshot))
+                {
+                    existingEntry.PortionNameSnapshot =
+                        selectedPortion!.Name;
+                }
             }
             else
             {
                 existingEntry.FoodPortionId = null;
                 existingEntry.PortionQuantity = null;
+                existingEntry.PortionNameSnapshot = null;
             }
 
             await _context.SaveChangesAsync();

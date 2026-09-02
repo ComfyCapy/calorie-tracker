@@ -1,0 +1,12 @@
+@page "{code:int}"
+@model CalorieTracker.Pages.StatusCodeModel
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<h1>@Model.Title</h1>
+
+<p>@Model.Message</p>
+
+<a asp-page="/Index" class="btn btn-primary">Return home</a>

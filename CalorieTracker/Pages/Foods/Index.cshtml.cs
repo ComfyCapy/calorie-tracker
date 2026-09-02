@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Pages.Foods
 {
@@ -53,13 +54,18 @@ namespace CalorieTracker.Pages.Foods
         public int CustomTotalPages { get; set; }
         public int RecentTotalPages { get; set; }
 
-        public async Task OnGetAsync(
-            string searchTerm,
+        public async Task<IActionResult> OnGetAsync(
+            string? searchTerm,
             int favouritesPage = 1,
             int customPage = 1,
             int recentPage = 1)
         {
-            SearchTerm = searchTerm;
+            if (!HasValidDiaryContext())
+            {
+                return BadRequest();
+            }
+
+            SearchTerm = searchTerm ?? string.Empty;
 
             FavouritesPage = Math.Max(1, favouritesPage);
             CustomPage = Math.Max(1, customPage);
@@ -72,7 +78,7 @@ namespace CalorieTracker.Pages.Foods
                 FavouriteFoods = [];
                 CustomFoods = [];
                 RecentFoods = [];
-                return;
+                return Page();
             }
 
             // Foods explicitly saved as favourites.
@@ -199,6 +205,7 @@ namespace CalorieTracker.Pages.Foods
                 .Take(PageSize)
                 .ToList();
 
+            return Page();
         }
 
         public async Task<IActionResult> OnPostFavouriteAsync(
@@ -208,6 +215,16 @@ namespace CalorieTracker.Pages.Foods
             DateTime? diaryDate = null,
             string? diaryMeal = null)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)))
+            {
+                return BadRequest();
+            }
+
+            if (!HasValidDiaryContext(diaryDate, diaryMeal))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -247,6 +264,16 @@ namespace CalorieTracker.Pages.Foods
             DateTime? diaryDate = null,
             string? diaryMeal = null)
         {
+            if (ValidationRules.HasBindingError(ModelState, nameof(id)))
+            {
+                return BadRequest();
+            }
+
+            if (!HasValidDiaryContext(diaryDate, diaryMeal))
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -278,6 +305,23 @@ namespace CalorieTracker.Pages.Foods
                     diaryDate = diaryDate?.ToString("yyyy-MM-dd"),
                     diaryMeal
                 });
+        }
+
+        private bool HasValidDiaryContext()
+        {
+            return ModelState.IsValid &&
+                HasValidDiaryContext(DiaryDate, DiaryMeal);
+        }
+
+        private static bool HasValidDiaryContext(
+            DateTime? diaryDate,
+            string? diaryMeal)
+        {
+            return (!diaryDate.HasValue ||
+                    (diaryDate.Value.Date >= ValidationRules.MinimumDiaryDate &&
+                     diaryDate.Value.Date <= ValidationRules.MaximumDiaryDate)) &&
+                (string.IsNullOrEmpty(diaryMeal) ||
+                 ValidationRules.MealTypes.Contains(diaryMeal));
         }
     }
 }

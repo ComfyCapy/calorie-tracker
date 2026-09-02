@@ -4,7 +4,7 @@
 <h1>Edit Diary Entry</h1>
 
 <form method="post">
-    <input type="hidden" asp-for="DiaryEntry.Id" />
+    <input type="hidden" name="id" value="@Model.DiaryEntry.Id" />
 
     <div class="form-group">
         <label asp-for="DiaryEntry.Date"
@@ -13,6 +13,8 @@
 
         <input asp-for="DiaryEntry.Date"
                type="date"
+               min="1900-01-01"
+               max="2100-12-31"
                class="form-control" />
 
         <span asp-validation-for="DiaryEntry.Date"
@@ -55,11 +57,14 @@
                         data-unit="@food.ServingUnit"
                         data-portions='@Html.Raw(
                                                 System.Text.Json.JsonSerializer.Serialize(
-                                                    food.Portions.Select(p => new
+                                                food.Portions
+                                                    .Where(p => !p.IsDeleted || p.Id == Model.OriginalPortionId)
+                                                    .Select(p => new
                                                     {
                                                         id = p.Id,
                                                         name = p.Name,
-                                                        amount = p.Amount
+                                                amount = CalorieTracker.Services.MeasurementUnits
+                                                    .FromCanonical(p.Amount, food.ServingUnit)
                                                     })
                                                 )
                                             )'>

@@ -14,16 +14,16 @@
 </div>
 
 <div class="mb-3">
-    <strong>Food:</strong> @Model.DiaryEntry.Food?.Name
+    <strong>Food:</strong> @Model.DiaryEntry.FoodNameSnapshot
 </div>
 
 <div class="mb-3">
     <strong>Quantity:</strong>
-    @Model.DiaryEntry.Quantity.ToString("0.##") @Model.DiaryEntry.Food?.ServingUnit
+    @CalorieTracker.Services.MeasurementUnits.FromCanonical(Model.DiaryEntry.Quantity, Model.DiaryEntry.ServingUnitSnapshot).ToString("0.##") @Model.DiaryEntry.ServingUnitSnapshot
 </div>
 
 <form method="post">
-    <input type="hidden" asp-for="DiaryEntry.Id" />
+    <input type="hidden" name="id" value="@Model.DiaryEntry.Id" />
 
     <button type="submit" class="btn btn-danger">Delete</button>
     <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
