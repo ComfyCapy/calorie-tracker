@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Pages.Diary
 {
@@ -32,13 +34,31 @@ namespace CalorieTracker.Pages.Diary
 
         public DateTime SelectedDate { get; set; }
 
-        public DateTime PreviousDate => SelectedDate.AddDays(-1);
-        public DateTime NextDate => SelectedDate.AddDays(1);
+        public DateTime? PreviousDate =>
+            SelectedDate > ValidationRules.MinimumDiaryDate
+                ? SelectedDate.AddDays(-1)
+                : null;
 
-        public async Task OnGetAsync(DateTime? date)
+        public DateTime? NextDate =>
+            SelectedDate < ValidationRules.MaximumDiaryDate
+                ? SelectedDate.AddDays(1)
+                : null;
+
+        public async Task<IActionResult> OnGetAsync(DateTime? date)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
             SelectedDate = date?.Date ?? DateTime.Today;
+
+            if (SelectedDate < ValidationRules.MinimumDiaryDate ||
+                SelectedDate > ValidationRules.MaximumDiaryDate)
+            {
+                return BadRequest();
+            }
 
             Entries = await _context.DiaryEntries
                 .Include(entry => entry.Food)
@@ -70,6 +90,8 @@ namespace CalorieTracker.Pages.Diary
                         Math.Min(CalorieProgressPercent, 100);
                 }
             }
+
+            return Page();
         }
     }
 }

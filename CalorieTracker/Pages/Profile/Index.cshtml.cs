@@ -99,6 +99,51 @@ namespace CalorieTracker.Pages.Profile
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (UserProfile.MeasurementSystem != "Metric" &&
+                UserProfile.MeasurementSystem != "Imperial")
+            {
+                ModelState.AddModelError(
+                    "UserProfile.MeasurementSystem",
+                    "Please select a valid measurement system.");
+            }
+
+            if (UserProfile.ThemePreference != "System" &&
+                UserProfile.ThemePreference != "Light" &&
+                UserProfile.ThemePreference != "Dark")
+            {
+                ModelState.AddModelError(
+                    "UserProfile.ThemePreference",
+                    "Please select a valid theme.");
+            }
+
+            if (UserProfile.CalculationSex != "Male" &&
+                UserProfile.CalculationSex != "Female")
+            {
+                ModelState.AddModelError(
+                    "UserProfile.CalculationSex",
+                    "Please select a valid calculation sex.");
+            }
+
+            if (UserProfile.ActivityLevel != "Sedentary" &&
+                UserProfile.ActivityLevel != "LightlyActive" &&
+                UserProfile.ActivityLevel != "ModeratelyActive" &&
+                UserProfile.ActivityLevel != "VeryActive" &&
+                UserProfile.ActivityLevel != "ExtraActive")
+            {
+                ModelState.AddModelError(
+                    "UserProfile.ActivityLevel",
+                    "Please select a valid activity level.");
+            }
+
+            if (UserProfile.Goal != "Lose" &&
+                UserProfile.Goal != "Maintain" &&
+                UserProfile.Goal != "Gain")
+            {
+                ModelState.AddModelError(
+                    "UserProfile.Goal",
+                    "Please select a valid goal.");
+            }
+
             if (UserProfile.DateOfBirth.HasValue &&
                 UserProfile.DateOfBirth.Value.Date > DateTime.Today)
             {
@@ -107,8 +152,30 @@ namespace CalorieTracker.Pages.Profile
                     "Date of birth cannot be in the future.");
             }
 
+            if (UserProfile.DateOfBirth.HasValue &&
+                (UserProfile.Age < 18 || UserProfile.Age > 120))
+            {
+                ModelState.AddModelError(
+                    "UserProfile.DateOfBirth",
+                    "You must be between 18 and 120 years old.");
+            }
+
             if (UserProfile.MeasurementSystem == "Imperial")
             {
+                if (!HeightFeet.HasValue)
+                {
+                    ModelState.AddModelError(
+                        nameof(HeightFeet),
+                        "Please enter your height in feet.");
+                }
+
+                if (!HeightInches.HasValue)
+                {
+                    ModelState.AddModelError(
+                        nameof(HeightInches),
+                        "Please enter your remaining height in inches.");
+                }
+
                 if (HeightFeet.HasValue && HeightInches.HasValue)
                 {
                     var totalInches =
@@ -117,14 +184,36 @@ namespace CalorieTracker.Pages.Profile
                     UserProfile.HeightCm = totalInches * 2.54m;
 
                     ModelState.Remove("UserProfile.HeightCm");
+
+                    if (UserProfile.HeightCm < 50 ||
+                        UserProfile.HeightCm > 300)
+                    {
+                        ModelState.AddModelError(
+                            nameof(HeightFeet),
+                            "Height must convert to between 50 cm and 300 cm.");
+                    }
                 }
 
-                if (WeightLb.HasValue)
+                if (!WeightLb.HasValue)
+                {
+                    ModelState.AddModelError(
+                        nameof(WeightLb),
+                        "Please enter your current weight.");
+                }
+                else
                 {
                     UserProfile.WeightKg =
                         WeightLb.Value / 2.2046226218m;
 
                     ModelState.Remove("UserProfile.WeightKg");
+
+                    if (UserProfile.WeightKg < 20 ||
+                        UserProfile.WeightKg > 500)
+                    {
+                        ModelState.AddModelError(
+                            nameof(WeightLb),
+                            "Weight must convert to between 20 kg and 500 kg.");
+                    }
                 }
 
                 if (GoalWeightLb.HasValue)
@@ -133,12 +222,53 @@ namespace CalorieTracker.Pages.Profile
                         GoalWeightLb.Value / 2.2046226218m;
 
                     ModelState.Remove("UserProfile.GoalWeightKg");
+
+                    if (UserProfile.GoalWeightKg < 20 ||
+                        UserProfile.GoalWeightKg > 500)
+                    {
+                        ModelState.AddModelError(
+                            nameof(GoalWeightLb),
+                            "Goal weight must convert to between 20 kg and 500 kg.");
+                    }
                 }
                 else
                 {
                     UserProfile.GoalWeightKg = null;
                     ModelState.Remove("UserProfile.GoalWeightKg");
                 }
+            }
+
+            if ((UserProfile.Goal == "Lose" ||
+                 UserProfile.Goal == "Gain") &&
+                !UserProfile.GoalWeightKg.HasValue)
+            {
+                var fieldName = UserProfile.MeasurementSystem == "Imperial"
+                    ? nameof(GoalWeightLb)
+                    : "UserProfile.GoalWeightKg";
+
+                ModelState.AddModelError(
+                    fieldName,
+                    "Please enter a goal weight.");
+            }
+
+            if ((UserProfile.Goal == "Lose" ||
+                 UserProfile.Goal == "Gain") &&
+                !UserProfile.WeeklyGoalKg.HasValue)
+            {
+                ModelState.AddModelError(
+                    "UserProfile.WeeklyGoalKg",
+                    "Please select a weekly weight change.");
+            }
+
+            if (UserProfile.WeeklyGoalKg.HasValue &&
+                UserProfile.WeeklyGoalKg.Value != 0.25m &&
+                UserProfile.WeeklyGoalKg.Value != 0.5m &&
+                UserProfile.WeeklyGoalKg.Value != 0.75m &&
+                UserProfile.WeeklyGoalKg.Value != 1.0m)
+            {
+                ModelState.AddModelError(
+                    "UserProfile.WeeklyGoalKg",
+                    "Please select a valid weekly weight change.");
             }
 
             if (UserProfile.Goal == "Lose" &&
@@ -167,12 +297,38 @@ namespace CalorieTracker.Pages.Profile
                     "Your goal weight must be higher than your current weight.");
             }
 
-            if (!UseCustomCalorieTarget)
+            if (UseCustomCalorieTarget &&
+                !UserProfile.CustomCalorieTarget.HasValue)
+            {
+                ModelState.AddModelError(
+                    "UserProfile.CustomCalorieTarget",
+                    "Please enter a custom calorie target.");
+            }
+            else if (!UseCustomCalorieTarget)
             {
                 UserProfile.CustomCalorieTarget = null;
 
                 ModelState.Remove(
                     "UserProfile.CustomCalorieTarget");
+            }
+
+            if (UserProfile.Goal == "Maintain")
+            {
+                UserProfile.GoalWeightKg = null;
+                UserProfile.WeeklyGoalKg = null;
+                GoalWeightLb = null;
+                ModelState.Remove("UserProfile.GoalWeightKg");
+                ModelState.Remove("UserProfile.WeeklyGoalKg");
+                ModelState.Remove(nameof(GoalWeightLb));
+            }
+
+            if (ModelState.IsValid &&
+                !UseCustomCalorieTarget &&
+                UserProfile.DailyCalorieTarget <= 0)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "These profile values do not produce a valid calculated calorie target.");
             }
 
             if (!ModelState.IsValid)
@@ -185,13 +341,6 @@ namespace CalorieTracker.Pages.Profile
             if (userId == null)
             {
                 return Challenge();
-            }
-
-            if (UserProfile.Goal == "Maintain")
-            {
-                UserProfile.GoalWeightKg = null;
-                UserProfile.WeeklyGoalKg = null;
-                GoalWeightLb = null;
             }
 
             var existingProfile = await _context.UserProfiles

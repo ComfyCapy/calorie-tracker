@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Pages.Foods
 {
@@ -15,8 +16,19 @@ namespace CalorieTracker.Pages.Foods
 
         [BindProperty(SupportsGet = true)]
         public string? DiaryMeal { get; set; }
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            if (!ModelState.IsValid ||
+                (DiaryDate.HasValue &&
+                 (DiaryDate.Value.Date < ValidationRules.MinimumDiaryDate ||
+                  DiaryDate.Value.Date > ValidationRules.MaximumDiaryDate)) ||
+                (!string.IsNullOrEmpty(DiaryMeal) &&
+                 !ValidationRules.MealTypes.Contains(DiaryMeal)))
+            {
+                return BadRequest();
+            }
+
+            return Page();
         }
     }
 }

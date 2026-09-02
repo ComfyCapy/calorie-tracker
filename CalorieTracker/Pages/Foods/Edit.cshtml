@@ -4,7 +4,7 @@
 <h1>Edit Food</h1>
 
 <form method="post">
-    <input type="hidden" asp-for="Food.Id" />
+    <input type="hidden" name="id" value="@Model.Food.Id" />
     <div class="form-group">
         <label asp-for="Food.Name" class="control-label"></label>
         <input asp-for="Food.Name" class="form-control" />
@@ -40,7 +40,12 @@
 
         <select asp-for="Food.ServingUnit" class="form-control">
             <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="oz">oz</option>
+            <option value="lb">lb</option>
             <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="fl oz">fl oz</option>
         </select>
 
         <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>

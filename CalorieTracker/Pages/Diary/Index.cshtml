@@ -8,11 +8,18 @@
 <h1>Daily Diary</h1>
 
 <div class="d-flex align-items-center gap-3 mb-3">
-    <a asp-page="./Index"
-       asp-route-date="@Model.PreviousDate.ToString("yyyy-MM-dd")"
-       class="btn btn-outline-secondary">
-        ← Previous
-    </a>
+    @if (Model.PreviousDate.HasValue)
+    {
+        <a asp-page="./Index"
+           asp-route-date="@Model.PreviousDate.Value.ToString("yyyy-MM-dd")"
+           class="btn btn-outline-secondary">
+            ← Previous
+        </a>
+    }
+    else
+    {
+        <button class="btn btn-outline-secondary" disabled>← Previous</button>
+    }
 
     <strong>
         @Model.SelectedDate.ToString("dddd, d MMMM yyyy")
@@ -23,11 +30,18 @@
         Today
     </a>
 
-    <a asp-page="./Index"
-       asp-route-date="@Model.NextDate.ToString("yyyy-MM-dd")"
-       class="btn btn-outline-secondary">
-        Next →
-    </a>
+    @if (Model.NextDate.HasValue)
+    {
+        <a asp-page="./Index"
+           asp-route-date="@Model.NextDate.Value.ToString("yyyy-MM-dd")"
+           class="btn btn-outline-secondary">
+            Next →
+        </a>
+    }
+    else
+    {
+        <button class="btn btn-outline-secondary" disabled>Next →</button>
+    }
 
     <form method="get" class="d-flex align-items-center gap-2">
         <input type="date"
@@ -155,27 +169,27 @@
                     <article class="food-search-result">
                         <div class="food-search-result-main">
                             <div>
-                                <h3>@entry.Food?.Name</h3>
+                                <h3>@entry.FoodNameSnapshot</h3>
 
-                                @if (entry.FoodPortion != null &&
-                                     entry.PortionQuantity.HasValue)
+                                @if (entry.PortionQuantity.HasValue &&
+                                     !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
                                 {
                                     <p>
                                         @entry.PortionQuantity.Value.ToString("0.##")
                                         ×
-                                        @entry.FoodPortion.Name
+                                        @entry.PortionNameSnapshot
                                     </p>
 
                                     <small class="text-muted">
-                                        @entry.Quantity.ToString("0.##")
-                                        @entry.Food?.ServingUnit
+                                        @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
+                                        @entry.ServingUnitSnapshot
                                     </small>
                                 }
                                 else
                                 {
                                     <p>
-                                        @entry.Quantity.ToString("0.##")
-                                        @entry.Food?.ServingUnit
+                                        @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
+                                        @entry.ServingUnitSnapshot
                                     </p>
                                 }
                             </div>

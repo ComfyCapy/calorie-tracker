@@ -12,11 +12,14 @@
             unit = food.ServingUnit,
             isFavourite = food.IsFavourite,
             isCustom = food.Source == null,
-            portions = food.Portions.Select(portion => new
+            portions = food.Portions
+                .Where(portion => !portion.IsDeleted)
+                .Select(portion => new
             {
                 id = portion.Id,
                 name = portion.Name,
-                amount = portion.Amount
+                amount = CalorieTracker.Services.MeasurementUnits
+                    .FromCanonical(portion.Amount, food.ServingUnit)
             })
         })
     );
@@ -33,6 +36,8 @@
 
         <input asp-for="DiaryEntry.Date"
                type="date"
+               min="1900-01-01"
+               max="2100-12-31"
                class="form-control" />
 
         <span asp-validation-for="DiaryEntry.Date"

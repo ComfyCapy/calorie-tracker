@@ -6,29 +6,29 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace CalorieTracker.Pages.Foods
 {
     [Authorize]
     public class ApiFoodModel : PageModel
     {
-        private readonly IFoodSearchService _foodSearchService;
+        private readonly ExternalFoodResolver _externalFoodResolver;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
+        private Food? _resolvedFood;
+
         public ApiFoodModel(
-            IFoodSearchService foodSearchService,
+            ExternalFoodResolver externalFoodResolver,
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager)
         {
-            _foodSearchService = foodSearchService;
+            _externalFoodResolver = externalFoodResolver;
             _context = context;
             _userManager = userManager;
         }
 
         public FoodSearchResult? Food { get; set; }
-
         public bool IsFavourite { get; set; }
 
         [BindProperty(SupportsGet = true)]
@@ -38,10 +38,6 @@ namespace CalorieTracker.Pages.Foods
         public string ExternalId { get; set; } = string.Empty;
 
         [BindProperty]
-        [Range(
-            0.01,
-            100000,
-            ErrorMessage = "Quantity must be greater than 0.")]
         public decimal Quantity { get; set; } = 100;
 
         [BindProperty]
@@ -56,6 +52,11 @@ namespace CalorieTracker.Pages.Foods
             string? meal,
             string? searchTerm)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -63,37 +64,32 @@ namespace CalorieTracker.Pages.Foods
                 return Challenge();
             }
 
-            if (string.IsNullOrWhiteSpace(id))
+            if (date.HasValue &&
+                (date.Value.Date < ValidationRules.MinimumDiaryDate ||
+                 date.Value.Date > ValidationRules.MaximumDiaryDate))
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            Food = await _foodSearchService.GetFoodAsync(id);
-
-            if (Food == null)
+            if (!string.IsNullOrWhiteSpace(meal) &&
+                !ValidationRules.MealTypes.Contains(meal))
             {
-                return NotFound();
+                return BadRequest();
             }
 
             ExternalId = id;
+
+            var failure = await LoadFoodAsync(userId);
+
+            if (failure != null)
+            {
+                return failure;
+            }
+
+            ExternalId = _resolvedFood!.ExternalId!;
             SearchTerm = searchTerm ?? string.Empty;
-
-            if (date.HasValue)
-            {
-                Date = date.Value;
-            }
-
-            if (!string.IsNullOrWhiteSpace(meal))
-            {
-                MealType = meal;
-            }
-
-            var existingFood = await FindExistingFoodAsync(
-                userId,
-                Food);
-
-            IsFavourite =
-                existingFood?.IsFavourite ?? false;
+            Date = date?.Date ?? DateTime.Today;
+            MealType = meal ?? "Dinner";
 
             return Page();
         }
@@ -107,40 +103,64 @@ namespace CalorieTracker.Pages.Foods
                 return Challenge();
             }
 
-            if (!await LoadFoodAsync())
+            var failure = await LoadFoodAsync(userId);
+
+            if (failure != null)
             {
-                return NotFound();
+                return failure;
+            }
+
+            ValidationRules.ValidateDiaryDate(
+                Date,
+                ModelState,
+                nameof(Date));
+
+            if (!ValidationRules.MealTypes.Contains(MealType))
+            {
+                ModelState.AddModelError(
+                    nameof(MealType),
+                    "Please select a valid meal.");
+            }
+
+            if (Quantity <= 0)
+            {
+                ModelState.AddModelError(
+                    nameof(Quantity),
+                    "Quantity must be greater than 0.");
+            }
+
+            if (!MeasurementUnits.TryToCanonical(
+                    Quantity,
+                    _resolvedFood!.ServingUnit,
+                    out var canonicalQuantity,
+                    out _,
+                    out _))
+            {
+                ModelState.AddModelError(
+                    nameof(Quantity),
+                    "The quantity could not be converted.");
             }
 
             if (!ModelState.IsValid)
             {
-                var existingFood =
-                    await FindExistingFoodAsync(
-                        userId,
-                        Food!);
-
-                IsFavourite =
-                    existingFood?.IsFavourite ?? false;
-
                 return Page();
             }
-
-            var databaseFood =
-                await GetOrCreateFoodAsync(
-                    userId,
-                    Food!);
 
             var diaryEntry = new DiaryEntry
             {
                 UserId = userId,
-                Date = Date,
+                Date = Date.Date,
                 MealType = MealType,
-                FoodId = databaseFood.Id,
-                Quantity = Quantity
+                Food = _resolvedFood,
+                Quantity = canonicalQuantity
             };
 
-            _context.DiaryEntries.Add(diaryEntry);
+            ValidationRules.CaptureSnapshot(
+                diaryEntry,
+                _resolvedFood,
+                null);
 
+            _context.DiaryEntries.Add(diaryEntry);
             await _context.SaveChangesAsync();
 
             return RedirectToPage(
@@ -160,24 +180,24 @@ namespace CalorieTracker.Pages.Foods
                 return Challenge();
             }
 
-            if (!await LoadFoodAsync())
+            if (!HasValidDiaryContext())
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            var databaseFood =
-                await GetOrCreateFoodAsync(
-                    userId,
-                    Food!);
+            var failure = await LoadFoodAsync(userId);
 
-            databaseFood.IsFavourite = true;
+            if (failure != null)
+            {
+                return failure;
+            }
 
+            _resolvedFood!.IsFavourite = true;
             await _context.SaveChangesAsync();
 
-            return RedirectToPage(
-            new
+            return RedirectToPage(new
             {
-                id = ExternalId,
+                id = _resolvedFood.ExternalId,
                 date = Date.ToString("yyyy-MM-dd"),
                 meal = MealType,
                 searchTerm = SearchTerm
@@ -193,100 +213,76 @@ namespace CalorieTracker.Pages.Foods
                 return Challenge();
             }
 
-            if (!await LoadFoodAsync())
+            if (!HasValidDiaryContext())
+            {
+                return BadRequest();
+            }
+
+            if (!MeasurementUnits.IsPositiveUsdaId(
+                    ExternalId,
+                    out var normalizedId))
+            {
+                return BadRequest();
+            }
+
+            var existingFood = await _context.Foods
+                .FirstOrDefaultAsync(food =>
+                    food.UserId == userId &&
+                    food.Source == "USDA" &&
+                    food.ExternalId == normalizedId &&
+                    food.IsFavourite &&
+                    !food.IsDeleted);
+
+            if (existingFood == null)
             {
                 return NotFound();
             }
 
-            var existingFood =
-                await FindExistingFoodAsync(
-                    userId,
-                    Food!);
-
-            if (existingFood != null)
-            {
-                existingFood.IsFavourite = false;
-
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToPage(
-                new
-                {
-                    id = ExternalId,
-                    date = Date.ToString("yyyy-MM-dd"),
-                    meal = MealType,
-                    searchTerm = SearchTerm
-                });
-        }
-
-        private async Task<bool> LoadFoodAsync()
-        {
-            if (string.IsNullOrWhiteSpace(ExternalId))
-            {
-                return false;
-            }
-
-            Food = await _foodSearchService
-                .GetFoodAsync(ExternalId);
-
-            return Food != null;
-        }
-
-        private async Task<Food?> FindExistingFoodAsync(
-            string userId,
-            FoodSearchResult food)
-        {
-            return await _context.Foods
-                .FirstOrDefaultAsync(existingFood =>
-                    existingFood.UserId == userId &&
-                    existingFood.Source == food.Source &&
-                    existingFood.ExternalId == food.ExternalId);
-        }
-
-        private async Task<Food> GetOrCreateFoodAsync(
-            string userId,
-            FoodSearchResult food)
-        {
-            var existingFood =
-                await FindExistingFoodAsync(
-                    userId,
-                    food);
-
-            if (existingFood != null)
-            {
-                existingFood.IsDeleted = false;
-
-                return existingFood;
-            }
-
-            var databaseFood = new Food
-            {
-                UserId = userId,
-                Source = food.Source,
-                ExternalId = food.ExternalId,
-
-                Name = food.Name,
-
-                Calories =
-                    (int)Math.Round(food.Calories),
-
-                Protein = food.Protein,
-                Carbohydrates = food.Carbohydrates,
-                Fat = food.Fat,
-
-                ServingSize = food.ServingSize,
-                ServingUnit = food.ServingUnit,
-
-                IsFavourite = false,
-                IsDeleted = false
-            };
-
-            _context.Foods.Add(databaseFood);
-
+            existingFood.IsFavourite = false;
             await _context.SaveChangesAsync();
 
-            return databaseFood;
+            return RedirectToPage(new
+            {
+                id = normalizedId,
+                date = Date.ToString("yyyy-MM-dd"),
+                meal = MealType,
+                searchTerm = SearchTerm
+            });
+        }
+
+        private async Task<IActionResult?> LoadFoodAsync(string userId)
+        {
+            var resolution = await _externalFoodResolver
+                .ResolveAsync(userId, ExternalId);
+
+            if (resolution.Failure == ExternalFoodFailure.InvalidId)
+            {
+                return BadRequest();
+            }
+
+            if (resolution.Failure == ExternalFoodFailure.Missing)
+            {
+                return NotFound();
+            }
+
+            if (resolution.Failure == ExternalFoodFailure.Unavailable)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
+
+            _resolvedFood = resolution.Food!;
+            Food = resolution.Result;
+            IsFavourite = _resolvedFood.IsFavourite;
+
+            return null;
+        }
+
+        private bool HasValidDiaryContext()
+        {
+            return ModelState.IsValid &&
+                Date.Date >= ValidationRules.MinimumDiaryDate &&
+                Date.Date <= ValidationRules.MaximumDiaryDate &&
+                ValidationRules.MealTypes.Contains(MealType);
         }
     }
 }

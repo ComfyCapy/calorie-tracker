@@ -2,13 +2,18 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using CalorieTracker.Data;
 
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+
 namespace CalorieTracker.Models
 {
     public class UserProfile
     {
+        [BindNever]
         public int Id { get; set; }
 
+        [BindNever]
         public string UserId { get; set; } = string.Empty;
+        [BindNever]
         public ApplicationUser? User { get; set; }
 
         [Required]

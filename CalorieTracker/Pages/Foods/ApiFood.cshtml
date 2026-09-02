@@ -73,6 +73,10 @@
                 <option value="Dinner">Dinner</option>
                 <option value="Snack">Snack</option>
             </select>
+
+            <span asp-validation-for="MealType"
+                  class="text-danger">
+            </span>
         </div>
 
         <div class="mb-3">
@@ -83,7 +87,13 @@
 
             <input asp-for="Date"
                    type="date"
+                   min="1900-01-01"
+                   max="2100-12-31"
                    class="form-control" />
+
+            <span asp-validation-for="Date"
+                  class="text-danger">
+            </span>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
