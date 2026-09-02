@@ -53,6 +53,11 @@
             "data-bs-theme",
             themeToApply
             );
+
+            document.documentElement.setAttribute(
+            "data-theme-preference",
+            savedTheme
+            );
             })();
     </script>
 
@@ -167,6 +172,11 @@
                         themeToApply
                     );
 
+                    document.documentElement.setAttribute(
+                        "data-theme-preference",
+                        selectedTheme
+                    );
+
                     // If logged in, also save the preference to the account.
                     @if (User.Identity?.IsAuthenticated == true)
                         {
@@ -179,19 +189,26 @@
                                     const themeForServer =
                                     selectedTheme.charAt(0).toUpperCase() +
                                     selectedTheme.slice(1);
-
                                     try {
-                                        await fetch('@Url.Page("/Profile/Index", "Theme")', {
+                                        const response = await fetch('@Url.Page("/Profile/Index", "Theme")', {
                                             method: "POST",
                                             headers: {
                                                 "Content-Type": "application/x-www-form-urlencoded",
-                                                "RequestVerificationToken": antiForgeryToken
+                                                "X-CSRF-TOKEN": antiForgeryToken
                                             },
                                             body: new URLSearchParams({
                                                 theme: themeForServer
                                             })
                                         });
-                            }
+
+                                        if (!response.ok) {
+                                            console.error(
+                                                "Theme preference save failed.",
+                                                response.status,
+                                                await response.text()
+                                            );
+                                        }
+                                    }
                                     catch (error) {
                                         console.error(
                                             "Unable to save theme preference.",

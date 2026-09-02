@@ -32,6 +32,7 @@ namespace CalorieTracker.Pages
         public List<CapyItem> OwnedItems { get; set; } = [];
         public List<CapyItem> CatalogueItems { get; set; } = [];
         public bool NeedsProvisioning { get; set; }
+        public bool HasUserProfile { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -41,6 +42,8 @@ namespace CalorieTracker.Pages
                 return;
 
             Username = _userManager.GetUserName(User) ?? "Your";
+            HasUserProfile = await _context.UserProfiles
+                .AnyAsync(profile => profile.UserId == userId);
 
             CapyAppearance = await _context.UserCapyAppearances
                 .Include(appearance => appearance.Expression)
