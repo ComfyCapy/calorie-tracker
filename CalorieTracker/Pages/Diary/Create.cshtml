@@ -28,6 +28,9 @@
 <h1>Add Diary Entry</h1>
 
 <form method="post">
+    <input type="hidden" asp-for="ReturnToFoodSearch" />
+    <input type="hidden" asp-for="FoodSearchTerm" />
+    <input type="hidden" asp-for="ReturnToFoodsIndex" />
 
     <div class="form-group">
         <label asp-for="DiaryEntry.Date"
@@ -219,11 +222,33 @@
             Add to Diary
         </button>
 
-        <a asp-page="./Index"
-           asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
-           class="btn btn-secondary">
-            Cancel
-        </a>
+        @if (Model.ReturnToFoodSearch && Model.ReturnToFoodsIndex)
+        {
+            <a asp-page="/Foods/Index"
+               asp-route-searchTerm="@Model.FoodSearchTerm"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        }
+        else if (Model.ReturnToFoodSearch)
+        {
+            <a asp-page="/Foods/Search"
+               asp-route-returnToDiary="true"
+               asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+               asp-route-diaryMeal="@Model.DiaryEntry.MealType"
+               asp-route-searchTerm="@Model.FoodSearchTerm"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        }
+        else
+        {
+            <a asp-page="./Index"
+               asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        }
     </div>
 
 </form>

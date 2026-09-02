@@ -6,12 +6,15 @@ using CalorieTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using CalorieTracker.Security;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CalorieTracker.Controllers
 {
     [ApiController]
     [Route("api/foods")]
     [Authorize]
+    [AutoValidateAntiforgeryToken]
     public class FoodsApiController : ControllerBase
     {
         private readonly IFoodSearchService _foodSearchService;
@@ -32,6 +35,7 @@ namespace CalorieTracker.Controllers
         }
 
         [HttpGet("search")]
+        [EnableRateLimiting(RateLimitPolicies.FoodSearch)]
         public async Task<ActionResult<FoodSearchPage>> Search(
             [FromQuery] string query,
             [FromQuery] int page = 1,

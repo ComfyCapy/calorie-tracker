@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using CalorieTracker.Data;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Areas.Identity.Pages.Account;
 
@@ -29,13 +30,15 @@ public class ExternalLoginModel : PageModel
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<ExternalLoginModel> _logger;
+    private readonly CapyProvisioningService _capyProvisioningService;
 
     public ExternalLoginModel(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         ILogger<ExternalLoginModel> logger,
-        IEmailSender emailSender)
+        IEmailSender emailSender,
+        CapyProvisioningService capyProvisioningService)
     {
         _signInManager = signInManager;
         _userManager = userManager;
@@ -43,6 +46,7 @@ public class ExternalLoginModel : PageModel
         _emailStore = GetEmailStore();
         _logger = logger;
         _emailSender = emailSender;
+        _capyProvisioningService = capyProvisioningService;
     }
 
     /// <summary>
@@ -165,6 +169,8 @@ public class ExternalLoginModel : PageModel
                     _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                     var userId = await _userManager.GetUserIdAsync(user);
+                    await _capyProvisioningService.ProvisionAsync(userId);
+
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = Url.Page(

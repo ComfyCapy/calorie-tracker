@@ -1,5 +1,6 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using CalorieTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,13 +14,16 @@ namespace CalorieTracker.Pages
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CapyProvisioningService _capyProvisioningService;
 
         public CustomisationModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            CapyProvisioningService capyProvisioningService)
         {
             _context = context;
             _userManager = userManager;
+            _capyProvisioningService = capyProvisioningService;
         }
 
         public UserCapyAppearance? CapyAppearance { get; set; }
@@ -27,6 +31,7 @@ namespace CalorieTracker.Pages
 
         public List<CapyItem> OwnedItems { get; set; } = [];
         public List<CapyItem> CatalogueItems { get; set; } = [];
+        public bool NeedsProvisioning { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -47,55 +52,17 @@ namespace CalorieTracker.Pages
                 .FirstOrDefaultAsync(appearance =>
                     appearance.UserId == userId);
  
-            if (CapyAppearance == null)
-            {
-                var defaultExpression = await _context.CapyItems
-                    .FirstAsync(item =>
-                        item.Category == "Expression" &&
-                        item.IsDefault);
-
-                var defaultBackground = await _context.CapyItems
-                    .FirstAsync(item =>
-                        item.Category == "Background" &&
-                        item.IsDefault);
-
-                CapyAppearance = new UserCapyAppearance
-                {
-                    UserId = userId,
-                    ExpressionId = defaultExpression.Id,
-                    Expression = defaultExpression,
-                    BackgroundId = defaultBackground.Id,
-                    Background = defaultBackground
-                };
-
-                _context.UserCapyAppearances.Add(CapyAppearance);
-
-                await _context.SaveChangesAsync();
-            }
-
-            // Give the user every currently available starter Capy item.
-            var starterItems = await _context.CapyItems
-                .Where(item =>
-                    item.IsActive &&
-                    item.IsStarter)
-                .ToListAsync();
-
             var ownedItemIds = await _context.UserCapyItems
                 .Where(userItem => userItem.UserId == userId)
                 .Select(userItem => userItem.CapyItemId)
                 .ToListAsync();
 
-            var missingStarterItems = starterItems
-                .Where(item => !ownedItemIds.Contains(item.Id))
-                .Select(item => new UserCapyItem
-                {
-                    UserId = userId,
-                    CapyItemId = item.Id
-                });
-
-            _context.UserCapyItems.AddRange(missingStarterItems);
-
-            await _context.SaveChangesAsync();
+            NeedsProvisioning =
+                CapyAppearance == null ||
+                await _context.CapyItems.AnyAsync(item =>
+                    item.IsActive &&
+                    item.IsStarter &&
+                    !ownedItemIds.Contains(item.Id));
 
             OwnedItems = await _context.UserCapyItems
             .Where(userItem => userItem.UserId == userId)
@@ -111,6 +78,18 @@ namespace CalorieTracker.Pages
                 .ToListAsync();
         }
 
+        public async Task<IActionResult> OnPostProvisionAsync()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+                return Unauthorized();
+
+            await _capyProvisioningService.ProvisionAsync(userId);
+
+            return new JsonResult(new { success = true });
+        }
+
         public async Task<IActionResult> OnPostEquipAsync(
         int? itemId,
         string category)
@@ -119,6 +98,8 @@ namespace CalorieTracker.Pages
 
             if (userId == null)
                 return Unauthorized();
+
+            await _capyProvisioningService.ProvisionAsync(userId);
 
             var appearance = await _context.UserCapyAppearances
                 .FirstOrDefaultAsync(appearance =>
@@ -205,6 +186,10 @@ namespace CalorieTracker.Pages
             if (userId == null)
                 return Unauthorized();
 
+            await _capyProvisioningService.ProvisionAsync(userId);
+
+            // Temporary MVP policy: any active cosmetic may be self-unlocked.
+            // Future achievement or currency rules must be enforced here on the server.
             var item = await _context.CapyItems
                 .FirstOrDefaultAsync(item =>
                     item.Id == itemId &&

@@ -8,3 +8,14 @@ obj/
 *.db-wal
 
 *.csproj.user
+
+# Local secrets and private keys
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+!.env.*.template
+*.pem
+*.key
+*.pfx
