@@ -1,5 +1,8 @@
 ﻿@page
 @model CalorieTracker.Pages.Diary.DeleteModel
+@{
+    ViewData["Title"] = "Delete Diary Entry";
+}
 
 <h1>Delete Diary Entry</h1>
 
@@ -26,5 +29,5 @@
     <input type="hidden" name="id" value="@Model.DiaryEntry.Id" />
 
     <button type="submit" class="btn btn-danger">Delete</button>
-    <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+    <a asp-page="./Index" asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")" class="btn btn-secondary">Cancel</a>
 </form>

@@ -132,6 +132,7 @@ namespace CalorieTracker.Pages.Foods
                 Food.CanonicalServingSize;
 
             await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Food updated.";
 
             return RedirectToPage("./Index");
         }

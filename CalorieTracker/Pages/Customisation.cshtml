@@ -67,6 +67,7 @@
 
 <div class="customisation-page">
     @Html.AntiForgeryToken()
+    <div id="capy-error" class="alert alert-danger" role="alert" hidden></div>
 
     <div class="text-center mb-4">
 
@@ -107,8 +108,8 @@
 
     @if (Model.CapyAppearance == null)
     {
-        <div class="alert alert-info">
-            Your Comfy Capy hasn't been set up yet.
+        <div id="capy-provision-status" class="alert alert-info" role="status">
+            Setting up your Comfy Capy…
         </div>
     }
     else
@@ -299,7 +300,9 @@
         @if (Model.NeedsProvisioning)
         {
             <text>
-            (async () => {
+            async function provisionCapy() {
+                const status = document.getElementById("capy-provision-status");
+                if (status) status.hidden = false;
                 const token = document.querySelector(
                     'input[name="__RequestVerificationToken"]'
                 ).value;
@@ -307,6 +310,7 @@
                 const body = new URLSearchParams();
                 body.append("__RequestVerificationToken", token);
 
+                try {
                 const response = await fetch(
                     `${window.location.pathname}?handler=Provision`,
                     {
@@ -319,17 +323,32 @@
                     }
                 );
 
-                if (response.ok) {
-                    window.location.reload();
+                if (!response.ok) throw new Error("Provisioning failed.");
+                window.location.reload();
+                } catch {
+                    if (status) status.hidden = true;
+                    const error = document.getElementById("capy-error");
+                    error.textContent = "We couldn't set up your Capy. ";
+                    error.hidden = false;
+                    const retry = document.createElement("button");
+                    retry.type = "button";
+                    retry.className = "btn btn-sm btn-outline-danger";
+                    retry.textContent = "Try again";
+                    retry.addEventListener("click", () => {
+                        error.hidden = true;
+                        void provisionCapy();
+                    });
+                    error.appendChild(retry);
                 }
-            })();
+            }
+            void provisionCapy();
             </text>
         }
 
-        document.querySelectorAll(".capy-item-tile[data-category]")
-            .forEach(button => {
-
-                button.addEventListener("click", async () => {
+        document.querySelector(".customisation-page").addEventListener("click", async event => {
+                    const button = event.target.closest(".capy-item-tile[data-category]");
+                    if (!button || button.disabled) return;
+                    document.getElementById("capy-error").hidden = true;
 
                     const category = button.dataset.category;
                     const itemId = button.dataset.itemId;
@@ -421,9 +440,9 @@
 
                         console.error(error);
 
-                        alert(
-                            "Your Capy refused to change clothes. Try again."
-                        );
+                        const feedback = document.getElementById("capy-error");
+                        feedback.textContent = "We couldn't save your Capy's appearance. Please try again.";
+                        feedback.hidden = false;
 
                     }
                     finally {
@@ -432,9 +451,7 @@
 
                     }
 
-                });
-
-            });
+        });
 
         function updateSelectedTheme() {
         const selectedTheme =
@@ -505,6 +522,7 @@
 
                 crown.addEventListener("click", async () => {
 
+                    document.getElementById("capy-error").hidden = true;
                     const itemId = crown.dataset.unlockItemId;
                     document.querySelectorAll(".capy-secret-crown")
                         .forEach(secretCrown => {
@@ -651,9 +669,11 @@
 
                         console.error(error);
 
-                        alert(
-                            "The royal court has rejected your Capy. Try again."
-                        );
+                        const feedback = document.getElementById("capy-error");
+                        feedback.textContent = "We couldn't unlock that item. Please try again.";
+                        feedback.hidden = false;
+                        document.querySelectorAll(".capy-secret-crown")
+                            .forEach(button => { button.disabled = false; });
 
                     }
 

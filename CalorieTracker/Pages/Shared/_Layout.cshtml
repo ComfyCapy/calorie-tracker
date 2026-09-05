@@ -28,17 +28,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CalorieTracker</title>
-    <script type="importmap"></script>
     <script>
             (() => {
                 const accountTheme = "@(accountTheme?.ToLowerInvariant() ?? "")";
                 const isAuthenticated =
                         @(User.Identity?.IsAuthenticated == true ? "true" : "false");
 
+                let anonymousTheme = "system";
+                if (!isAuthenticated) {
+                    try { anonymousTheme = localStorage.getItem("theme") || "system"; } catch { }
+                }
                 const savedTheme =
                     isAuthenticated
                         ? accountTheme || "system"
-                        : "system";
+                        : (["light", "dark", "system"].includes(anonymousTheme) ? anonymousTheme : "system");
 
                 let themeToApply = savedTheme;
 
@@ -88,7 +91,7 @@
                     <ul class="navbar-nav flex-grow-1">
 
                         <li class="nav-item">
-                            <a class="nav-link text-link"
+                            <a class="nav-link"
                                asp-area=""
                                asp-page="/Index">
                                 Home
@@ -100,12 +103,12 @@
                             <li class="nav-item">
                                 <a class="nav-link"
                                    asp-page="/Foods/Index">
-                                    Food
+                                    Foods
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link text-link"
+                                <a class="nav-link"
                                    asp-area=""
                                    asp-page="/Diary/Index">
                                     Diary
@@ -130,6 +133,13 @@
 
     <div class="container">
         <main role="main" class="pb-3">
+            @if (TempData["UiStatusMessage"] is string statusMessage)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="status">
+                    @statusMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             @RenderBody()
         </main>
     </div>
@@ -154,8 +164,8 @@
                     const selectedTheme = button.dataset.theme;
 
                     // Apply and cache the theme immediately.
-                    if (@(User.Identity?.IsAuthenticated == true ? "true" : "false")) {
-                        localStorage.setItem("theme", selectedTheme);
+                    if (!@(User.Identity?.IsAuthenticated == true ? "true" : "false")) {
+                        try { localStorage.setItem("theme", selectedTheme); } catch { }
                     }
 
                     let themeToApply = selectedTheme;
@@ -221,7 +231,6 @@
             });
     </script>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

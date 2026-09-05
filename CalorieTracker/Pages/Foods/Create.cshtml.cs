@@ -80,6 +80,7 @@ namespace CalorieTracker.Pages.Foods
 
             _context.Foods.Add(Food);
             await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Food added.";
 
             if (ReturnToDiary)
             {
