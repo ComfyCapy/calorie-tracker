@@ -20,6 +20,16 @@ public sealed class TestDatabase : IAsyncDisposable
 
     public static async Task<TestDatabase> CreateAsync()
     {
+        return await CreateAsync(useMigrations: false);
+    }
+
+    public static async Task<TestDatabase> CreateMigratedAsync()
+    {
+        return await CreateAsync(useMigrations: true);
+    }
+
+    private static async Task<TestDatabase> CreateAsync(bool useMigrations)
+    {
         var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
@@ -28,7 +38,15 @@ public sealed class TestDatabase : IAsyncDisposable
             .Options;
 
         var context = new ApplicationDbContext(options);
-        await context.Database.EnsureCreatedAsync();
+
+        if (useMigrations)
+        {
+            await context.Database.MigrateAsync();
+        }
+        else
+        {
+            await context.Database.EnsureCreatedAsync();
+        }
 
         return new TestDatabase(connection, context);
     }

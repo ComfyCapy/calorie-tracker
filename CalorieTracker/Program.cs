@@ -141,9 +141,20 @@ builder.Services.AddRateLimiter(options =>
             TimeSpan.FromMinutes(1)));
 });
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>((services, options) =>
+{
+    var connectionString = services
+        .GetRequiredService<IConfiguration>()
+        .GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "Connection string 'DefaultConnection' is not configured.");
+    }
+
+    options.UseSqlite(connectionString);
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -181,6 +192,13 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
+
+// Resolve the context once so a missing production connection string fails
+// during startup, before the application begins accepting requests.
+using (var scope = app.Services.CreateScope())
+{
+    _ = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+}
 
 app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
 
