@@ -120,6 +120,16 @@ builder.Services.AddRateLimiter(options =>
                 TimeSpan.FromMinutes(15));
         }
 
+        if (path.Equals(
+                "/Feedback",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return FixedWindow(
+                $"feedback:{remoteAddress}",
+                5,
+                TimeSpan.FromMinutes(15));
+        }
+
         return NoLimit();
     });
 
@@ -200,3 +210,5 @@ app.MapRazorPages()
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;
