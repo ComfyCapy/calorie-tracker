@@ -18,6 +18,7 @@ namespace CalorieTracker.Areas.Identity.Pages.Account.Manage;
 
 public class EnableAuthenticatorModel : PageModel
 {
+    private const string AuthenticatorIssuer = "CalorieTracker";
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<EnableAuthenticatorModel> _logger;
     private readonly UrlEncoder _urlEncoder;
@@ -180,7 +181,7 @@ public class EnableAuthenticatorModel : PageModel
         return string.Format(
             CultureInfo.InvariantCulture,
             AuthenticatorUriFormat,
-            _urlEncoder.Encode("Microsoft.AspNetCore.Identity.UI"),
+            _urlEncoder.Encode(AuthenticatorIssuer),
             _urlEncoder.Encode(email),
             unformattedKey);
     }

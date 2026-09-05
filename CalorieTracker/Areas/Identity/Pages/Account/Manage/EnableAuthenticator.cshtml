@@ -8,11 +8,11 @@
 <partial name="_StatusMessage" for="StatusMessage" />
 <h2 class="h3">@ViewData["Title"]</h2>
 <div>
-    <p>To use an authenticator app go through the following steps:</p>
+    <p>Use an authenticator app to add two-factor authentication to your account.</p>
     <ol class="list">
         <li>
             <p>
-                Download a two-factor authenticator app like Microsoft Authenticator for
+                Install or open an authenticator app such as Microsoft Authenticator for
                 <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
                 <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
                 Google Authenticator for
@@ -21,22 +21,26 @@
             </p>
         </li>
         <li>
-            <p>Scan the QR Code or enter this key <kbd>@Model.SharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
-            <div class="alert alert-info">Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</a>.</div>
-            <div id="qrCode"></div>
-            <div id="qrCodeData" data-url="@Model.AuthenticatorUri"></div>
+            <p>Scan this QR code with your authenticator app.</p>
+            <div class="d-inline-block bg-white border rounded p-3 mb-3">
+                <div id="qrCode" aria-hidden="true"></div>
+            </div>
+            <div id="qrCodeData" data-url="@Model.AuthenticatorUri" hidden></div>
+            <p>
+                If you cannot scan the QR code, manually enter the setup key
+                <kbd>@Model.SharedKey</kbd>. Spaces and casing do not matter.
+            </p>
         </li>
         <li>
             <p>
-                Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
-                with a unique code. Enter the code in the confirmation box below.
+                Enter the verification code shown by your authenticator app.
             </p>
             <div class="row">
                 <div class="col-md-6">
                     <form id="send-code" method="post">
                         <div class="form-floating mb-3">
-                            <input asp-for="Input.Code" class="form-control" autocomplete="off" placeholder="Please enter the code."/>
-                            <label asp-for="Input.Code" class="control-label form-label">Verification Code</label>
+                            <input asp-for="Input.Code" class="form-control" autocomplete="one-time-code" inputmode="numeric" placeholder="Please enter the code." />
+                            <label asp-for="Input.Code" class="control-label form-label">Verification code</label>
                             <span asp-validation-for="Input.Code" class="text-danger"></span>
                         </div>
                         <button type="submit" class="w-100 btn btn-lg btn-primary">Verify</button>
@@ -50,4 +54,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/qrcodejs/qrcode.min.js"></script>
+    <script src="~/js/qr.js"></script>
 }
