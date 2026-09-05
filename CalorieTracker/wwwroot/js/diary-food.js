@@ -35,6 +35,11 @@
         const portionSelect =
             document.getElementById("portionSelect");
 
+        const foodSearchStatus =
+            document.getElementById("foodSearchStatus");
+
+        let activeSuggestionIndex = -1;
+
 
         function getSelectedFood() {
             const id =
@@ -62,6 +67,62 @@
             return "Recent";
         }
 
+        function setSuggestionsVisibility(isVisible) {
+            foodResults.style.display =
+                isVisible ? "block" : "none";
+
+            foodSearch.setAttribute(
+                "aria-expanded",
+                isVisible ? "true" : "false"
+            );
+
+            if (!isVisible) {
+                activeSuggestionIndex = -1;
+                foodSearch.removeAttribute("aria-activedescendant");
+            }
+        }
+
+        function updateActiveSuggestion(index) {
+            const options =
+                foodResults.querySelectorAll('[role="option"]');
+
+            if (options.length === 0) {
+                activeSuggestionIndex = -1;
+                foodSearch.removeAttribute("aria-activedescendant");
+                return;
+            }
+
+            activeSuggestionIndex =
+                (index + options.length) % options.length;
+
+            options.forEach((option, optionIndex) => {
+                const isActive =
+                    optionIndex === activeSuggestionIndex;
+
+                option.setAttribute(
+                    "aria-selected",
+                    isActive ? "true" : "false"
+                );
+
+                option.classList.toggle(
+                    "active",
+                    isActive
+                );
+            });
+
+            const activeOption =
+                options[activeSuggestionIndex];
+
+            foodSearch.setAttribute(
+                "aria-activedescendant",
+                activeOption.id
+            );
+
+            activeOption.scrollIntoView({
+                block: "nearest"
+            });
+        }
+
 
         function renderFoodResults() {
             const searchTerm =
@@ -70,6 +131,8 @@
                     .toLowerCase();
 
             foodResults.innerHTML = "";
+            activeSuggestionIndex = -1;
+            foodSearch.removeAttribute("aria-activedescendant");
 
             const matches = foods
                 .filter(food =>
@@ -92,17 +155,35 @@
                     emptyResult
                 );
 
-                foodResults.style.display =
-                    "block";
+                foodSearchStatus.textContent =
+                    "No foods found.";
+
+                setSuggestionsVisibility(true);
 
                 return;
             }
+
+            foodSearchStatus.textContent =
+                `${matches.length} food suggestion${matches.length === 1 ? "" : "s"} available.`;
 
             matches.forEach(food => {
                 const button =
                     document.createElement("button");
 
                 button.type = "button";
+
+                button.id =
+                    `food-option-${food.id}`;
+
+                button.setAttribute(
+                    "role",
+                    "option"
+                );
+
+                button.setAttribute(
+                    "aria-selected",
+                    "false"
+                );
 
                 button.className =
                     "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
@@ -135,8 +216,7 @@
                 );
             });
 
-            foodResults.style.display =
-                "block";
+            setSuggestionsVisibility(true);
         }
 
 
@@ -147,8 +227,10 @@
             foodSearch.value =
                 food.name;
 
-            foodResults.style.display =
-                "none";
+            setSuggestionsVisibility(false);
+
+            foodSearchStatus.textContent =
+                `Selected ${food.name}.`;
 
             updateFood();
         }
@@ -320,6 +402,36 @@
             renderFoodResults
         );
 
+        foodSearch.addEventListener(
+            "keydown",
+            event => {
+                const options =
+                    foodResults.querySelectorAll('[role="option"]');
+
+                if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    if (options.length === 0) {
+                        renderFoodResults();
+                    }
+                    updateActiveSuggestion(activeSuggestionIndex + 1);
+                }
+                else if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    updateActiveSuggestion(activeSuggestionIndex - 1);
+                }
+                else if (event.key === "Enter" &&
+                         activeSuggestionIndex >= 0 &&
+                         options[activeSuggestionIndex]) {
+                    event.preventDefault();
+                    options[activeSuggestionIndex].click();
+                }
+                else if (event.key === "Escape") {
+                    event.preventDefault();
+                    setSuggestionsVisibility(false);
+                }
+            }
+        );
+
         exactMode.addEventListener(
             "change",
             updateMeasurementMode
@@ -338,8 +450,7 @@
                     !foodSearch.contains(event.target) &&
                     !foodResults.contains(event.target)
                 ) {
-                    foodResults.style.display =
-                        "none";
+                    setSuggestionsVisibility(false);
                 }
             }
         );

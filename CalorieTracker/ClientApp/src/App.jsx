@@ -22,12 +22,14 @@ function App({
     const [totalPages, setTotalPages] = useState(0)
     const [totalResults, setTotalResults] = useState(0)
     const [activeSearchTerm, setActiveSearchTerm] = useState(initialQuery)
+    const [statusMessage, setStatusMessage] = useState('')
 
     const loadSearchPage = useCallback(
         async (query, pageNumber, nextPageSize) => {
             setIsLoading(true)
             setError('')
             setHasSearched(true)
+            setStatusMessage('Searching the USDA food database...')
 
             try {
                 const params = new URLSearchParams({
@@ -45,15 +47,24 @@ function App({
                 }
 
                 const result = await response.json()
+                const resultPage = result.pageNumber || pageNumber
+                const resultTotalPages = result.totalPages || 0
+                const resultTotal = result.totalResults || 0
 
                 setFoods(Array.isArray(result.foods) ? result.foods : [])
-                setCurrentPage(result.pageNumber || pageNumber)
-                setTotalPages(result.totalPages || 0)
-                setTotalResults(result.totalResults || 0)
+                setCurrentPage(resultPage)
+                setTotalPages(resultTotalPages)
+                setTotalResults(resultTotal)
+                setStatusMessage(resultTotalPages > 0
+                    ? `${resultTotal.toLocaleString()} foods found. Page ${resultPage} of ${resultTotalPages}.`
+                    : `${resultTotal.toLocaleString()} foods found.`)
             } catch {
                 setFoods([])
                 setTotalPages(0)
                 setTotalResults(0)
+                setStatusMessage(
+                    'We could not search the USDA database. Please try again.'
+                )
                 setError(
                     'We could not search the USDA database. Please try again.'
                 )
@@ -89,6 +100,7 @@ function App({
             setCurrentPage(1)
             setTotalPages(0)
             setTotalResults(0)
+            setStatusMessage('Search cleared.')
             return
         }
 
@@ -233,7 +245,14 @@ function App({
                         className="food-search-form"
                         onSubmit={handleSearch}
                     >
+                        <label
+                            className="visually-hidden"
+                            htmlFor="food-search-input"
+                        >
+                            Search foods
+                        </label>
                         <input
+                            id="food-search-input"
                             className="food-search-input"
                             type="search"
                             value={searchTerm}
@@ -254,11 +273,19 @@ function App({
                 </>
             )}
 
+            <div
+                className="visually-hidden"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                {statusMessage}
+            </div>
+
             {isLoading && foods.length === 0 && (
                 <div
                     className="food-search-message"
-                    role="status"
-                    aria-live="polite"
+                    aria-hidden="true"
                 >
                     Searching the USDA food database...
                 </div>
@@ -279,7 +306,7 @@ function App({
                 foods.length === 0 && (
                     <div
                         className="food-search-message"
-                        role="status"
+                        aria-hidden="true"
                     >
                         No matching USDA foods found.
                     </div>
@@ -339,17 +366,20 @@ function App({
                                 <div className="food-search-result-bottom">
                                     <div className="food-search-macros">
                                         <span>
-                                            <strong>P</strong>
+                                            <strong aria-hidden="true">P</strong>
+                                            <span className="visually-hidden">Protein </span>
                                             {food.protein}g
                                         </span>
 
                                         <span>
-                                            <strong>C</strong>
+                                            <strong aria-hidden="true">C</strong>
+                                            <span className="visually-hidden">Carbohydrates </span>
                                             {food.carbohydrates}g
                                         </span>
 
                                         <span>
-                                            <strong>F</strong>
+                                            <strong aria-hidden="true">F</strong>
+                                            <span className="visually-hidden">Fat </span>
                                             {food.fat}g
                                         </span>
                                     </div>
@@ -369,8 +399,8 @@ function App({
                                             }
                                             aria-label={
                                                 food.isFavourite
-                                                    ? 'Remove from Favourites'
-                                                    : 'Add to Favourites'
+                                                    ? `Remove ${food.name} from Favourites`
+                                                    : `Add ${food.name} to Favourites`
                                             }
                                             aria-pressed={food.isFavourite}
                                             title={
@@ -390,6 +420,7 @@ function App({
                                             disabled={
                                                 selectedFoodId === food.externalId
                                             }
+                                            aria-label={`Add ${food.name} to Diary`}
                                         >
                                             {selectedFoodId === food.externalId
                                                 ? 'Adding...'
@@ -416,7 +447,7 @@ function App({
                             ←
                         </button>
 
-                        <span>
+                        <span aria-current="page">
                             Page {currentPage} of {totalPages}
                         </span>
 

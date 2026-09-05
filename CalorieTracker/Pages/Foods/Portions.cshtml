@@ -39,9 +39,9 @@ else
     <table class="table align-middle">
         <thead>
             <tr>
-                <th>Portion</th>
-                <th>Amount</th>
-                <th>Actions</th>
+                <th scope="col">Portion</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -51,7 +51,11 @@ else
 
 
                         <td>
+                            <label for="portion-name-@portion.Id" class="visually-hidden">
+                                Portion name for @portion.Name
+                            </label>
                             <input type="text"
+                                   id="portion-name-@portion.Id"
                                    name="name"
                                    form="portion-@portion.Id"
                                    value="@(Model.EditedPortionId == portion.Id ? Model.EditedName : portion.Name)"
@@ -59,7 +63,11 @@ else
                         </td>
 
                         <td>
+                            <label for="portion-amount-@portion.Id" class="visually-hidden">
+                                Amount in @Model.Food.ServingUnit for @portion.Name
+                            </label>
                             <input type="number"
+                                   id="portion-amount-@portion.Id"
                                    name="amount"
                                    form="portion-@portion.Id"
                                    value="@(Model.EditedPortionId == portion.Id ? Model.EditedAmount : CalorieTracker.Services.MeasurementUnits.FromCanonical(portion.Amount, Model.Food.ServingUnit).ToString("0.############################"))"

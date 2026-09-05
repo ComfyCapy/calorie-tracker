@@ -48,14 +48,16 @@ else
                type="date"
                class="form-control"
                max="@DateTime.Today.ToString("yyyy-MM-dd")"
-               data-msg-max="Date of birth cannot be in the future." />
+               data-msg-max="Date of birth cannot be in the future."
+               aria-required="true" />
 
         <span asp-validation-for="UserProfile.DateOfBirth"
               class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Measurement System</label>
+        <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label">Measurement System</legend>
 
         <div>
             <div class="form-check form-check-inline">
@@ -82,6 +84,7 @@ else
                 </label>
             </div>
         </div>
+        </fieldset>
     </div>
 
     <div id="metricHeightSection" class="mb-3">
@@ -100,10 +103,11 @@ else
          class="mb-3"
          style="display: none;">
 
-        <label class="form-label">Height</label>
+        <div class="form-label">Height</div>
 
         <div class="row g-2">
             <div class="col">
+                <label for="HeightFeet" class="visually-hidden">Height in feet</label>
                 <div class="input-group">
                     <input asp-for="HeightFeet"
                            class="form-control" />
@@ -116,6 +120,7 @@ else
             </div>
 
             <div class="col">
+                <label for="HeightInches" class="visually-hidden">Height in inches</label>
                 <div class="input-group">
                     <input asp-for="HeightInches"
                            class="form-control"
@@ -164,7 +169,8 @@ else
         </label>
 
         <select asp-for="UserProfile.CalculationSex"
-                class="form-select">
+                class="form-select"
+                aria-required="true">
 
             <option value="">Select...</option>
             <option value="Male">Male</option>
@@ -188,7 +194,8 @@ else
         </label>
 
         <select asp-for="UserProfile.ActivityLevel"
-                class="form-select">
+                class="form-select"
+                aria-required="true">
 
             <option value="">Select...</option>
 
@@ -229,7 +236,8 @@ else
 
         <select asp-for="UserProfile.Goal"
                 id="goalSelect"
-                class="form-select">
+                class="form-select"
+                aria-required="true">
 
             <option value="">Select...</option>
             <option value="Lose">Lose weight</option>
@@ -250,7 +258,8 @@ else
         </label>
 
         <input asp-for="UserProfile.GoalWeightKg"
-               class="form-control" />
+               class="form-control"
+               aria-describedby="metricGoalConsistencyError" />
 
         <div class="form-text">
             Used to track your progress towards your goal.
@@ -260,7 +269,10 @@ else
               class="text-danger"></span>
 
         <span id="metricGoalConsistencyError"
-              class="text-danger"></span>
+              class="text-danger"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"></span>
     </div>
 
     <div id="imperialGoalWeightSection"
@@ -274,13 +286,17 @@ else
 
         <input asp-for="GoalWeightLb"
                class="form-control"
-               step="0.1" />
+               step="0.1"
+               aria-describedby="imperialGoalConsistencyError" />
 
         <span asp-validation-for="GoalWeightLb"
               class="text-danger"></span>
 
         <span id="imperialGoalConsistencyError"
-              class="text-danger"></span>
+              class="text-danger"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"></span>
 
         <div class="form-text">
             Used to track your progress towards your goal.
@@ -338,9 +354,8 @@ else
     <fieldset class="form-section">
         <legend>Calorie target</legend>
     <div class="mb-3">
-        <label class="form-label">
-            Daily Calorie Target
-        </label>
+        <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label">Daily Calorie Target</legend>
 
         <div class="form-check">
             <input asp-for="UseCustomCalorieTarget"
@@ -377,6 +392,7 @@ else
             Choose this if you already know the daily
             calorie target you want to use.
         </div>
+        </fieldset>
     </div>
 
     <div id="customCalorieTargetSection"
@@ -413,9 +429,9 @@ else
     <div class="card form-shell mt-4">
         <div class="card-body">
 
-            <h3 class="card-title">
+            <h2 class="card-title h3">
                 Your Estimates
-            </h3>
+            </h2>
 
             <p class="text-muted">
                 These estimates are based on the information in your profile.
@@ -426,10 +442,10 @@ else
                     Daily Calorie Target
                 </small>
 
-                <h2 class="mb-1">
+                <h3 class="mb-1 h2">
                     @Model.EstimatesProfile.EffectiveCalorieTarget.ToString("0")
                     <small class="fs-6 fw-normal">kcal/day</small>
-                </h2>
+                </h3>
 
                 @if (Model.EstimatesProfile.CustomCalorieTarget.HasValue)
                 {
@@ -744,6 +760,9 @@ else
             imperialGoalConsistencyError.textContent =
                 "";
 
+            goalWeightKgInput.setAttribute("aria-invalid", "false");
+            goalWeightLbInput.setAttribute("aria-invalid", "false");
+
             if (goalSelect.value !== "Lose" &&
                 goalSelect.value !== "Gain") {
                 return;
@@ -784,6 +803,8 @@ else
                 errorElement.textContent =
                     "Your goal weight must be lower than your current weight.";
 
+                goalWeightInput.setAttribute("aria-invalid", "true");
+
                 return;
             }
 
@@ -792,6 +813,8 @@ else
 
                 errorElement.textContent =
                     "Your goal weight must be higher than your current weight.";
+
+                goalWeightInput.setAttribute("aria-invalid", "true");
             }
         }
 
