@@ -65,19 +65,12 @@ Logging `2 slices` would therefore be stored as `70 g`, allowing the existing ca
 
 Foods without saved portions simply use exact quantity logging without displaying unnecessary portion controls.
 
-## Currently working on
+## Next planned work
 
-- Finishing user-specific profiles
-- BMR/TDEE and calorie target calculations
-- Further food library improvements
-- Expanding favourite food management
-- Improving portion handling and edge cases
 - Recipes and saved meals
 - Weight tracking
-- Replacing the default home page with a dashboard
-- Making the UI less Bootstrap-y
 - Mobile responsiveness
-- Tests and general error handling
+- Additional tests and error handling
 
 ## Tech
 
@@ -105,19 +98,33 @@ cd calorie-tracker
 Restore dependencies:
 
 ```bash
-dotnet restore
+dotnet restore CalorieTracker/CalorieTracker.csproj
 ```
 
 Apply database migrations:
 
 ```bash
-dotnet ef database update
+dotnet ef database update --project CalorieTracker/CalorieTracker.csproj
 ```
 
 Run the application:
 
 ```bash
-dotnet run
+dotnet run --project CalorieTracker/CalorieTracker.csproj
 ```
 
-The USDA FoodData Central integration requires an API key to be configured locally before food database searches can be used.
+The application requires these configuration keys. Keep the values in user-secrets or environment variables; do not commit them:
+
+- `ConnectionStrings:DefaultConnection`
+- `FoodDataCentral:ApiKey`
+- `Resend:ApiKey`
+
+For local development, the React food-search island can be rebuilt with:
+
+```bash
+cd CalorieTracker/ClientApp
+npm install
+npm run build
+```
+
+The build writes the production island assets to `CalorieTracker/wwwroot/react-food-search`, which are currently committed because the .NET project does not build the React island automatically.

@@ -16,17 +16,6 @@ namespace CalorieTracker.Services
             _configuration = configuration;
         }
 
-        public async Task<List<FoodSearchResult>> SearchFoodsAsync(
-            string searchTerm)
-        {
-            var page = await SearchFoodsPageAsync(
-                searchTerm,
-                1,
-                20);
-
-            return page.Foods;
-        }
-
         public async Task<FoodSearchPage> SearchFoodsPageAsync(
             string searchTerm,
             int pageNumber,
@@ -86,7 +75,7 @@ namespace CalorieTracker.Services
                 .Select(food => new FoodSearchResult
                 {
                     ExternalId = food.FdcId.ToString(),
-                    Source = "USDA",
+                    Source = FoodSources.Usda,
                     Name = food.Description,
 
                     Calories = GetEnergy(food),
@@ -113,7 +102,7 @@ namespace CalorieTracker.Services
 
         public async Task<FoodSearchResult?> GetFoodAsync(string externalId)
         {
-            if (!MeasurementUnits.IsPositiveUsdaId(
+            if (!ExternalFoodIds.TryNormalizeUsdaId(
                     externalId,
                     out var normalizedId))
             {
@@ -142,7 +131,7 @@ namespace CalorieTracker.Services
             return new FoodSearchResult
             {
                 ExternalId = food.FdcId.ToString(),
-                Source = "USDA",
+                Source = FoodSources.Usda,
                 Name = food.Description,
 
                 Calories = GetDetailEnergy(food),

@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace CalorieTracker.Services
 {
     public enum MeasurementDimension
@@ -15,6 +13,7 @@ namespace CalorieTracker.Services
             MeasurementDimension Dimension,
             decimal CanonicalFactor);
 
+        // Accept case-insensitive input while retaining the preferred display spelling.
         private static readonly Dictionary<string, UnitDefinition> Units =
             new(StringComparer.OrdinalIgnoreCase)
             {
@@ -26,9 +25,6 @@ namespace CalorieTracker.Services
                 ["l"] = new("L", MeasurementDimension.Volume, 1000m),
                 ["fl oz"] = new("fl oz", MeasurementDimension.Volume, 29.5735295625m)
             };
-
-        public static IReadOnlyList<string> SupportedUnits { get; } =
-            ["g", "kg", "oz", "lb", "ml", "L", "fl oz"];
 
         public static bool TryNormalize(
             string? unit,
@@ -95,23 +91,5 @@ namespace CalorieTracker.Services
         public static string CanonicalUnit(MeasurementDimension dimension) =>
             dimension == MeasurementDimension.Mass ? "g" : "ml";
 
-        public static bool IsPositiveUsdaId(
-            string? externalId,
-            out string normalizedId)
-        {
-            if (int.TryParse(
-                    externalId,
-                    NumberStyles.None,
-                    CultureInfo.InvariantCulture,
-                    out var id) &&
-                id > 0)
-            {
-                normalizedId = id.ToString(CultureInfo.InvariantCulture);
-                return true;
-            }
-
-            normalizedId = string.Empty;
-            return false;
-        }
     }
 }

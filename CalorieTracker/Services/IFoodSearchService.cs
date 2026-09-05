@@ -4,8 +4,6 @@ namespace CalorieTracker.Services
 {
     public interface IFoodSearchService
     {
-        Task<List<FoodSearchResult>> SearchFoodsAsync(string searchTerm);
-
         Task<FoodSearchPage> SearchFoodsPageAsync(
             string searchTerm,
             int pageNumber,

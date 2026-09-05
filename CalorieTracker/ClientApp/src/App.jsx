@@ -149,6 +149,7 @@ function App({
             }
 
             if (embedded) {
+                // Embedded search is server-composed; reload so surrounding Razor lists reflect the mutation.
                 window.location.reload()
                 return
             }

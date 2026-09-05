@@ -204,6 +204,7 @@ namespace CalorieTracker.Pages.Diary
                                 "The resulting quantity is too large.");
                         }
 
+                        // Quantity is derived from the owned portion, not trusted from the posted field.
                         ModelState.Remove(
                             "DiaryEntry.Quantity");
                     }
@@ -216,6 +217,7 @@ namespace CalorieTracker.Pages.Diary
                 DiaryEntry.FoodPortionId = null;
                 DiaryEntry.PortionQuantity = null;
 
+                // Exact mode owns quantity; discard stale portion fields from the same form post.
                 ModelState.Remove(
                     nameof(SelectedPortionId));
 
@@ -256,10 +258,7 @@ namespace CalorieTracker.Pages.Diary
 
             DiaryEntry.UserId = userId;
 
-            ValidationRules.CaptureSnapshot(
-                DiaryEntry,
-                selectedFood!,
-                selectedPortion);
+            DiaryEntry.CaptureSnapshot(selectedFood!, selectedPortion);
 
             _context.DiaryEntries.Add(DiaryEntry);
 
@@ -297,23 +296,10 @@ namespace CalorieTracker.Pages.Diary
                 .ToListAsync();
 
             // Recently logged database foods.
-            var recentEntries = await _context.DiaryEntries
-                .Where(entry =>
-                    entry.UserId == userId &&
-                    entry.Food != null &&
-                    entry.Food.Source != null &&
-                    !entry.Food.IsDeleted)
-                .Include(entry => entry.Food!)
-                    .ThenInclude(food => food.Portions)
-                .OrderByDescending(entry => entry.Date)
-                .ThenByDescending(entry => entry.Id)
-                .Take(100)
-                .ToListAsync();
-
-            var recentFoods = recentEntries
-                .Where(entry => entry.Food != null)
-                .GroupBy(entry => entry.FoodId)
-                .Select(group => group.First().Food!)
+            var recentFoods = (await RecentFoodQuery.LoadAsync(
+                _context,
+                userId,
+                includePortions: true))
                 .Take(10)
                 .ToList();
 

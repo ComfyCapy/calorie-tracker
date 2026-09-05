@@ -189,6 +189,7 @@ namespace CalorieTracker.Pages.Foods
                 return NotFound();
             }
 
+            // Soft-delete keeps existing diary foreign keys and historical labels valid.
             portion.IsDeleted = true;
 
             await _context.SaveChangesAsync();

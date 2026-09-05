@@ -41,6 +41,8 @@ namespace CalorieTracker.Models
         [Display(Name = "Amount")]
         public decimal ServingSize { get; set; } = 100;
 
+        // Nutrition calculations use canonical grams or millilitres;
+        // ServingSize/ServingUnit retain the user's preferred display basis.
         [BindNever]
         public decimal CanonicalServingSize { get; set; } = 100;
 

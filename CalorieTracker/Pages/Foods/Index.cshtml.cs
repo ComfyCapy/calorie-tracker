@@ -156,22 +156,10 @@ namespace CalorieTracker.Pages.Foods
                 .ToListAsync();
 
             // Database foods the user has recently logged.
-            var recentEntries = await _context.DiaryEntries
-                .Where(entry =>
-                    entry.UserId == userId &&
-                    entry.Food != null &&
-                    entry.Food.Source != null &&
-                    !entry.Food.IsDeleted)
-                .Include(entry => entry.Food)
-                .OrderByDescending(entry => entry.Date)
-                .ThenByDescending(entry => entry.Id)
-                .Take(100)
-                .ToListAsync();
-
-            var recentFoodsQuery = recentEntries
-                .Where(entry => entry.Food != null)
-                .GroupBy(entry => entry.FoodId)
-                .Select(group => group.First().Food!);
+            var recentFoodsQuery = (await RecentFoodQuery.LoadAsync(
+                _context,
+                userId))
+                .AsEnumerable();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {

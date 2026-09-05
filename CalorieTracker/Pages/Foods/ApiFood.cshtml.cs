@@ -155,10 +155,7 @@ namespace CalorieTracker.Pages.Foods
                 Quantity = canonicalQuantity
             };
 
-            ValidationRules.CaptureSnapshot(
-                diaryEntry,
-                _resolvedFood,
-                null);
+            diaryEntry.CaptureSnapshot(_resolvedFood, null);
 
             _context.DiaryEntries.Add(diaryEntry);
             await _context.SaveChangesAsync();
@@ -219,7 +216,7 @@ namespace CalorieTracker.Pages.Foods
                 return BadRequest();
             }
 
-            if (!MeasurementUnits.IsPositiveUsdaId(
+            if (!ExternalFoodIds.TryNormalizeUsdaId(
                     ExternalId,
                     out var normalizedId))
             {
@@ -229,7 +226,7 @@ namespace CalorieTracker.Pages.Foods
             var existingFood = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.UserId == userId &&
-                    food.Source == "USDA" &&
+                    food.Source == FoodSources.Usda &&
                     food.ExternalId == normalizedId &&
                     food.IsFavourite &&
                     !food.IsDeleted);

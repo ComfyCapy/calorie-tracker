@@ -36,6 +36,7 @@
                 const isAuthenticated =
                         @(User.Identity?.IsAuthenticated == true ? "true" : "false");
 
+                // Signed-in users load the account preference; localStorage is only the anonymous fallback.
                 let anonymousTheme = "system";
                 if (!isAuthenticated) {
                     try { anonymousTheme = localStorage.getItem("theme") || "system"; } catch { }
@@ -169,7 +170,7 @@
                 button.addEventListener("click", async () => {
                     const selectedTheme = button.dataset.theme;
 
-                    // Apply and cache the theme immediately.
+                    // Apply immediately to prevent a flash; anonymous preference is persisted locally.
                     if (!@(User.Identity?.IsAuthenticated == true ? "true" : "false")) {
                         try { localStorage.setItem("theme", selectedTheme); } catch { }
                     }
@@ -193,7 +194,7 @@
                         selectedTheme
                     );
 
-                    // If logged in, also save the preference to the account.
+                    // Persist signed-in choices on the account so server-rendered pages keep the preference.
                     @if (User.Identity?.IsAuthenticated == true)
                         {
                             <text>

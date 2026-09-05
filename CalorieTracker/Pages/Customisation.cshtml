@@ -1,5 +1,6 @@
 ﻿@page
 @model CalorieTracker.Pages.CustomisationModel
+@using CalorieTracker.Services
 
 @{
     ViewData["Title"] = "Customisation";
@@ -8,42 +9,42 @@
     {
         new
         {
-            Key = "Background",
+            Key = CapyCategories.Background,
             Name = "Background",
             Icon = "Icon-Background.png",
             Optional = false
         },
         new
         {
-            Key = "Expression",
+            Key = CapyCategories.Expression,
             Name = "Expression",
             Icon = "Icon-Expression.png",
             Optional = false
         },
         new
         {
-            Key = "Clothes",
+            Key = CapyCategories.Clothes,
             Name = "Clothes",
             Icon = "Icon-Clothes.png",
             Optional = true
         },
         new
         {
-            Key = "NeckAccessory",
+            Key = CapyCategories.NeckAccessory,
             Name = "Neck Accessories",
             Icon = "Icon-NeckAccessory.png",
             Optional = true
         },
         new
         {
-            Key = "HatHair",
+            Key = CapyCategories.HatHair,
             Name = "Hats & Hair",
             Icon = "Icon-HatHair.png",
             Optional = true
         },
         new
         {
-            Key = "FaceAccessory",
+            Key = CapyCategories.FaceAccessory,
             Name = "Face Accessories",
             Icon = "Icon-FaceAccessory.png",
             Optional = true
@@ -53,19 +54,20 @@
     Func<string, int?> getEquippedItemId = category =>
         category switch
         {
-            "Background" => Model.CapyAppearance?.BackgroundId,
-            "Expression" => Model.CapyAppearance?.ExpressionId,
-            "Clothes" => Model.CapyAppearance?.ClothesId,
-            "NeckAccessory" => Model.CapyAppearance?.NeckAccessoryId,
-            "HatHair" => Model.CapyAppearance?.HatHairId,
-            "FaceAccessory" => Model.CapyAppearance?.FaceAccessoryId,
+            CapyCategories.Background => Model.CapyAppearance?.BackgroundId,
+            CapyCategories.Expression => Model.CapyAppearance?.ExpressionId,
+            CapyCategories.Clothes => Model.CapyAppearance?.ClothesId,
+            CapyCategories.NeckAccessory => Model.CapyAppearance?.NeckAccessoryId,
+            CapyCategories.HatHair => Model.CapyAppearance?.HatHairId,
+            CapyCategories.FaceAccessory => Model.CapyAppearance?.FaceAccessoryId,
             _ => null
         };
         var ownsGoldCrown = Model.OwnedItems
        .Any(item => item.Id == 14);
 }
 
-<div class="customisation-page">
+<div class="customisation-page"
+     data-needs-provisioning="@(Model.NeedsProvisioning ? "true" : "false")">
     @Html.AntiForgeryToken()
     <div id="capy-error" class="alert alert-danger" role="alert" hidden></div>
 
@@ -317,413 +319,5 @@
 
 @section Scripts
 {
-    <script>
-        @if (Model.NeedsProvisioning)
-        {
-            <text>
-            async function provisionCapy() {
-                const status = document.getElementById("capy-provision-status");
-                if (status) status.hidden = false;
-                const token = document.querySelector(
-                    'input[name="__RequestVerificationToken"]'
-                ).value;
-
-                const body = new URLSearchParams();
-                body.append("__RequestVerificationToken", token);
-
-                try {
-                const response = await fetch(
-                    `${window.location.pathname}?handler=Provision`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type":
-                                "application/x-www-form-urlencoded; charset=UTF-8"
-                        },
-                        body: body
-                    }
-                );
-
-                if (!response.ok) throw new Error("Provisioning failed.");
-                window.location.reload();
-                } catch {
-                    if (status) status.hidden = true;
-                    const error = document.getElementById("capy-error");
-                    error.textContent = "We couldn't set up your Capy. ";
-                    error.hidden = false;
-                    const retry = document.createElement("button");
-                    retry.type = "button";
-                    retry.className = "btn btn-sm btn-outline-danger";
-                    retry.textContent = "Try again";
-                    retry.addEventListener("click", () => {
-                        error.hidden = true;
-                        void provisionCapy();
-                    });
-                    error.appendChild(retry);
-                }
-            }
-            void provisionCapy();
-            </text>
-        }
-
-        document.querySelector(".customisation-page").addEventListener("click", async event => {
-                    const button = event.target.closest(".capy-item-tile[data-category]");
-                    if (!button || button.disabled) return;
-                    document.getElementById("capy-error").hidden = true;
-
-                    const category = button.dataset.category;
-                    const itemId = button.dataset.itemId;
-
-                    const token = document.querySelector(
-                        'input[name="__RequestVerificationToken"]'
-                    ).value;
-
-                    button.disabled = true;
-
-                    try {
-                        const body = new URLSearchParams();
-
-                        body.append(
-                            "__RequestVerificationToken",
-                            token
-                        );
-
-                        body.append(
-                            "category",
-                            category
-                        );
-
-                        body.append(
-                            "itemId",
-                            itemId
-                        );
-
-                        const response = await fetch(
-                            `${window.location.pathname}?handler=Equip`,
-                            {
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/x-www-form-urlencoded; charset=UTF-8"
-                                },
-
-                                body: body
-                            }
-                        );
-
-                        if (!response.ok) {
-                            throw new Error(
-                                `Could not save Capy appearance. Status: ${response.status}`
-                            );
-                        }
-
-                        const result = await response.json();
-
-
-                        // Move the equipped highlight.
-
-                        document.querySelectorAll(
-                            `.capy-item-tile[data-category="${category}"]`
-                        ).forEach(tile => {
-                            tile.classList.remove("is-equipped");
-                            tile.setAttribute("aria-pressed", "false");
-                        });
-
-                        button.classList.add("is-equipped");
-                        button.setAttribute("aria-pressed", "true");
-
-
-                        // Update EVERY visible Capy renderer:
-                        // big customisation preview + navbar avatar.
-
-                        const layers = document.querySelectorAll(
-                            `[data-capy-layer="${result.category}"]`
-                        );
-
-                        layers.forEach(layer => {
-
-                            layer.innerHTML = "";
-
-                            if (result.imagePath) {
-
-                                const image =
-                                    document.createElement("img");
-
-                                image.src = result.imagePath;
-                                image.alt = "";
-
-                                layer.appendChild(image);
-                            }
-
-                        });
-
-                    }
-                    catch (error) {
-
-                        console.error(error);
-
-                        const feedback = document.getElementById("capy-error");
-                        feedback.textContent = "We couldn't save your Capy's appearance. Please try again.";
-                        feedback.hidden = false;
-
-                    }
-                    finally {
-
-                        button.disabled = false;
-
-                    }
-
-        });
-
-        function updateSelectedTheme() {
-        const selectedTheme =
-        document.documentElement.dataset.themePreference || "system";
-
-            document.querySelectorAll(".capy-theme-option")
-                .forEach(button => {
-
-                    button.classList.toggle(
-                        "is-selected",
-                        button.dataset.theme === selectedTheme
-                    );
-
-                    button.setAttribute(
-                        "aria-pressed",
-                        button.dataset.theme === selectedTheme
-                            ? "true"
-                            : "false"
-                    );
-
-                });
-        }
-
-        updateSelectedTheme();
-
-        document.querySelectorAll(".capy-theme-option")
-            .forEach(button => {
-
-                button.addEventListener("click", () => {
-                    updateSelectedTheme();
-                });
-
-            });
-
-        document.querySelectorAll(".capy-inventory-filter")
-            .forEach(button => {
-
-                button.addEventListener("click", () => {
-
-                    const filter = button.dataset.filter;
-
-                    document.querySelectorAll(".capy-item-locked")
-                        .forEach(item => {
-
-                            item.style.display =
-                                filter === "owned"
-                                    ? "none"
-                                    : "";
-
-                        });
-
-                    document.querySelectorAll(".capy-inventory-filter")
-                        .forEach(filterButton => {
-
-                            const isSelected =
-                                filterButton.dataset.filter === filter;
-
-                            filterButton.classList.toggle(
-                                "btn-primary",
-                                isSelected
-                            );
-
-                            filterButton.classList.toggle(
-                                "btn-outline-secondary",
-                                !isSelected
-                            );
-
-                            filterButton.setAttribute(
-                                "aria-pressed",
-                                isSelected ? "true" : "false"
-                            );
-
-                        });
-
-                });
-
-            });
-        document.querySelectorAll(".capy-secret-crown")
-            .forEach(crown => {
-
-                crown.addEventListener("click", async () => {
-
-                    document.getElementById("capy-error").hidden = true;
-                    const itemId = crown.dataset.unlockItemId;
-                    document.querySelectorAll(".capy-secret-crown")
-                        .forEach(secretCrown => {
-                            secretCrown.disabled = true;
-                        });
-
-                    const token = document.querySelector(
-                        'input[name="__RequestVerificationToken"]'
-                    ).value;
-
-                    const body = new URLSearchParams();
-
-                    body.append(
-                        "__RequestVerificationToken",
-                        token
-                    );
-
-                    body.append(
-                        "itemId",
-                        itemId
-                    );
-
-                    try {
-
-                        const response = await fetch(
-                            `${window.location.pathname}?handler=Unlock`,
-                            {
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/x-www-form-urlencoded; charset=UTF-8"
-                                },
-
-                                body: body
-                            }
-                        );
-
-                        if (!response.ok) {
-                            throw new Error(
-                                `Could not unlock Capy item. Status: ${response.status}`
-                            );
-                        }
-
-                        const result = await response.json();
-
-                        // Turn the locked catalogue tile into an owned item.
-                        const lockedItem = document.querySelector(
-                            `.capy-item-locked img[src="${result.imagePath}"]`
-                        )?.closest(".capy-item-locked");
-
-                        if (lockedItem) {
-
-                            const button =
-                                document.createElement("button");
-
-                            button.type = "button";
-
-                            button.className =
-                                "capy-item-tile";
-
-                            button.dataset.category =
-                                result.category;
-
-                            button.dataset.itemId =
-                                result.itemId;
-
-                            button.title =
-                                result.name;
-
-                            button.setAttribute(
-                                "aria-label",
-                                result.name
-                            );
-
-                            button.setAttribute(
-                                "aria-pressed",
-                                "false"
-                            );
-
-                            const image =
-                                document.createElement("img");
-
-                            image.src =
-                                result.imagePath;
-
-                            image.alt =
-                                result.name;
-
-                            button.appendChild(image);
-
-                            lockedItem.replaceWith(button);
-                        }
-
-                        // Show our extremely serious royal announcement.
-                        const message =
-                            document.getElementById(
-                                "capy-unlock-message"
-                            );
-
-                        message.innerHTML =
-                            `👑 <strong>${result.name} Unlocked!</strong> Your Capy is now legally royalty.`;
-
-                        message.hidden = false;
-
-                        setTimeout(() => {
-
-                            message.hidden = true;
-
-                            document.querySelectorAll(
-                                ".capy-secret-crown"
-                            ).forEach(secretCrown => {
-
-                                secretCrown.remove();
-
-                            });
-
-                        }, 4000);
-
-                        // Mandatory celebratory crown boing.
-                        document.querySelectorAll(
-                            ".capy-secret-crown"
-                        ).forEach(secretCrown => {
-
-                            secretCrown.animate(
-                                [
-                                    {
-                                        transform:
-                                            "scale(1) rotate(0deg)"
-                                    },
-                                    {
-                                        transform:
-                                            "scale(1.45) rotate(-12deg)"
-                                    },
-                                    {
-                                        transform:
-                                            "scale(1.25) rotate(12deg)"
-                                    },
-                                    {
-                                        transform:
-                                            "scale(1) rotate(0deg)"
-                                    }
-                                ],
-                                {
-                                    duration: 550,
-                                    easing: "ease-out"
-                                }
-                            );
-
-                        });
-
-                    }
-                    catch (error) {
-
-                        console.error(error);
-
-                        const feedback = document.getElementById("capy-error");
-                        feedback.textContent = "We couldn't unlock that item. Please try again.";
-                        feedback.hidden = false;
-                        document.querySelectorAll(".capy-secret-crown")
-                            .forEach(button => { button.disabled = false; });
-
-                    }
-
-                });
-
-            });
-    </script>
+    <script src="~/js/customisation.js" asp-append-version="true"></script>
 }
