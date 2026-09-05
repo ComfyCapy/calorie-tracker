@@ -892,7 +892,7 @@ body {
     background: var(--bs-tertiary-bg);
 }
 
-.form-section legend {
+.form-section > legend {
     position: absolute;
     top: -2rem;
     left: 0;

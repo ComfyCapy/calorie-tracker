@@ -2,6 +2,16 @@
 
 Use development/test credentials and configuration. Do not use real personal data in screenshots or bug reports.
 
+## Fresh deployment database
+
+- Choose a new disposable SQLite path and confirm the file does not already exist.
+- Set the environment's `ConnectionStrings__DefaultConnection` to that path, then run `dotnet ef database update --project CalorieTracker/CalorieTracker.csproj` without copying or editing another database.
+- Start the app against the migrated database and register/confirm/sign in with a fresh account.
+- Configure Profile, then load Foods, Diary and Comfy Capy Customisation; confirm none require historical development rows.
+- Confirm the new user owns catalog items 1–13, has expression 1 and background 13 equipped, does not own item 14, and can unlock the Gold Crown through the current authenticated self-unlock flow.
+- Verify Feedback and account-security pages load with test email configuration and USDA search fails gracefully or returns live results without requiring pre-existing food rows.
+- Delete the disposable database after the check; never point this procedure at the normal development or production path.
+
 ## Account
 
 - Register a fresh account and confirm the starter Capy state is available.

@@ -129,6 +129,34 @@ The application requires these configuration keys. Keep the values in user-secre
 - `Resend:ApiKey`
 - `Feedback:RecipientAddress`
 
+`appsettings.Development.json` supplies only the local SQLite connection string. Other environments must provide `ConnectionStrings__DefaultConnection`; startup fails clearly when it is missing rather than creating a database in the application directory.
+
+## Database and first deployment
+
+For the first single-instance portfolio deployment, use SQLite on a persistent mounted volume. It is proportionate to the expected traffic and keeps operation, cost and EF migration compatibility simple. Set `ConnectionStrings__DefaultConnection` to a path on that volume, for example `Data Source=/var/lib/calorietracker/calorietracker.db`. Do not use an application/deployment directory that is replaced or discarded during releases.
+
+If the chosen host cannot provide persistent storage, or the application later needs multiple instances or materially more concurrent writes, move to managed PostgreSQL. That change is intentionally deferred until the deployment platform is selected because it requires the Npgsql provider, provider-specific migration verification and a planned data transfer; the repository does not maintain two migration histories today.
+
+Apply migrations as an explicit release/pre-deploy step after taking a backup and before starting the new application version:
+
+```bash
+dotnet ef database update --project CalorieTracker/CalorieTracker.csproj
+```
+
+The release environment must supply the production connection string to that command. The application deliberately does not run `Database.Migrate()` at startup, avoiding hidden migration failures and multi-instance migration races.
+
+To prove a new installation independently of any development database, choose an unused disposable path and run:
+
+```bash
+dotnet ef database update --project CalorieTracker/CalorieTracker.csproj --connection "Data Source=/tmp/calorietracker-fresh.db"
+```
+
+The migration chain creates the complete schema and system Capy catalog. Runtime provisioning gives each new user the active starter inventory and equips the default expression/background; it does not grant the Gold Crown.
+
+Back up the SQLite database daily, retaining at least seven daily copies and several weekly copies for a small deployment. Prefer a platform volume snapshot or SQLite's online backup mechanism/`sqlite3 .backup`; do not copy a live database file while writes may be in progress. To restore, stop application writes, restore the database to a replacement persistent path, point the connection string at it, run the checked-in migrations, and then start the app. Keep source/migrations and deployment configuration in version control, but store connection strings, API/email credentials and persistent ASP.NET Core data-protection keys separately in the platform's secret/persistent-storage facilities.
+
+Diary entries snapshot food name, serving basis/unit, nutrition and portion name/count at logging time. Later custom-food or portion edits and soft deletion do not rewrite history. Existing cached USDA foods may be reused if upstream data disappears, while new external foods require a successful server-side fetch; previously logged diary nutrition never depends on a later USDA response.
+
 For local development, the React food-search island can be rebuilt with:
 
 ```bash
