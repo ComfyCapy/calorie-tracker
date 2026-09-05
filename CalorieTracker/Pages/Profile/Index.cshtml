@@ -1,5 +1,8 @@
 ﻿@page
 @model CalorieTracker.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = "Profile & Goals";
+}
 
 @if (Model.IsFirstTimeSetup)
 {
@@ -26,14 +29,16 @@ else
     </div>
 }
 
-<form method="post">
+<form method="post" class="form-shell">
 
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
 
     <input asp-for="UserProfile.ThemePreference"
            type="hidden"
            id="profileThemePreference" />
 
+    <fieldset class="form-section">
+        <legend>Body details</legend>
     <div class="mb-3">
         <label asp-for="UserProfile.DateOfBirth" class="form-label">
             Date of Birth
@@ -174,6 +179,9 @@ else
               class="text-danger"></span>
     </div>
 
+    </fieldset>
+    <fieldset class="form-section">
+        <legend>Activity & goals</legend>
     <div class="mb-3">
         <label asp-for="UserProfile.ActivityLevel" class="form-label">
             Activity Level
@@ -326,6 +334,9 @@ else
               class="text-danger"></span>
     </div>
 
+    </fieldset>
+    <fieldset class="form-section">
+        <legend>Calorie target</legend>
     <div class="mb-3">
         <label class="form-label">
             Daily Calorie Target
@@ -389,6 +400,7 @@ else
               class="text-danger"></span>
     </div>
 
+    </fieldset>
     <button type="submit"
             class="btn btn-primary">
         Save Profile
@@ -396,9 +408,9 @@ else
 </form>
 
 
-@if (Model.UserProfile.Id > 0)
+@if (Model.EstimatesProfile != null)
 {
-    <div class="card mt-4">
+    <div class="card form-shell mt-4">
         <div class="card-body">
 
             <h3 class="card-title">
@@ -415,29 +427,29 @@ else
                 </small>
 
                 <h2 class="mb-1">
-                    @Model.UserProfile.EffectiveCalorieTarget.ToString("0")
+                    @Model.EstimatesProfile.EffectiveCalorieTarget.ToString("0")
                     <small class="fs-6 fw-normal">kcal/day</small>
                 </h2>
 
-                @if (Model.UserProfile.CustomCalorieTarget.HasValue)
+                @if (Model.EstimatesProfile.CustomCalorieTarget.HasValue)
                 {
                     <p class="text-muted mb-0">
                         Your custom calorie target.
                     </p>
                 }
-                else if (Model.UserProfile.Goal == "Maintain")
+                else if (Model.EstimatesProfile.Goal == "Maintain")
                 {
                     <p class="text-muted mb-0">
                         Calculated to maintain your current weight.
                     </p>
                 }
-                else if (Model.UserProfile.Goal == "Lose")
+                else if (Model.EstimatesProfile.Goal == "Lose")
                 {
                     <p class="text-muted mb-0">
                         Calculated for your selected rate of weight loss.
                     </p>
                 }
-                else if (Model.UserProfile.Goal == "Gain")
+                else if (Model.EstimatesProfile.Goal == "Gain")
                 {
                     <p class="text-muted mb-0">
                         Calculated for your selected rate of weight gain.
@@ -451,7 +463,7 @@ else
                     <strong>Maintenance Calories</strong>
 
                     <p class="mb-1">
-                        ~@Model.UserProfile.TDEE.ToString("0") kcal/day
+                        ~@Model.EstimatesProfile.TDEE.ToString("0") kcal/day
                     </p>
 
                     <small class="text-muted">
@@ -463,7 +475,7 @@ else
                     <strong>BMR</strong>
 
                     <p class="mb-1">
-                        ~@Model.UserProfile.BMR.ToString("0") kcal/day
+                        ~@Model.EstimatesProfile.BMR.ToString("0") kcal/day
                     </p>
 
                     <small class="text-muted">
@@ -475,7 +487,7 @@ else
                     <strong>BMI</strong>
 
                     <p class="mb-1">
-                        @Model.UserProfile.BMI.ToString("0.0")
+                        @Model.EstimatesProfile.BMI.ToString("0.0")
                     </p>
 
                     <small class="text-muted">
@@ -487,7 +499,7 @@ else
                     <strong>Age</strong>
 
                     <p class="mb-1">
-                        @Model.UserProfile.Age years
+                        @Model.EstimatesProfile.Age years
                     </p>
 
                     <small class="text-muted">

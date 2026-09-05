@@ -162,6 +162,7 @@ namespace CalorieTracker.Pages.Foods
 
             _context.DiaryEntries.Add(diaryEntry);
             await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Diary entry added.";
 
             return RedirectToPage(
                 "/Diary/Index",

@@ -84,6 +84,7 @@ namespace CalorieTracker.Pages.Diary
 
             _context.DiaryEntries.Remove(diaryEntry);
             await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Diary entry deleted.";
 
             return RedirectToPage("./Index", new
             {

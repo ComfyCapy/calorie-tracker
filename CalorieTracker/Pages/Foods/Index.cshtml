@@ -1,5 +1,8 @@
 ﻿@page
 @model CalorieTracker.Pages.Foods.IndexModel
+@{
+    ViewData["Title"] = "My Foods";
+}
 
 <link rel="stylesheet"
       href="~/react-food-search/assets/food-search.css"
@@ -33,10 +36,24 @@
 
 <p>
     <a asp-page="./Create"
+       asp-route-returnToDiary="@Model.ReturnToDiary"
+       asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+       asp-route-diaryMeal="@Model.DiaryMeal"
        class="btn btn-primary">
         Add Custom Food
     </a>
 </p>
+
+@if (string.IsNullOrWhiteSpace(Model.SearchTerm) && Model.FavouriteFoods.Count == 0
+    && Model.CustomFoods.Count == 0 && Model.RecentFoods.Count == 0)
+{
+    <div class="card my-4">
+        <div class="card-body">
+            <h2 class="h5">Start your food collection</h2>
+            <p class="mb-0 text-body-secondary">Search the USDA database above or add a custom food. Favourite foods you use often to find them here next time.</p>
+        </div>
+    </div>
+}
 
 @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
 {

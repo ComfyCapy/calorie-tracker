@@ -23,13 +23,20 @@
     </div>
 }
 
+<div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
+
 @if (Model.Portions.Count == 0)
 {
     <p>No portions have been added for this food yet.</p>
 }
 else
 {
-    <table class="table">
+    @foreach (var portion in Model.Portions)
+    {
+        <form id="portion-@portion.Id" method="post" asp-page-handler="Edit"
+              asp-route-id="@Model.Food.Id" asp-route-portionId="@portion.Id"></form>
+    }
+    <table class="table align-middle">
         <thead>
             <tr>
                 <th>Portion</th>
@@ -41,22 +48,21 @@ else
             @foreach (var portion in Model.Portions)
             {
                 <tr>
-                    <form method="post"
-                          asp-page-handler="Edit"
-                          asp-route-id="@Model.Food.Id"
-                          asp-route-portionId="@portion.Id">
+
 
                         <td>
                             <input type="text"
                                    name="name"
-                                   value="@portion.Name"
+                                   form="portion-@portion.Id"
+                                   value="@(Model.EditedPortionId == portion.Id ? Model.EditedName : portion.Name)"
                                    class="form-control form-control-sm" />
                         </td>
 
                         <td>
                             <input type="number"
                                    name="amount"
-                                   value="@CalorieTracker.Services.MeasurementUnits.FromCanonical(portion.Amount, Model.Food.ServingUnit).ToString("0.############################")"
+                                   form="portion-@portion.Id"
+                                   value="@(Model.EditedPortionId == portion.Id ? Model.EditedAmount : CalorieTracker.Services.MeasurementUnits.FromCanonical(portion.Amount, Model.Food.ServingUnit).ToString("0.############################"))"
                                    step="0.01"
                                    min="0.01"
                                    class="form-control form-control-sm" />
@@ -65,18 +71,22 @@ else
                         <td>
                             <div class="d-flex gap-1">
                                 <button type="submit"
+                                        form="portion-@portion.Id"
                                         class="btn btn-sm btn-primary">
                                     Save
                                 </button>
 
                                 <button type="submit"
+                                        form="portion-@portion.Id"
+                                        formnovalidate
+                                        onclick="return confirm('Delete this portion? Existing diary entries will be kept.');"
                                         formaction="?handler=Delete&id=@Model.Food.Id&portionId=@portion.Id"
                                         class="btn btn-sm btn-danger">
                                     Delete
                                 </button>
                             </div>
                         </td>
-                    </form>
+
                 </tr>
             }
         </tbody>
@@ -87,7 +97,7 @@ else
 
 <h2>Add Portion</h2>
 
-<form method="post">
+<form method="post" class="form-shell">
     <div class="mb-3">
         <label asp-for="NewPortion.Name" class="form-label">Portion Name</label>
         <input asp-for="NewPortion.Name"
@@ -109,6 +119,4 @@ else
     <button type="submit" class="btn btn-primary">Add Portion</button>
 </form>
 
-<br />
-
-<a asp-page="./Index" class="btn btn-secondary">Back to Foods</a>
+<a asp-page="./Index" class="btn btn-secondary mt-3">Back to Foods</a>

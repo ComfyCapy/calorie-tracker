@@ -325,6 +325,7 @@ namespace CalorieTracker.Pages.Diary
             }
 
             await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Diary entry updated.";
 
             return RedirectToPage("./Index", new
             {

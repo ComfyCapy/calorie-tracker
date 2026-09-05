@@ -1,14 +1,44 @@
 ﻿@page
 @model CalorieTracker.Pages.Diary.EditModel
+@{
+    ViewData["Title"] = "Edit Diary Entry";
+}
+
+@using System.Text.Json
+
+@{
+    var foodsJson = JsonSerializer.Serialize(
+        Model.FoodOptions.Select(food => new
+        {
+            id = food.Id,
+            name = food.Name,
+            unit = food.ServingUnit,
+            isFavourite = food.IsFavourite,
+            isCustom = food.Source == null,
+            portions = food.Portions
+                .Where(portion => !portion.IsDeleted || portion.Id == Model.OriginalPortionId)
+                .Select(portion => new
+            {
+                id = portion.Id,
+                name = portion.Name,
+                amount = CalorieTracker.Services.MeasurementUnits
+                    .FromCanonical(portion.Amount, food.ServingUnit)
+            })
+        })
+    );
+}
 
 <h1>Edit Diary Entry</h1>
 
-<form method="post">
+<form method="post" class="form-shell">
+    <div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
     <input type="hidden" name="id" value="@Model.DiaryEntry.Id" />
 
-    <div class="form-group">
+    <fieldset class="form-section">
+        <legend>When</legend>
+    <div class="mb-3">
         <label asp-for="DiaryEntry.Date"
-               class="control-label">
+               class="form-label">
         </label>
 
         <input asp-for="DiaryEntry.Date"
@@ -22,14 +52,14 @@
         </span>
     </div>
 
-    <div class="form-group">
+    <div class="mb-3">
         <label asp-for="DiaryEntry.MealType"
-               class="control-label">
+               class="form-label">
             Meal
         </label>
 
         <select asp-for="DiaryEntry.MealType"
-                class="form-control">
+                class="form-select">
             <option value="Breakfast">Breakfast</option>
             <option value="Lunch">Lunch</option>
             <option value="Dinner">Dinner</option>
@@ -41,47 +71,54 @@
         </span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="DiaryEntry.FoodId"
-               class="control-label">
+    </fieldset>
+    <fieldset class="form-section">
+        <legend>Food</legend>
+    <div class="mb-3 mt-3">
+        <label class="form-label">
             Food
         </label>
 
-        <select asp-for="DiaryEntry.FoodId"
-                id="foodSelect"
-                class="form-control">
+        <input type="hidden"
+               asp-for="DiaryEntry.FoodId"
+               id="foodId" />
 
-            @foreach (var food in Model.FoodOptions)
-            {
-                <option value="@food.Id"
-                        data-unit="@food.ServingUnit"
-                        data-portions='@Html.Raw(
-                                                System.Text.Json.JsonSerializer.Serialize(
-                                                food.Portions
-                                                    .Where(p => !p.IsDeleted || p.Id == Model.OriginalPortionId)
-                                                    .Select(p => new
-                                                    {
-                                                        id = p.Id,
-                                                        name = p.Name,
-                                                amount = CalorieTracker.Services.MeasurementUnits
-                                                    .FromCanonical(p.Amount, food.ServingUnit)
-                                                    })
-                                                )
-                                            )'>
-                    @food.Name
-                </option>
-            }
-        </select>
+        <div class="position-relative">
+            <input type="text"
+                   id="foodSearch"
+                   class="form-control"
+                   placeholder="Search your foods..."
+                   autocomplete="off" />
 
-        <span asp-validation-for="DiaryEntry.FoodId"
-              class="text-danger">
-        </span>
+            <div id="foodResults"
+                 class="list-group position-absolute w-100 shadow-sm"
+                 style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+            </div>
+        </div>
+
     </div>
 
-    <div id="measurementModeSection"
-         class="form-group mt-3">
+    <span asp-validation-for="DiaryEntry.FoodId"
+          class="text-danger">
+    </span>
 
-        <label class="control-label">
+    <div id="selectedFoodDisplay"
+         class="mt-2 text-muted"
+         style="display: none;">
+        Selected:
+        <strong id="selectedFoodName"
+                class="text-body">
+        </strong>
+    </div>
+
+
+    </fieldset>
+    <fieldset id="measurementFields" class="form-section" hidden>
+        <legend>Amount</legend>
+    <div id="measurementModeSection"
+         class="mb-3 mt-3">
+
+        <label class="form-label">
             How would you like to log this?
         </label>
 
@@ -115,7 +152,7 @@
     </div>
 
     <div id="exactQuantitySection"
-         class="form-group mt-3">
+         class="mb-3 mt-3">
 
         <label asp-for="DiaryEntry.Quantity">
             Quantity (<span id="quantityUnit"></span>)
@@ -132,17 +169,17 @@
     </div>
 
     <div id="portionSection"
-         class="form-group mt-3"
+         class="mb-3 mt-3"
          style="display: none;">
 
         <label asp-for="SelectedPortionId"
-               class="control-label">
+               class="form-label">
             Portion
         </label>
 
         <select asp-for="SelectedPortionId"
                 id="portionSelect"
-                class="form-control">
+                class="form-select">
 
             <option value="">
                 Select a portion...
@@ -169,7 +206,8 @@
         </div>
     </div>
 
-    <div class="form-group mt-3">
+    </fieldset>
+    <div class="mb-3 mt-3">
         <button type="submit"
                 class="btn btn-primary">
             Save Changes
@@ -185,176 +223,9 @@
 
 @section Scripts {
     <script>
-        const selectedPortionId =
-            "@Model.SelectedPortionId";
-
-        const foodSelect =
-            document.getElementById("foodSelect");
-
-        const quantityUnit =
-            document.getElementById("quantityUnit");
-
-        const measurementModeSection =
-            document.getElementById("measurementModeSection");
-
-        const exactMode =
-            document.getElementById("exactMode");
-
-        const portionMode =
-            document.getElementById("portionMode");
-
-        const exactQuantitySection =
-            document.getElementById("exactQuantitySection");
-
-        const portionSection =
-            document.getElementById("portionSection");
-
-        const portionSelect =
-            document.getElementById("portionSelect");
-
-
-        function getSelectedFood() {
-            return foodSelect.options[
-                foodSelect.selectedIndex
-            ];
-        }
-
-
-        function getSelectedFoodPortions() {
-            const selectedOption =
-                getSelectedFood();
-
-            if (!selectedOption) {
-                return [];
-            }
-
-            return JSON.parse(
-                selectedOption.dataset.portions || "[]"
-            );
-        }
-
-
-        function updateQuantityUnit() {
-            const selectedOption =
-                getSelectedFood();
-
-            if (!selectedOption) {
-                quantityUnit.textContent = "";
-                return;
-            }
-
-            quantityUnit.textContent =
-                selectedOption.dataset.unit || "";
-        }
-
-
-        function updatePortionOptions() {
-            const selectedOption =
-                getSelectedFood();
-
-            const portions =
-                getSelectedFoodPortions();
-
-            portionSelect.innerHTML =
-                '<option value="">Select a portion...</option>';
-
-            if (!selectedOption) {
-                return;
-            }
-
-            portions.forEach(portion => {
-                const option =
-                    document.createElement("option");
-
-                option.value =
-                    portion.id;
-
-                if (
-                    portion.id.toString() ===
-                    selectedPortionId
-                ) {
-                    option.selected = true;
-                }
-
-                option.textContent =
-                    `${portion.name} (${portion.amount} ${selectedOption.dataset.unit})`;
-
-                portionSelect.appendChild(option);
-            });
-        }
-
-
-        function updatePortionAvailability() {
-            const portions =
-                getSelectedFoodPortions();
-
-            const hasPortions =
-                portions.length > 0;
-
-            if (hasPortions) {
-                measurementModeSection.style.display =
-                    "block";
-            }
-            else {
-                measurementModeSection.style.display =
-                    "none";
-
-                exactMode.checked = true;
-                portionMode.checked = false;
-            }
-        }
-
-
-        function updateMeasurementMode() {
-            const portions =
-                getSelectedFoodPortions();
-
-            if (
-                portionMode.checked &&
-                portions.length > 0
-            ) {
-                exactQuantitySection.style.display =
-                    "none";
-
-                portionSection.style.display =
-                    "block";
-            }
-            else {
-                exactQuantitySection.style.display =
-                    "block";
-
-                portionSection.style.display =
-                    "none";
-            }
-        }
-
-
-        function updateFood() {
-            updateQuantityUnit();
-            updatePortionOptions();
-            updatePortionAvailability();
-            updateMeasurementMode();
-        }
-
-
-        foodSelect.addEventListener(
-            "change",
-            updateFood
-        );
-
-        exactMode.addEventListener(
-            "change",
-            updateMeasurementMode
-        );
-
-        portionMode.addEventListener(
-            "change",
-            updateMeasurementMode
-        );
-
-
-        updateFood();
+        const foods = @Html.Raw(foodsJson);
+        const selectedPortionId = "@Model.SelectedPortionId";
     </script>
-
+    <script src="~/js/diary-food.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />
 }

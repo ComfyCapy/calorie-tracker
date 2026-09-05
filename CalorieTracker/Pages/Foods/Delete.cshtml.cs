@@ -86,6 +86,7 @@ namespace CalorieTracker.Pages.Foods
             food.IsDeleted = true;
 
             await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Food deleted.";
 
             return RedirectToPage("./Index");
         }

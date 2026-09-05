@@ -61,6 +61,7 @@ namespace CalorieTracker.Pages.Profile
         public string? ProfileStatusMessage { get; set; }
 
         public bool IsFirstTimeSetup { get; set; }
+        public UserProfile? EstimatesProfile { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -76,6 +77,7 @@ namespace CalorieTracker.Pages.Profile
             }
 
             UserProfile = profile;
+            EstimatesProfile = profile;
 
             UseCustomCalorieTarget =
                 profile.CustomCalorieTarget.HasValue;
@@ -331,11 +333,6 @@ namespace CalorieTracker.Pages.Profile
                     "These profile values do not produce a valid calculated calorie target.");
             }
 
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -345,6 +342,13 @@ namespace CalorieTracker.Pages.Profile
 
             var existingProfile = await _context.UserProfiles
                 .FirstOrDefaultAsync(profile => profile.UserId == userId);
+
+            if (!ModelState.IsValid)
+            {
+                IsFirstTimeSetup = existingProfile == null;
+                EstimatesProfile = existingProfile;
+                return Page();
+            }
 
             if (existingProfile == null)
             {

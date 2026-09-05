@@ -15,6 +15,10 @@ namespace CalorieTracker.Pages.Foods
         [TempData]
         public string? StatusMessage { get; set; }
 
+        public int? EditedPortionId { get; set; }
+        public string? EditedName { get; set; }
+        public string? EditedAmount { get; set; }
+
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
@@ -231,53 +235,33 @@ namespace CalorieTracker.Pages.Foods
                 return NotFound();
             }
 
+            // Only the row fields belong to this handler; NewPortion is the separate add form.
+            ModelState.Remove("NewPortion.Name");
+            ModelState.Remove("NewPortion.Amount");
             if (string.IsNullOrWhiteSpace(name))
-            {
-                StatusMessage =
-                    "Portion name cannot be empty.";
-
-                return RedirectToPage(new
-                {
-                    id
-                });
-            }
-
-            if (name.Trim().Length > 50)
-            {
-                StatusMessage =
-                    "Portion name must be 50 characters or fewer.";
-
-                return RedirectToPage(new
-                {
-                    id
-                });
-            }
+                ModelState.AddModelError(nameof(name), "Portion name cannot be empty.");
+            else if (name.Trim().Length > 50)
+                ModelState.AddModelError(nameof(name), "Portion name must be 50 characters or fewer.");
 
             if (amount <= 0)
-            {
-                StatusMessage =
-                    "Portion amount must be greater than 0.";
-
-                return RedirectToPage(new
-                {
-                    id
-                });
-            }
+                ModelState.AddModelError(nameof(amount), "Portion amount must be greater than 0.");
 
             if (!MeasurementUnits.TryToCanonical(
-                    amount,
-                    portion.Food!.ServingUnit,
-                    out var canonicalAmount,
-                    out _,
-                    out _))
-            {
-                StatusMessage =
-                    "The portion amount could not be converted.";
+                    amount, portion.Food!.ServingUnit,
+                    out var canonicalAmount, out _, out _))
+                ModelState.AddModelError(nameof(amount), "The portion amount could not be converted.");
 
-                return RedirectToPage(new
-                {
-                    id
-                });
+            if (!ModelState.IsValid)
+            {
+                Food = portion.Food!;
+                Portions = await _context.FoodPortions
+                    .Where(item => item.FoodId == Food.Id && !item.IsDeleted)
+                    .OrderBy(item => item.Amount)
+                    .ToListAsync();
+                EditedPortionId = portion.Id;
+                EditedName = ModelState[nameof(name)]?.AttemptedValue ?? name;
+                EditedAmount = ModelState[nameof(amount)]?.AttemptedValue;
+                return Page();
             }
 
             portion.Name = name.Trim();
