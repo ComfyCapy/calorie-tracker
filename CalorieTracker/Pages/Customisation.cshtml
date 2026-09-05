@@ -78,7 +78,7 @@
             <button type="button"
                     class="capy-secret-crown"
                     data-unlock-item-id="14"
-                    aria-label="Secret crown">
+                    aria-label="Unlock gold crown">
                 👑
             </button>
         }
@@ -90,7 +90,7 @@
             <button type="button"
                     class="capy-secret-crown"
                     data-unlock-item-id="14"
-                    aria-label="Secret crown">
+                    aria-label="Unlock gold crown">
                 👑
             </button>
         }
@@ -131,6 +131,8 @@
 
             <section class="capy-inventory">
 
+                <h2 class="visually-hidden">Capy inventory</h2>
+
                 <div class="d-flex justify-content-end mb-2">
                     <div class="btn-group btn-group-sm"
                          role="group"
@@ -138,13 +140,15 @@
 
                         <button type="button"
                                 class="btn btn-outline-secondary capy-inventory-filter"
-                                data-filter="owned">
+                                data-filter="owned"
+                                aria-pressed="false">
                             Owned only
                         </button>
 
                         <button type="button"
                                 class="btn btn-primary capy-inventory-filter"
-                                data-filter="all">
+                                data-filter="all"
+                                aria-pressed="true">
                             All items
                         </button>
 
@@ -165,15 +169,23 @@
                         .Select(item => item.Id)
                         .ToHashSet();
 
-                    <div class="capy-inventory-row">
+                    <div class="capy-inventory-row"
+                         role="group"
+                         aria-labelledby="capy-category-@category.Key">
 
                         <div class="capy-category-icon"
-                             title="@category.Name">
+                             title="@category.Name"
+                             aria-hidden="true">
 
                             <img src="/images/capy/ui/@category.Icon"
-                                 alt="@category.Name" />
+                                 alt="" />
 
                         </div>
+
+                        <h3 id="capy-category-@category.Key"
+                            class="visually-hidden">
+                            @category.Name
+                        </h3>
 
                         <div class="capy-item-list">
 
@@ -183,7 +195,9 @@
                                         class="capy-item-tile capy-none-tile @(equippedItemId == null ? "is-equipped" : "")"
                                         data-category="@category.Key"
                                         data-item-id=""
-                                        title="None">
+                                        title="None"
+                                        aria-label="No @category.Name"
+                                        aria-pressed="@(equippedItemId == null ? "true" : "false")">
 
                                     <span>×</span>
 
@@ -200,7 +214,9 @@
                                             class="capy-item-tile @(equippedItemId == item.Id ? "is-equipped" : "")"
                                             data-category="@category.Key"
                                             data-item-id="@item.Id"
-                                            title="@item.Name">
+                                            title="@item.Name"
+                                            aria-label="@item.Name"
+                                            aria-pressed="@(equippedItemId == item.Id ? "true" : "false")">
 
                                         <img src="@item.ImagePath"
                                              alt="@item.Name" />
@@ -210,7 +226,9 @@
                                 else
                                 {
                                     <div class="capy-item-tile capy-item-locked"
-                                         title="@item.Name — Locked">
+                                         title="@item.Name — Locked"
+                                         role="img"
+                                         aria-label="@item.Name, locked">
 
                                         <img src="@item.ImagePath"
                                              alt="" />
@@ -234,7 +252,7 @@
         </div>
 
         <section class="capy-theme-section">
-            <h3 class="capy-theme-title">Theme</h3>
+            <h2 class="capy-theme-title">Theme</h2>
 
             <p class="text-muted mb-3">
                 Choose how CalorieTracker looks.
@@ -245,6 +263,7 @@
                 <button type="button"
                         class="capy-theme-option theme-option"
                         data-theme="light"
+                        aria-pressed="false"
                         disabled="@(!Model.HasUserProfile)">
                     <span class="capy-theme-option-title">
                         Light
@@ -258,6 +277,7 @@
                 <button type="button"
                         class="capy-theme-option theme-option"
                         data-theme="dark"
+                        aria-pressed="false"
                         disabled="@(!Model.HasUserProfile)">
                     <span class="capy-theme-option-title">
                         Dark
@@ -271,6 +291,7 @@
                 <button type="button"
                         class="capy-theme-option theme-option"
                         data-theme="system"
+                        aria-pressed="false"
                         disabled="@(!Model.HasUserProfile)">
                     <span class="capy-theme-option-title">
                         System
@@ -406,9 +427,11 @@
                             `.capy-item-tile[data-category="${category}"]`
                         ).forEach(tile => {
                             tile.classList.remove("is-equipped");
+                            tile.setAttribute("aria-pressed", "false");
                         });
 
                         button.classList.add("is-equipped");
+                        button.setAttribute("aria-pressed", "true");
 
 
                         // Update EVERY visible Capy renderer:
@@ -465,6 +488,13 @@
                         button.dataset.theme === selectedTheme
                     );
 
+                    button.setAttribute(
+                        "aria-pressed",
+                        button.dataset.theme === selectedTheme
+                            ? "true"
+                            : "false"
+                    );
+
                 });
         }
 
@@ -510,6 +540,11 @@
                             filterButton.classList.toggle(
                                 "btn-outline-secondary",
                                 !isSelected
+                            );
+
+                            filterButton.setAttribute(
+                                "aria-pressed",
+                                isSelected ? "true" : "false"
                             );
 
                         });
@@ -592,6 +627,16 @@
 
                             button.title =
                                 result.name;
+
+                            button.setAttribute(
+                                "aria-label",
+                                result.name
+                            );
+
+                            button.setAttribute(
+                                "aria-pressed",
+                                "false"
+                            );
 
                             const image =
                                 document.createElement("img");

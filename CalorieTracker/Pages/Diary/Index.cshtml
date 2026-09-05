@@ -15,39 +15,65 @@
     {
         <a asp-page="./Index"
            asp-route-date="@Model.PreviousDate.Value.ToString("yyyy-MM-dd")"
-           class="btn btn-outline-secondary">
+           class="btn btn-outline-secondary"
+           aria-label="Previous diary day">
             ← Previous
         </a>
     }
     else
     {
-        <button class="btn btn-outline-secondary" disabled>← Previous</button>
+        <button class="btn btn-outline-secondary"
+                type="button"
+                disabled
+                aria-label="Previous diary day">
+            ← Previous
+        </button>
     }
 
     <strong>
         @Model.SelectedDate.ToString("dddd, d MMMM yyyy")
     </strong>
 
-    <a asp-page="./Index"
-       class="btn btn-outline-secondary @(Model.SelectedDate.Date == DateTime.Today ? "disabled" : "")">
-        Today
-    </a>
+    @if (Model.SelectedDate.Date == DateTime.Today)
+    {
+        <span class="btn btn-outline-secondary disabled"
+              aria-current="date"
+              aria-disabled="true">
+            Today
+        </span>
+    }
+    else
+    {
+        <a asp-page="./Index"
+           class="btn btn-outline-secondary"
+           aria-label="Go to today">
+            Today
+        </a>
+    }
 
     @if (Model.NextDate.HasValue)
     {
         <a asp-page="./Index"
            asp-route-date="@Model.NextDate.Value.ToString("yyyy-MM-dd")"
-           class="btn btn-outline-secondary">
+           class="btn btn-outline-secondary"
+           aria-label="Next diary day">
             Next →
         </a>
     }
     else
     {
-        <button class="btn btn-outline-secondary" disabled>Next →</button>
+        <button class="btn btn-outline-secondary"
+                type="button"
+                disabled
+                aria-label="Next diary day">
+            Next →
+        </button>
     }
 
     <form method="get" class="d-flex align-items-center gap-2 ms-2">
-        <input type="date"
+        <label for="diaryDate" class="visually-hidden">Diary date</label>
+        <input id="diaryDate"
+               type="date"
                name="date"
                min="1900-01-01"
                max="2100-12-31"
@@ -62,7 +88,7 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <h4 class="card-title">Daily Progress</h4>
+        <h2 class="card-title h4">Daily Progress</h2>
 
         @if (Model.DailyCalorieTarget > 0)
         {
@@ -96,6 +122,7 @@
             <div class="progress mb-3" style="height: 20px;">
                 <div class="progress-bar"
                      role="progressbar"
+                     aria-label="Daily calorie progress"
                      style="width: @Model.CalorieProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
                      aria-valuenow="@Model.CalorieProgressPercent"
                      aria-valuemin="0"
@@ -137,7 +164,7 @@
     <section class="mb-5">
         <div class="d-flex justify-content-between align-items-end mb-2">
             <div>
-                <h3 class="mb-0">@meal</h3>
+                <h2 class="mb-0 h3">@meal</h2>
 
                 @if (mealEntries.Count > 0)
                 {
@@ -153,7 +180,8 @@
             <a asp-page="./Create"
                asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
                asp-route-meal="@meal"
-               class="btn btn-sm btn-outline-primary">
+               class="btn btn-sm btn-outline-primary"
+               aria-label="Add food to @meal">
                 + Add Food
             </a>
         </div>
@@ -207,17 +235,20 @@
                         <div class="food-search-result-bottom">
                             <div class="food-search-macros">
                                 <span>
-                                    <strong>P</strong>
+                                    <strong aria-hidden="true">P</strong>
+                                    <span class="visually-hidden">Protein </span>
                                     @entry.ProteinConsumed.ToString("0.0")g
                                 </span>
 
                                 <span>
-                                    <strong>C</strong>
+                                    <strong aria-hidden="true">C</strong>
+                                    <span class="visually-hidden">Carbohydrates </span>
                                     @entry.CarbohydratesConsumed.ToString("0.0")g
                                 </span>
 
                                 <span>
-                                    <strong>F</strong>
+                                    <strong aria-hidden="true">F</strong>
+                                    <span class="visually-hidden">Fat </span>
                                     @entry.FatConsumed.ToString("0.0")g
                                 </span>
                             </div>
@@ -225,13 +256,15 @@
                             <div class="d-flex align-items-center gap-2">
                                 <a asp-page="./Edit"
                                    asp-route-id="@entry.Id"
-                                   class="btn btn-sm btn-outline-primary">
+                                   class="btn btn-sm btn-outline-primary"
+                                   aria-label="Edit @entry.FoodNameSnapshot diary entry">
                                     Edit
                                 </a>
 
                                 <a asp-page="./Delete"
                                    asp-route-id="@entry.Id"
-                                   class="btn btn-sm btn-outline-danger">
+                                   class="btn btn-sm btn-outline-danger"
+                                   aria-label="Delete @entry.FoodNameSnapshot diary entry">
                                     Delete
                                 </a>
                             </div>

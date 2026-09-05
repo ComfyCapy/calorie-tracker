@@ -47,7 +47,8 @@
                type="date"
                min="1900-01-01"
                max="2100-12-31"
-               class="form-control" />
+               class="form-control"
+               aria-required="true" />
 
         <span asp-validation-for="DiaryEntry.Date"
               class="text-danger">
@@ -61,7 +62,8 @@
         </label>
 
         <select asp-for="DiaryEntry.MealType"
-                class="form-select">
+                class="form-select"
+                aria-required="true">
             <option value="Breakfast">Breakfast</option>
             <option value="Lunch">Lunch</option>
             <option value="Dinner">Dinner</option>
@@ -77,7 +79,7 @@
     <fieldset class="form-section">
         <legend>Food</legend>
     <div class="mb-3 mt-3">
-        <label class="form-label">
+        <label class="form-label" for="foodSearch">
             Food
         </label>
 
@@ -90,17 +92,33 @@
                    id="foodSearch"
                    class="form-control"
                    placeholder="Search your foods..."
-                   autocomplete="off" />
+                   autocomplete="off"
+                   role="combobox"
+                   aria-autocomplete="list"
+                   aria-controls="foodResults"
+                   aria-expanded="false"
+                   aria-required="true"
+                   aria-describedby="foodSearchStatus foodSearchError" />
 
             <div id="foodResults"
                  class="list-group position-absolute w-100 shadow-sm"
+                 role="listbox"
+                 aria-label="Food suggestions"
                  style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+            </div>
+
+            <div id="foodSearchStatus"
+                 class="visually-hidden"
+                 role="status"
+                 aria-live="polite"
+                 aria-atomic="true">
             </div>
         </div>
 
     </div>
 
-    <span asp-validation-for="DiaryEntry.FoodId"
+    <span id="foodSearchError"
+          asp-validation-for="DiaryEntry.FoodId"
           class="text-danger">
     </span>
 
@@ -139,9 +157,8 @@
          class="mb-3 mt-3"
          style="display: none;">
 
-        <label class="form-label">
-            How would you like to log this?
-        </label>
+        <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label">How would you like to log this?</legend>
 
         <div class="mt-2">
             <div class="form-check form-check-inline">
@@ -170,6 +187,7 @@
                 </label>
             </div>
         </div>
+        </fieldset>
     </div>
 
     <div id="exactQuantitySection"

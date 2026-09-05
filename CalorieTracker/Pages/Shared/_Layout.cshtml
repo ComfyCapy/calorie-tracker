@@ -20,6 +20,8 @@
                 .FirstOrDefaultAsync();
         }
     }
+
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
 }
 
 <!DOCTYPE html>
@@ -80,20 +82,21 @@
                 <button class="navbar-toggler"
                         type="button"
                         data-bs-toggle="collapse"
-                        data-bs-target=".navbar-collapse"
+                        data-bs-target="#navbarSupportedContent"
                         aria-controls="navbarSupportedContent"
                         aria-expanded="false"
                         aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div id="navbarSupportedContent" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
 
                         <li class="nav-item">
                             <a class="nav-link"
                                asp-area=""
-                               asp-page="/Index">
+                               asp-page="/Index"
+                               aria-current="@(currentPage == "/Index" ? "page" : null)">
                                 Home
                             </a>
                         </li>
@@ -102,7 +105,8 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link"
-                                   asp-page="/Foods/Index">
+                                   asp-page="/Foods/Index"
+                                   aria-current="@(currentPage?.StartsWith("/Foods", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
                                     Foods
                                 </a>
                             </li>
@@ -110,7 +114,8 @@
                             <li class="nav-item">
                                 <a class="nav-link"
                                    asp-area=""
-                                   asp-page="/Diary/Index">
+                                   asp-page="/Diary/Index"
+                                   aria-current="@(currentPage?.StartsWith("/Diary", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
                                     Diary
                                 </a>
                             </li>
@@ -118,7 +123,8 @@
                             <li class="nav-item">
                                 <a class="nav-link"
                                    asp-area=""
-                                   asp-page="/Profile/Index">
+                                   asp-page="/Profile/Index"
+                                   aria-current="@(currentPage?.StartsWith("/Profile", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
                                     Profile
                                 </a>
                             </li>

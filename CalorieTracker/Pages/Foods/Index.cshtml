@@ -21,7 +21,9 @@
            asp-for="DiaryMeal" />
 
     <div class="input-group">
+        <label for="foodSearchTerm" class="visually-hidden">Search my foods</label>
         <input type="text"
+               id="foodSearchTerm"
                name="searchTerm"
                value="@Model.SearchTerm"
                class="form-control"
@@ -101,17 +103,20 @@
                     <div class="food-search-result-bottom">
                         <div class="food-search-macros">
                             <span>
-                                <strong>P</strong>
+                                <strong aria-hidden="true">P</strong>
+                                <span class="visually-hidden">Protein </span>
                                 @food.Protein.ToString("0.##")g
                             </span>
 
                             <span>
-                                <strong>C</strong>
+                                <strong aria-hidden="true">C</strong>
+                                <span class="visually-hidden">Carbohydrates </span>
                                 @food.Carbohydrates.ToString("0.##")g
                             </span>
 
                             <span>
-                                <strong>F</strong>
+                                <strong aria-hidden="true">F</strong>
+                                <span class="visually-hidden">Fat </span>
                                 @food.Fat.ToString("0.##")g
                             </span>
                         </div>
@@ -127,8 +132,8 @@
 
                                 <button type="submit"
                                         class="food-search-favourite-button is-favourite"
-                                        aria-label="Remove from Favourites"
-                                        title="Remove from Favourites">
+                                        aria-label="Remove @food.Name from Favourites"
+                                        title="Remove @food.Name from Favourites">
                                     ★
                                 </button>
                             </form>
@@ -159,7 +164,7 @@
                                             type="button"
                                             data-bs-toggle="dropdown"
                                             aria-expanded="false"
-                                            aria-label="Food actions">
+                                            aria-label="Actions for @food.Name">
                                         ⋮
                                     </button>
 
@@ -216,35 +221,51 @@
                 <nav aria-label="Favourites pages">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item @(Model.FavouritesPage <= 1 ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               asp-route-returnToDiary="@Model.ReturnToDiary"
-                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                               asp-route-diaryMeal="@Model.DiaryMeal"
-                               asp-route-favouritesPage="@(Model.FavouritesPage - 1)"
-                               asp-route-customPage="@Model.CustomPage"
-                               asp-route-recentPage="@Model.RecentPage">
-                                ‹
-                            </a>
+                            @if (Model.FavouritesPage <= 1)
+                            {
+                                <span class="page-link" aria-disabled="true">‹</span>
+                            }
+                            else
+                            {
+                                <a class="page-link"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-diaryMeal="@Model.DiaryMeal"
+                                   asp-route-favouritesPage="@(Model.FavouritesPage - 1)"
+                                   asp-route-customPage="@Model.CustomPage"
+                                   asp-route-recentPage="@Model.RecentPage"
+                                   aria-label="Previous favourites page">
+                                    ‹
+                                </a>
+                            }
                         </li>
 
                         <li class="page-item disabled">
-                            <span class="page-link">
+                            <span class="page-link" aria-current="page">
                                 Page @Model.FavouritesPage of @Model.FavouritesTotalPages
                             </span>
                         </li>
 
                         <li class="page-item @(Model.FavouritesPage >= Model.FavouritesTotalPages ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               asp-route-returnToDiary="@Model.ReturnToDiary"
-                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                               asp-route-diaryMeal="@Model.DiaryMeal"
-                               asp-route-favouritesPage="@(Model.FavouritesPage + 1)"
-                               asp-route-customPage="@Model.CustomPage"
-                               asp-route-recentPage="@Model.RecentPage">
-                                ›
-                            </a>
+                            @if (Model.FavouritesPage >= Model.FavouritesTotalPages)
+                            {
+                                <span class="page-link" aria-disabled="true">›</span>
+                            }
+                            else
+                            {
+                                <a class="page-link"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-diaryMeal="@Model.DiaryMeal"
+                                   asp-route-favouritesPage="@(Model.FavouritesPage + 1)"
+                                   asp-route-customPage="@Model.CustomPage"
+                                   asp-route-recentPage="@Model.RecentPage"
+                                   aria-label="Next favourites page">
+                                    ›
+                                </a>
+                            }
                         </li>
                     </ul>
                 </nav>
@@ -284,17 +305,20 @@
                     <div class="food-search-result-bottom">
                         <div class="food-search-macros">
                             <span>
-                                <strong>P</strong>
+                                <strong aria-hidden="true">P</strong>
+                                <span class="visually-hidden">Protein </span>
                                 @food.Protein.ToString("0.##")g
                             </span>
 
                             <span>
-                                <strong>C</strong>
+                                <strong aria-hidden="true">C</strong>
+                                <span class="visually-hidden">Carbohydrates </span>
                                 @food.Carbohydrates.ToString("0.##")g
                             </span>
 
                             <span>
-                                <strong>F</strong>
+                                <strong aria-hidden="true">F</strong>
+                                <span class="visually-hidden">Fat </span>
                                 @food.Fat.ToString("0.##")g
                             </span>
                         </div>
@@ -310,8 +334,8 @@
 
                                 <button type="submit"
                                         class="food-search-favourite-button @(food.IsFavourite ? "is-favourite" : "")"
-                                        aria-label="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")"
-                                        title="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")">
+                                        aria-label="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")"
+                                        title="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")">
                                     @(food.IsFavourite ? "★" : "☆")
                                 </button>
                             </form>
@@ -320,7 +344,8 @@
                                asp-route-foodId="@food.Id"
                                asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
                                asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                               class="btn btn-primary btn-sm">
+                               class="btn btn-primary btn-sm"
+                               aria-label="Add @food.Name to Diary">
                                 Add to Diary
                             </a>
 
@@ -329,7 +354,7 @@
                                         type="button"
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false"
-                                        aria-label="Food actions">
+                                        aria-label="Actions for @food.Name">
                                     ⋮
                                 </button>
 
@@ -385,35 +410,51 @@
                 <nav aria-label="Custom food pages">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item @(Model.CustomPage <= 1 ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               asp-route-returnToDiary="@Model.ReturnToDiary"
-                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                               asp-route-diaryMeal="@Model.DiaryMeal"
-                               asp-route-favouritesPage="@Model.FavouritesPage"
-                               asp-route-customPage="@(Model.CustomPage - 1)"
-                               asp-route-recentPage="@Model.RecentPage">
-                                ‹
-                            </a>
+                            @if (Model.CustomPage <= 1)
+                            {
+                                <span class="page-link" aria-disabled="true">‹</span>
+                            }
+                            else
+                            {
+                                <a class="page-link"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-diaryMeal="@Model.DiaryMeal"
+                                   asp-route-favouritesPage="@Model.FavouritesPage"
+                                   asp-route-customPage="@(Model.CustomPage - 1)"
+                                   asp-route-recentPage="@Model.RecentPage"
+                                   aria-label="Previous custom food page">
+                                    ‹
+                                </a>
+                            }
                         </li>
 
                         <li class="page-item disabled">
-                            <span class="page-link">
+                            <span class="page-link" aria-current="page">
                                 Page @Model.CustomPage of @Model.CustomTotalPages
                             </span>
                         </li>
 
                         <li class="page-item @(Model.CustomPage >= Model.CustomTotalPages ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               asp-route-returnToDiary="@Model.ReturnToDiary"
-                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                               asp-route-diaryMeal="@Model.DiaryMeal"
-                               asp-route-favouritesPage="@Model.FavouritesPage"
-                               asp-route-customPage="@(Model.CustomPage + 1)"
-                               asp-route-recentPage="@Model.RecentPage">
-                                ›
-                            </a>
+                            @if (Model.CustomPage >= Model.CustomTotalPages)
+                            {
+                                <span class="page-link" aria-disabled="true">›</span>
+                            }
+                            else
+                            {
+                                <a class="page-link"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-diaryMeal="@Model.DiaryMeal"
+                                   asp-route-favouritesPage="@Model.FavouritesPage"
+                                   asp-route-customPage="@(Model.CustomPage + 1)"
+                                   asp-route-recentPage="@Model.RecentPage"
+                                   aria-label="Next custom food page">
+                                    ›
+                                </a>
+                            }
                         </li>
                     </ul>
                 </nav>
@@ -453,17 +494,20 @@
                     <div class="food-search-result-bottom">
                         <div class="food-search-macros">
                             <span>
-                                <strong>P</strong>
+                                <strong aria-hidden="true">P</strong>
+                                <span class="visually-hidden">Protein </span>
                                 @food.Protein.ToString("0.##")g
                             </span>
 
                             <span>
-                                <strong>C</strong>
+                                <strong aria-hidden="true">C</strong>
+                                <span class="visually-hidden">Carbohydrates </span>
                                 @food.Carbohydrates.ToString("0.##")g
                             </span>
 
                             <span>
-                                <strong>F</strong>
+                                <strong aria-hidden="true">F</strong>
+                                <span class="visually-hidden">Fat </span>
                                 @food.Fat.ToString("0.##")g
                             </span>
                         </div>
@@ -479,8 +523,8 @@
 
                                 <button type="submit"
                                         class="food-search-favourite-button @(food.IsFavourite ? "is-favourite" : "")"
-                                        aria-label="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")"
-                                        title="@(food.IsFavourite ? "Remove from Favourites" : "Add to Favourites")">
+                                        aria-label="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")"
+                                        title="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")">
                                     @(food.IsFavourite ? "★" : "☆")
                                 </button>
                             </form>
@@ -490,7 +534,8 @@
                                asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
                                asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
                                asp-route-searchTerm="@Model.SearchTerm"
-                               class="btn btn-primary btn-sm">
+                               class="btn btn-primary btn-sm"
+                               aria-label="Add @food.Name to Diary">
                                 Add to Diary
                             </a>
                         </div>
@@ -515,35 +560,51 @@
                 <nav aria-label="Recent food pages">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item @(Model.RecentPage <= 1 ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               asp-route-returnToDiary="@Model.ReturnToDiary"
-                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                               asp-route-diaryMeal="@Model.DiaryMeal"
-                               asp-route-favouritesPage="@Model.FavouritesPage"
-                               asp-route-customPage="@Model.CustomPage"
-                               asp-route-recentPage="@(Model.RecentPage - 1)">
-                                ‹
-                            </a>
+                            @if (Model.RecentPage <= 1)
+                            {
+                                <span class="page-link" aria-disabled="true">‹</span>
+                            }
+                            else
+                            {
+                                <a class="page-link"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-diaryMeal="@Model.DiaryMeal"
+                                   asp-route-favouritesPage="@Model.FavouritesPage"
+                                   asp-route-customPage="@Model.CustomPage"
+                                   asp-route-recentPage="@(Model.RecentPage - 1)"
+                                   aria-label="Previous recent food page">
+                                    ‹
+                                </a>
+                            }
                         </li>
 
                         <li class="page-item disabled">
-                            <span class="page-link">
+                            <span class="page-link" aria-current="page">
                                 Page @Model.RecentPage of @Model.RecentTotalPages
                             </span>
                         </li>
 
                         <li class="page-item @(Model.RecentPage >= Model.RecentTotalPages ? "disabled" : "")">
-                            <a class="page-link"
-                               asp-route-searchTerm="@Model.SearchTerm"
-                               asp-route-returnToDiary="@Model.ReturnToDiary"
-                               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                               asp-route-diaryMeal="@Model.DiaryMeal"
-                               asp-route-favouritesPage="@Model.FavouritesPage"
-                               asp-route-customPage="@Model.CustomPage"
-                               asp-route-recentPage="@(Model.RecentPage + 1)">
-                                ›
-                            </a>
+                            @if (Model.RecentPage >= Model.RecentTotalPages)
+                            {
+                                <span class="page-link" aria-disabled="true">›</span>
+                            }
+                            else
+                            {
+                                <a class="page-link"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-diaryMeal="@Model.DiaryMeal"
+                                   asp-route-favouritesPage="@Model.FavouritesPage"
+                                   asp-route-customPage="@Model.CustomPage"
+                                   asp-route-recentPage="@(Model.RecentPage + 1)"
+                                   aria-label="Next recent food page">
+                                    ›
+                                </a>
+                            }
                         </li>
                     </ul>
                 </nav>
