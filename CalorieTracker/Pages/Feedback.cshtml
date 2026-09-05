@@ -1,0 +1,65 @@
+@page
+@model CalorieTracker.Pages.FeedbackModel
+@using CalorieTracker.Services
+@{
+    ViewData["Title"] = "Feedback";
+    var feedbackInvalid =
+        ViewData.ModelState["FeedbackText"]?.Errors.Count > 0;
+}
+
+<h1>Feedback</h1>
+
+<p class="text-muted">
+    Tell us what is working well or what could be improved. Please do not include personal information.
+</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success" role="status">
+        @Model.SuccessMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.SubmissionError))
+{
+    <div class="alert alert-danger" role="alert">
+        @Model.SubmissionError
+    </div>
+}
+
+<form method="post" class="form-shell">
+    <div asp-validation-summary="ModelOnly"
+         class="alert alert-danger validation-summary"
+         role="alert"></div>
+
+    <div class="mb-3">
+        <label asp-for="FeedbackText" class="form-label">
+            Your feedback
+        </label>
+
+        <textarea asp-for="FeedbackText"
+                  class="form-control"
+                  rows="8"
+                  maxlength="@FeedbackRules.MaximumLength"
+                  required
+                  aria-required="true"
+                  aria-invalid="@(feedbackInvalid ? "true" : null)"
+                  aria-describedby="feedbackHelp feedbackValidation"></textarea>
+
+        <div id="feedbackHelp" class="form-text">
+            Maximum @FeedbackRules.MaximumLength.ToString("N0") characters.
+        </div>
+
+        <span asp-validation-for="FeedbackText"
+              id="feedbackValidation"
+              class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Send feedback
+    </button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -113,11 +113,21 @@ Run the application:
 dotnet run --project CalorieTracker/CalorieTracker.csproj
 ```
 
+Run the automated test suite:
+
+```bash
+dotnet test CalorieTracker/CalorieTracker.slnx
+```
+
+The remaining browser and release checks are listed in
+[`MANUAL-TESTING.md`](MANUAL-TESTING.md).
+
 The application requires these configuration keys. Keep the values in user-secrets or environment variables; do not commit them:
 
 - `ConnectionStrings:DefaultConnection`
 - `FoodDataCentral:ApiKey`
 - `Resend:ApiKey`
+- `Feedback:RecipientAddress`
 
 For local development, the React food-search island can be rebuilt with:
 
