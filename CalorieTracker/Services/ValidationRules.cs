@@ -136,23 +136,6 @@ namespace CalorieTracker.Services
                 entry.Errors.Count > 0;
         }
 
-        public static void CaptureSnapshot(
-            DiaryEntry entry,
-            Food food,
-            FoodPortion? portion)
-        {
-            entry.FoodNameSnapshot = food.Name;
-            entry.ServingSizeSnapshot = food.ServingSize;
-            entry.ServingUnitSnapshot = food.ServingUnit;
-            entry.CanonicalServingSizeSnapshot =
-                food.CanonicalServingSize;
-            entry.CaloriesSnapshot = food.Calories;
-            entry.ProteinSnapshot = food.Protein;
-            entry.CarbohydratesSnapshot = food.Carbohydrates;
-            entry.FatSnapshot = food.Fat;
-            entry.PortionNameSnapshot = portion?.Name;
-        }
-
         private static void ValidateNonNegative(
             decimal value,
             string key,

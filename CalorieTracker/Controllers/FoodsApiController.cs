@@ -14,6 +14,7 @@ namespace CalorieTracker.Controllers
     [ApiController]
     [Route("api/foods")]
     [Authorize]
+    // These mutations use the Identity cookie, so browser requests also require an antiforgery token.
     [AutoValidateAntiforgeryToken]
     public class FoodsApiController : ControllerBase
     {
@@ -94,7 +95,7 @@ namespace CalorieTracker.Controllers
             var favouriteExternalIds = (await _context.Foods
                 .Where(food =>
                     food.UserId == userId &&
-                    food.Source == "USDA" &&
+                    food.Source == FoodSources.Usda &&
                     food.ExternalId != null &&
                     externalIds.Contains(food.ExternalId) &&
                     food.IsFavourite &&
@@ -223,7 +224,7 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
-            if (!MeasurementUnits.IsPositiveUsdaId(
+            if (!ExternalFoodIds.TryNormalizeUsdaId(
                     externalId,
                     out var normalizedId))
             {
@@ -237,7 +238,7 @@ namespace CalorieTracker.Controllers
             var food = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.UserId == userId &&
-                    food.Source == "USDA" &&
+                    food.Source == FoodSources.Usda &&
                     food.ExternalId == normalizedId &&
                     food.IsFavourite &&
                     !food.IsDeleted);

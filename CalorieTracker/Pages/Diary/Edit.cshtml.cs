@@ -149,6 +149,7 @@ namespace CalorieTracker.Pages.Diary
                     "Please select a valid measurement mode.");
             }
 
+            // Keep the original soft-deleted food available so its historical entry can still be edited.
             var selectedFood = await _context.Foods
                 .Include(food => food.Portions)
                 .FirstOrDefaultAsync(food =>
@@ -187,6 +188,7 @@ namespace CalorieTracker.Pages.Diary
                     PortionQuantity > 0 &&
                     selectedFood != null)
                 {
+                    // The original deleted portion stays selectable for this entry; new choices must be active.
                     var portion = selectedFood.Portions
                         .FirstOrDefault(portion =>
                             portion.Id == SelectedPortionId &&
@@ -204,6 +206,7 @@ namespace CalorieTracker.Pages.Diary
                     {
                         selectedPortion = portion;
 
+                        // Preserve the historical amount if the portion row was edited after logging.
                         var canonicalAmount =
                             selectedFood.Id == existingEntry.FoodId &&
                             portion.Id == existingEntry.FoodPortionId &&
@@ -225,6 +228,7 @@ namespace CalorieTracker.Pages.Diary
                                 "The resulting quantity is too large.");
                         }
 
+                        // Quantity is derived from the selected owned portion, not the posted quantity field.
                         ModelState.Remove(
                             "DiaryEntry.Quantity");
                     }
@@ -234,6 +238,7 @@ namespace CalorieTracker.Pages.Diary
             {
                 decimal canonicalQuantity = 0;
 
+                // Exact mode owns quantity; discard stale portion fields from the same form post.
                 ModelState.Remove(
                     nameof(SelectedPortionId));
 
@@ -274,6 +279,7 @@ namespace CalorieTracker.Pages.Diary
                 return Page();
             }
 
+            // Only a new food gets a new snapshot; changing date/meal/quantity must preserve history.
             var foodChanged =
                 existingEntry.FoodId != DiaryEntry.FoodId;
 
@@ -294,14 +300,12 @@ namespace CalorieTracker.Pages.Diary
 
             if (foodChanged)
             {
-                ValidationRules.CaptureSnapshot(
-                    existingEntry,
-                    selectedFood!,
-                    selectedPortion);
+                existingEntry.CaptureSnapshot(selectedFood!, selectedPortion);
             }
 
             if (MeasurementMode == "Portion")
             {
+                // Retain the original portion label unless the selection changed or legacy data lacks it.
                 existingEntry.FoodPortionId =
                     SelectedPortionId;
 

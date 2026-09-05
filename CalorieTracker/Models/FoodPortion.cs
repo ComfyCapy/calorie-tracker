@@ -19,6 +19,7 @@ namespace CalorieTracker.Models
         [StringLength(50)]
         public string Name { get; set; } = string.Empty;
 
+        // Portion amounts are stored in the food's canonical grams or millilitres.
         public decimal Amount { get; set; }
 
         [BindNever]

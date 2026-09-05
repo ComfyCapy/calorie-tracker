@@ -54,11 +54,16 @@ namespace CalorieTracker.Pages
                 .Include(appearance => appearance.Background)
                 .FirstOrDefaultAsync(appearance =>
                     appearance.UserId == userId);
- 
-            var ownedItemIds = await _context.UserCapyItems
+
+            var ownedItems = await _context.UserCapyItems
                 .Where(userItem => userItem.UserId == userId)
-                .Select(userItem => userItem.CapyItemId)
+                .Include(userItem => userItem.CapyItem)
+                .Where(userItem => userItem.CapyItem.IsActive)
                 .ToListAsync();
+
+            var ownedItemIds = ownedItems
+                .Select(userItem => userItem.CapyItemId)
+                .ToHashSet();
 
             NeedsProvisioning =
                 CapyAppearance == null ||
@@ -67,13 +72,10 @@ namespace CalorieTracker.Pages
                     item.IsStarter &&
                     !ownedItemIds.Contains(item.Id));
 
-            OwnedItems = await _context.UserCapyItems
-            .Where(userItem => userItem.UserId == userId)
-            .Include(userItem => userItem.CapyItem)
-            .Where(userItem => userItem.CapyItem.IsActive)
-            .Select(userItem => userItem.CapyItem)
-            .OrderBy(item => item.Name)
-            .ToListAsync();
+            OwnedItems = ownedItems
+                .Select(userItem => userItem.CapyItem)
+                .OrderBy(item => item.Name)
+                .ToList();
 
             CatalogueItems = await _context.CapyItems
                 .Where(item => item.IsActive)
@@ -102,6 +104,7 @@ namespace CalorieTracker.Pages
             if (userId == null)
                 return Unauthorized();
 
+            // Equip also self-heals legacy users instead of depending on a prior GET provisioning request.
             await _capyProvisioningService.ProvisionAsync(userId);
 
             var appearance = await _context.UserCapyAppearances
@@ -137,33 +140,33 @@ namespace CalorieTracker.Pages
 
             switch (category)
             {
-                case "Background":
+                case CapyCategories.Background:
                     if (item == null)
                         return BadRequest();
 
                     appearance.BackgroundId = item.Id;
                     break;
 
-                case "Expression":
+                case CapyCategories.Expression:
                     if (item == null)
                         return BadRequest();
 
                     appearance.ExpressionId = item.Id;
                     break;
 
-                case "Clothes":
+                case CapyCategories.Clothes:
                     appearance.ClothesId = item?.Id;
                     break;
 
-                case "NeckAccessory":
+                case CapyCategories.NeckAccessory:
                     appearance.NeckAccessoryId = item?.Id;
                     break;
 
-                case "HatHair":
+                case CapyCategories.HatHair:
                     appearance.HatHairId = item?.Id;
                     break;
 
-                case "FaceAccessory":
+                case CapyCategories.FaceAccessory:
                     appearance.FaceAccessoryId = item?.Id;
                     break;
 

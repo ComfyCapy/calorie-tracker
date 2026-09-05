@@ -6,10 +6,12 @@ namespace CalorieTracker.Services
     public class EmailSender : IEmailSender
     {
         private readonly IResend _resend;
+        private readonly IConfiguration _configuration;
 
-        public EmailSender(IResend resend)
+        public EmailSender(IResend resend, IConfiguration configuration)
         {
             _resend = resend;
+            _configuration = configuration;
         }
 
         public async Task SendEmailAsync(
@@ -19,7 +21,8 @@ namespace CalorieTracker.Services
         {
             var message = new EmailMessage
             {
-                From = "CalorieTracker <noreply@comfycapy.com>",
+                From = _configuration["Resend:FromAddress"]
+                    ?? "CalorieTracker <noreply@comfycapy.com>",
                 To = email,
                 Subject = subject,
                 HtmlBody = htmlMessage

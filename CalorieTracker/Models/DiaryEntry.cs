@@ -39,6 +39,22 @@ namespace CalorieTracker.Models
 
         public decimal Quantity { get; set; }
 
+        // Quantity is stored in the food's canonical grams or millilitres.
+        // The snapshot preserves the display serving basis used when this entry was logged.
+        // Nutrition calculations use the canonical serving-size snapshot as their denominator.
+        public void CaptureSnapshot(Food food, FoodPortion? portion)
+        {
+            FoodNameSnapshot = food.Name;
+            ServingSizeSnapshot = food.ServingSize;
+            ServingUnitSnapshot = food.ServingUnit;
+            CanonicalServingSizeSnapshot = food.CanonicalServingSize;
+            CaloriesSnapshot = food.Calories;
+            ProteinSnapshot = food.Protein;
+            CarbohydratesSnapshot = food.Carbohydrates;
+            FatSnapshot = food.Fat;
+            PortionNameSnapshot = portion?.Name;
+        }
+
         [BindNever]
         public string FoodNameSnapshot { get; set; } = string.Empty;
 

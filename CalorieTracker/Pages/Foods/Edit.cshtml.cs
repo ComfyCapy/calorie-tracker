@@ -96,9 +96,10 @@ namespace CalorieTracker.Pages.Foods
                 MeasurementUnits.TryNormalize(
                     existingFood.ServingUnit,
                     out _,
-                    out var existingDimension) &&
+                out var existingDimension) &&
                 existingDimension != newDimension)
             {
+                // A dimension change would reinterpret stored portions and diary quantities.
                 var hasPortions = await _context.FoodPortions
                     .AnyAsync(portion =>
                         portion.FoodId == existingFood.Id);

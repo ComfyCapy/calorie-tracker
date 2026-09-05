@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CalorieTracker.Data;
+using CalorieTracker.Services;
 
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -17,10 +18,10 @@ namespace CalorieTracker.Models
         public ApplicationUser? User { get; set; }
 
         [Required]
-        public string MeasurementSystem { get; set; } = "Metric";
+        public string MeasurementSystem { get; set; } = ProfileOptions.Metric;
 
         [Required]
-        public string ThemePreference { get; set; } = "System";
+        public string ThemePreference { get; set; } = ProfileOptions.SystemTheme;
 
         [Required(ErrorMessage = "Please enter your date of birth.")]
         [DataType(DataType.Date)]
@@ -117,8 +118,8 @@ namespace CalorieTracker.Models
 
                 return CalculationSex switch
                 {
-                    "Male" => baseBmr + 5,
-                    "Female" => baseBmr - 161,
+                    ProfileOptions.Male => baseBmr + 5,
+                    ProfileOptions.Female => baseBmr - 161,
                     _ => 0
                 };
             }
@@ -131,11 +132,11 @@ namespace CalorieTracker.Models
             {
                 var activityMultiplier = ActivityLevel switch
                 {
-                    "Sedentary" => 1.2m,
-                    "LightlyActive" => 1.375m,
-                    "ModeratelyActive" => 1.55m,
-                    "VeryActive" => 1.725m,
-                    "ExtraActive" => 1.9m,
+                    ProfileOptions.Sedentary => 1.2m,
+                    ProfileOptions.LightlyActive => 1.375m,
+                    ProfileOptions.ModeratelyActive => 1.55m,
+                    ProfileOptions.VeryActive => 1.725m,
+                    ProfileOptions.ExtraActive => 1.9m,
                     _ => 0
                 };
 
@@ -152,7 +153,7 @@ namespace CalorieTracker.Models
                     return 0;
                 }
 
-                if (Goal == "Maintain")
+                if (Goal == ProfileOptions.Maintain)
                 {
                     return TDEE;
                 }
@@ -166,8 +167,8 @@ namespace CalorieTracker.Models
 
                 return Goal switch
                 {
-                    "Lose" => TDEE - dailyAdjustment,
-                    "Gain" => TDEE + dailyAdjustment,
+                    ProfileOptions.Lose => TDEE - dailyAdjustment,
+                    ProfileOptions.Gain => TDEE + dailyAdjustment,
                     _ => TDEE
                 };
             }

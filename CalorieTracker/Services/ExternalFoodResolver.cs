@@ -37,7 +37,7 @@ namespace CalorieTracker.Services
             string userId,
             string? externalId)
         {
-            if (!MeasurementUnits.IsPositiveUsdaId(
+            if (!ExternalFoodIds.TryNormalizeUsdaId(
                     externalId,
                     out var normalizedId))
             {
@@ -51,9 +51,10 @@ namespace CalorieTracker.Services
             var cachedFood = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.UserId == userId &&
-                    food.Source == "USDA" &&
+                    food.Source == FoodSources.Usda &&
                     food.ExternalId == normalizedId);
 
+            // Prefer fresh USDA data, but keep this user's cached copy usable during upstream failures.
             try
             {
                 var result = await _foodSearchService
@@ -90,9 +91,10 @@ namespace CalorieTracker.Services
                     MeasurementUnits.TryNormalize(
                         cachedFood.ServingUnit,
                         out _,
-                        out var cachedDimension) &&
+                    out var cachedDimension) &&
                     cachedDimension != MeasurementDimension.Mass)
                 {
+                    // Do not refresh a historical volume food to USDA's gram basis and reinterpret its history.
                     var hasPortions = await _context.FoodPortions
                         .AnyAsync(portion =>
                             portion.FoodId == cachedFood.Id);
@@ -110,7 +112,7 @@ namespace CalorieTracker.Services
                 var food = cachedFood ?? new Food
                 {
                     UserId = userId,
-                    Source = "USDA",
+                    Source = FoodSources.Usda,
                     ExternalId = normalizedId
                 };
 
@@ -165,6 +167,7 @@ namespace CalorieTracker.Services
 
         private static ExternalFoodResolution Cached(Food food)
         {
+            // A cached fallback is usable again even if the row was previously soft-deleted.
             food.IsDeleted = false;
 
             return new(
@@ -177,7 +180,7 @@ namespace CalorieTracker.Services
         private static FoodSearchResult ToResult(Food food) => new()
         {
             ExternalId = food.ExternalId ?? string.Empty,
-            Source = food.Source ?? "USDA",
+            Source = food.Source ?? FoodSources.Usda,
             IsFavourite = food.IsFavourite,
             Name = food.Name,
             Calories = food.Calories,

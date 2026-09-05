@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using CalorieTracker.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Data
 {
@@ -31,6 +32,8 @@ namespace CalorieTracker.Data
                 .HasForeignKey<UserProfile>(
                     profile => profile.UserId);
 
+            // Restrict physical deletes for food/portion references so historical diary
+            // foreign keys remain resolvable; the UI soft-deletes instead.
             builder.Entity<FoodPortion>()
                 .HasOne(portion => portion.Food)
                 .WithMany(food => food.Portions)
@@ -139,7 +142,7 @@ namespace CalorieTracker.Data
     {
         Id = 1,
         Name = "Base Capy",
-        Category = "Expression",
+        Category = CapyCategories.Expression,
         ImagePath = "/images/capy/expressions/Capy-Base.png",
         IsDefault = true,
         IsActive = true,
@@ -151,7 +154,7 @@ namespace CalorieTracker.Data
     {
         Id = 2,
         Name = "Cowboy Hat",
-        Category = "HatHair",
+        Category = CapyCategories.HatHair,
         ImagePath = "/images/capy/hats-hair/Capy-CowboyHat.png",
         IsDefault = false,
         IsActive = true,
@@ -161,7 +164,7 @@ namespace CalorieTracker.Data
     {
         Id = 3,
         Name = "Blue & Yellow Party Hat",
-        Category = "HatHair",
+        Category = CapyCategories.HatHair,
         ImagePath = "/images/capy/hats-hair/PartyHat-BlueYellow.png",
         IsDefault = false,
         IsActive = true,
@@ -173,7 +176,7 @@ namespace CalorieTracker.Data
     {
         Id = 4,
         Name = "Cool Sunglasses",
-        Category = "FaceAccessory",
+        Category = CapyCategories.FaceAccessory,
         ImagePath = "/images/capy/face-accessories/Sunglasses-Cool.png",
         IsDefault = false,
         IsActive = true,
@@ -185,7 +188,7 @@ namespace CalorieTracker.Data
     {
         Id = 5,
         Name = "Green & Red Scarf",
-        Category = "NeckAccessory",
+        Category = CapyCategories.NeckAccessory,
         ImagePath = "/images/capy/neck-accessories/Scarf-GreenRed.png",
         IsDefault = false,
         IsActive = true,
@@ -195,7 +198,7 @@ namespace CalorieTracker.Data
     {
         Id = 6,
         Name = "Red & White Tie",
-        Category = "NeckAccessory",
+        Category = CapyCategories.NeckAccessory,
         ImagePath = "/images/capy/neck-accessories/Tie-RedAndWhite.png",
         IsDefault = false,
         IsActive = true,
@@ -207,7 +210,7 @@ namespace CalorieTracker.Data
     {
         Id = 7,
         Name = "Pink T-Shirt",
-        Category = "Clothes",
+        Category = CapyCategories.Clothes,
         ImagePath = "/images/capy/clothes/TShirt-Pink.png",
         IsDefault = false,
         IsActive = true,
@@ -219,7 +222,7 @@ namespace CalorieTracker.Data
     {
         Id = 8,
         Name = "Banana",
-        Category = "Background",
+        Category = CapyCategories.Background,
         ImagePath = "/images/capy/backgrounds/BG-Banana.png",
         IsDefault = false,
         IsActive = true,
@@ -229,7 +232,7 @@ namespace CalorieTracker.Data
     {
         Id = 9,
         Name = "Fields",
-        Category = "Background",
+        Category = CapyCategories.Background,
         ImagePath = "/images/capy/backgrounds/BG-Fields.png",
         IsDefault = false,
         IsActive = true,
@@ -239,7 +242,7 @@ namespace CalorieTracker.Data
     {
         Id = 10,
         Name = "Pale Pink",
-        Category = "Background",
+        Category = CapyCategories.Background,
         ImagePath = "/images/capy/backgrounds/BG-PalePink.png",
         IsDefault = false,
         IsActive = true,
@@ -249,7 +252,7 @@ namespace CalorieTracker.Data
     {
         Id = 11,
         Name = "Pale Purple",
-        Category = "Background",
+        Category = CapyCategories.Background,
         ImagePath = "/images/capy/backgrounds/BG-PalePurple.png",
         IsDefault = false,
         IsActive = true,
@@ -259,7 +262,7 @@ namespace CalorieTracker.Data
     {
         Id = 12,
         Name = "Sky",
-        Category = "Background",
+        Category = CapyCategories.Background,
         ImagePath = "/images/capy/backgrounds/BG-Sky.png",
         IsDefault = false,
         IsActive = true,
@@ -269,7 +272,7 @@ namespace CalorieTracker.Data
     {
         Id = 13,
         Name = "White",
-        Category = "Background",
+        Category = CapyCategories.Background,
         ImagePath = "/images/capy/backgrounds/BG-White.png",
         IsDefault = true,
         IsActive = true,
@@ -280,7 +283,7 @@ namespace CalorieTracker.Data
     {
         Id = 14,
         Name = "Gold Crown",
-        Category = "HatHair",
+        Category = CapyCategories.HatHair,
         ImagePath = "/images/capy/hats-hair/Capy-Crown-Gold.png",
         IsDefault = false,
         IsStarter = false,

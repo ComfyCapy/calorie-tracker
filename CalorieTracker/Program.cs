@@ -13,7 +13,6 @@ using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeAreaFolder(
@@ -175,7 +174,6 @@ var app = builder.Build();
 
 app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");

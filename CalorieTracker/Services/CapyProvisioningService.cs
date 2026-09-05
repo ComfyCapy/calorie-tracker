@@ -15,6 +15,7 @@ public class CapyProvisioningService
 
     public async Task ProvisionAsync(string userId)
     {
+        // This idempotent path also upgrades legacy users without relying on a prior Customisation GET.
         var appearanceExists = await _context.UserCapyAppearances
             .AnyAsync(appearance => appearance.UserId == userId);
 
@@ -22,7 +23,7 @@ public class CapyProvisioningService
         {
             var defaultExpressionId = await _context.CapyItems
                 .Where(item =>
-                    item.Category == "Expression" &&
+                    item.Category == CapyCategories.Expression &&
                     item.IsDefault &&
                     item.IsActive)
                 .Select(item => item.Id)
@@ -30,7 +31,7 @@ public class CapyProvisioningService
 
             var defaultBackgroundId = await _context.CapyItems
                 .Where(item =>
-                    item.Category == "Background" &&
+                    item.Category == CapyCategories.Background &&
                     item.IsDefault &&
                     item.IsActive)
                 .Select(item => item.Id)
