@@ -1,5 +1,6 @@
 using CalorieTracker.Data;
 using CalorieTracker.Services;
+using CalorieTracker;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,8 @@ using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ProductionConfiguration.Validate(builder.Configuration, builder.Environment);
+
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeAreaFolder(
@@ -20,8 +23,14 @@ builder.Services.AddRazorPages(options =>
         "/Account/Manage");
 });
 builder.Services.AddControllers();
-builder.Services.AddAntiforgery(options =>
-    options.HeaderName = "X-CSRF-TOKEN");
+ProductionConfiguration.ConfigureAntiforgery(
+    builder.Services,
+    builder.Environment);
+
+ProductionConfiguration.ConfigureDataProtection(
+    builder.Services,
+    builder.Configuration,
+    builder.Environment);
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -171,6 +180,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders()
 .AddDefaultUI();
+
+ProductionConfiguration.ConfigureIdentityCookie(
+    builder.Services,
+    builder.Environment);
 
 builder.Services.AddHttpClient<IFoodSearchService, UsdaFoodService>();
 builder.Services.AddScoped<ExternalFoodResolver>();
