@@ -1,6 +1,17 @@
-# CalorieTracker manual release checklist
+# Comfy Capy Calories manual release checklist
 
 Use development/test credentials and configuration. Do not use real personal data in screenshots or bug reports.
+
+## Branding and information
+
+- Check the Comfy Capy Calories name, temporary Capy mark and navigation at desktop and narrow viewport widths while signed in and signed out.
+- Confirm browser titles follow `Page · Comfy Capy Calories` and the Capy favicon/app icon loads.
+- Open Home, About, Help & FAQ and Privacy in Light, Dark and System themes; verify headings, cards, FAQ disclosure controls, links and footer wrapping.
+- Confirm About and Help clearly describe the product relationship to Comfy Capy and that nutrition guidance is visible from Profile estimates.
+- Register, log in, log out, request confirmation/password-reset email, and review the friendly copy without losing labels, validation, antiforgery or security guidance.
+- Check email sender name, subjects, links and product wording using development/test email configuration.
+- Walk through account settings, authenticator setup, 2FA login and recovery-code pages; confirm instructions remain precise and QR/TOTP behaviour is unchanged.
+- Navigate the new public pages and account forms using only a keyboard, and check headings/link names with a screen reader if available.
 
 ## Fresh deployment database
 

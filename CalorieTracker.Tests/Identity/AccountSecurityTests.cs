@@ -56,10 +56,10 @@ public class AccountSecurityTests
         var authenticatorUri = WebUtility.HtmlDecode(uriMatch.Groups[1].Value);
 
         Assert.StartsWith(
-            "otpauth://totp/CalorieTracker:test%2Bqr@example.test?",
+            "otpauth://totp/Comfy%20Capy%20Calories:test%2Bqr@example.test?",
             authenticatorUri);
         Assert.Contains($"secret={AuthenticatorKey}", authenticatorUri);
-        Assert.Contains("issuer=CalorieTracker", authenticatorUri);
+        Assert.Contains("issuer=Comfy%20Capy%20Calories", authenticatorUri);
 
         var qrScriptSources = Regex.Matches(
                 html,

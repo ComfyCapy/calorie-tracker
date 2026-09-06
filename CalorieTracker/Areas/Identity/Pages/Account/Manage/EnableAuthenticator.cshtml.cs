@@ -18,7 +18,7 @@ namespace CalorieTracker.Areas.Identity.Pages.Account.Manage;
 
 public class EnableAuthenticatorModel : PageModel
 {
-    private const string AuthenticatorIssuer = "CalorieTracker";
+    private const string AuthenticatorIssuer = "Comfy Capy Calories";
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<EnableAuthenticatorModel> _logger;
     private readonly UrlEncoder _urlEncoder;

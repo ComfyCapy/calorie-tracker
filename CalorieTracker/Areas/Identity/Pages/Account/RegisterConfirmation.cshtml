@@ -1,7 +1,7 @@
 @page
 @model RegisterConfirmationModel
 @{
-    ViewData["Title"] = "Register confirmation";
+    ViewData["Title"] = "One last tiny step";
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -9,14 +9,14 @@
     if (@Model.DisplayConfirmAccountLink)
     {
 <p>
-    This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-    Normally this would be emailed: <a id="confirm-link" href="@Model.EmailConfirmationUrl">Click here to confirm your account</a>
+    Email delivery is not configured in this environment. Use this development-only
+    <a id="confirm-link" href="@Model.EmailConfirmationUrl">account confirmation link</a>.
 </p>
     }
     else
     {
 <p>
-        Please check your email to confirm your account.
+        Check your inbox for a confirmation link, then your Comfy Capy Calories account will be ready to use.
 </p>
     }
 }

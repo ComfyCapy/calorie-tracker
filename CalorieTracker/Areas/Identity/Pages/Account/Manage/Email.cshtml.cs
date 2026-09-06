@@ -125,8 +125,24 @@ public class EmailModel : PageModel
                 protocol: Request.Scheme)!;
             await _emailSender.SendEmailAsync(
                 Input.NewEmail,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                "Confirm your new Comfy Capy Calories email address",
+                $"""
+                <p>Heya!</p>
+
+                <p>Looks like you'd like to use a new email address for your Comfy Capy Calories account.</p>
+
+                <p>
+                    <a href="{HtmlEncoder.Default.Encode(callbackUrl)}">
+                        Confirm your new email address
+                    </a>
+                </p>
+
+                <p>Give that link a click to confirm the change.</p>
+
+                <p>If you didn't ask to change your email, you can safely ignore this message.</p>
+
+                <p>~ Comfy Capy</p>
+                """);
 
             StatusMessage = "Confirmation link to change email sent. Please check your email.";
             return RedirectToPage();
@@ -161,8 +177,8 @@ public class EmailModel : PageModel
             protocol: Request.Scheme)!;
         await _emailSender.SendEmailAsync(
             email!,
-            "Confirm your email",
-            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            "Confirm your Comfy Capy Calories email address",
+            $"<p><a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>Confirm your email address</a> for your Comfy Capy Calories account.</p>");
 
         StatusMessage = "Verification email sent. Please check your email.";
         return RedirectToPage();

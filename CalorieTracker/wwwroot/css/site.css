@@ -37,6 +37,45 @@ body {
   margin-bottom: 60px;
 }
 
+.content-page {
+    max-width: 52rem;
+}
+
+.content-page h2 {
+    margin-top: 2rem;
+    font-size: 1.4rem;
+}
+
+.page-eyebrow {
+    margin-bottom: .35rem;
+    color: var(--bs-primary);
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.content-card,
+.faq-list details {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    background: var(--bs-tertiary-bg);
+}
+
+.content-card h2 {
+    margin-top: 0;
+}
+
+.faq-list summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.faq-list details p {
+    margin: 1rem 0 0;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
@@ -48,6 +87,15 @@ body {
 
 .navbar-nav .nav-item {
     margin-right: 1.0rem;
+}
+
+.navbar-brand-mark {
+    width: 2rem;
+    height: 2rem;
+    max-width: 2rem;
+    max-height: 2rem;
+    flex: 0 0 auto;
+    object-fit: contain;
 }
 
 .navbar-nav .dropdown-toggle,

@@ -1,17 +1,16 @@
 @page
 @model LoginWithRecoveryCodeModel
 @{
-    ViewData["Title"] = "Recovery code verification";
+    ViewData["Title"] = "Use a recovery code";
 }
 
 <h1>@ViewData["Title"]</h1>
-<hr />
 <p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
+    Enter one of the recovery codes you saved when setting up two-factor authentication. This login will not
+    be remembered until you later use an authenticator code or disable 2FA and log in again.
 </p>
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-12 account-form-shell">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">

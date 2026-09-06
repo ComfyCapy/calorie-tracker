@@ -5,10 +5,9 @@
 }
 
 <h1>@ViewData["Title"]</h1>
-<hr />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
+<p>Your Comfy Capy Calories account is protected with an authenticator app. Enter its current code to continue.</p>
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-12 account-form-shell">
         <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
             <input asp-for="RememberMe" type="hidden" />
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>

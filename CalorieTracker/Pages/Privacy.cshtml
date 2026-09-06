@@ -1,8 +1,55 @@
 ﻿@page
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Privacy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="content-page">
+    <h1>Privacy</h1>
+    <p class="lead">How Comfy Capy Calories uses and protects your information.</p>
+
+    <h2>Information linked to your account</h2>
+    <p>
+        We store the account details you provide, including your username, first name and email address,
+        along with the security information ASP.NET Core Identity needs for sign-in, email confirmation,
+        password resets and optional authenticator-app two-factor authentication.
+    </p>
+    <p>
+        If you complete your profile, we also store the details used to calculate your estimates: date of
+        birth, height, weight, calculation sex, activity level, goal, optional goal weight and weekly goal,
+        measurement preference, calorie-target preference and theme preference.
+    </p>
+
+    <h2>Food, Diary and Capy data</h2>
+    <p>
+        Your custom foods, saved portions, favourites and Diary entries are linked to your account. Diary
+        entries keep a snapshot of the food and nutrition information that applied when you logged them so
+        later edits do not rewrite your history. Your Comfy Capy inventory and equipped appearance are also
+        stored with your account.
+    </p>
+    <p>
+        Foods retrieved from USDA FoodData Central may be cached locally for reuse. Cached USDA food records
+        are shared reference data; your favourites and Diary use remain account-specific.
+    </p>
+
+    <h2>Cookies and outside services</h2>
+    <p>
+        The application uses technically necessary cookies for sign-in, session security and request
+        protection. It does not add advertising or analytics tracking. USDA FoodData Central processes food
+        searches, and the configured email provider processes transactional account email and feedback
+        delivery.
+    </p>
+
+    <h2>Anonymous feedback</h2>
+    <p>
+        Feedback can be sent while signed in or signed out. The feedback form does not ask for account
+        details, but you should not include personal or sensitive information in your message.
+    </p>
+
+    <h2>Your choices</h2>
+    <p>
+        Account settings let you download the personal account data exposed by ASP.NET Core Identity or
+        permanently delete your account. If you have a privacy question that is not answered here, please
+        use the <a asp-page="/Feedback">Feedback page</a> without including sensitive information.
+    </p>
+</div>

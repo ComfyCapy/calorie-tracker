@@ -2,10 +2,11 @@
 @model LoginModel
 
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Welcome back";
 }
 
 <h1>@ViewData["Title"]</h1>
+<p class="text-body-secondary">Log in to continue to your Diary and Comfy Capy.</p>
 @if (Model.EmailConfirmed)
 {
     <div class="alert alert-success" role="alert">

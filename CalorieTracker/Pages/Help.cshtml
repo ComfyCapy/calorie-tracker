@@ -1,0 +1,79 @@
+@page
+@{
+    ViewData["Title"] = "Help & FAQ";
+}
+
+<div class="content-page">
+    <p class="page-eyebrow">Help &amp; FAQ</p>
+    <h1>A few helpful answers</h1>
+    <p class="lead">Got a question? Check out the FAQ!</p>
+
+    <section class="faq-list" aria-label="Frequently asked questions">
+        <details open>
+            <summary>How do I get my daily calorie target?</summary>
+            <p>
+                Complete your <a asp-page="/Profile/Index">Profile</a>. You can use the calculated estimate
+                based on your details, activity and goal, or enter a custom target.
+            </p>
+        </details>
+
+        <details>
+            <summary>Where do foods come from?</summary>
+            <p>
+                You can create custom foods or search USDA FoodData Central. Nutrition for USDA results is
+                resolved by the server before a food is logged. Check any value that matters to you because
+                external and user-entered data can contain mistakes.
+            </p>
+        </details>
+
+        <details>
+            <summary>What are portions?</summary>
+            <p>
+                Portions let you save familiar amounts such as a slice or bowl against a custom food. You can
+                still log an exact mass or volume whenever you prefer.
+            </p>
+        </details>
+
+        <details>
+            <summary>Will editing a food change old Diary entries?</summary>
+            <p>
+                No. Diary entries snapshot the food name, serving basis, nutrition and portion description
+                used when you logged them, so your history remains intact if the original food changes later.
+            </p>
+        </details>
+
+        <details>
+            <summary>How do themes and Capy customisation work?</summary>
+            <p>
+                Open <a asp-page="/Customisation">Customise Capy</a> to equip owned cosmetics and choose Light,
+                Dark or System theme. Signed-in theme choices are saved to your profile; signed-out choices use
+                this browser.
+            </p>
+        </details>
+
+        <details>
+            <summary>What if I cannot confirm my email or sign in?</summary>
+            <p>
+                Use <a asp-area="Identity" asp-page="/Account/ResendEmailConfirmation">Resend email confirmation</a>
+                or <a asp-area="Identity" asp-page="/Account/ForgotPassword">reset your password</a>. If you use
+                two-factor authentication and cannot access your authenticator, use one of your saved recovery codes.
+            </p>
+        </details>
+
+        <details id="nutrition-estimates" open>
+            <summary>Are calorie and nutrition figures medical advice?</summary>
+            <p>
+                No. Calorie, TDEE and nutrition figures are estimates for general information and tracking.
+                Food values may come from your input or an external data source and may be inaccurate. Do not
+                rely on the app as medical advice. If you have medical or specialised dietary needs—including
+                pregnancy, an eating disorder, or a condition affected by nutrition—seek advice from an
+                appropriately qualified professional.
+            </p>
+        </details>
+    </section>
+
+    <p class="mt-4">
+        Still stuck? <a asp-page="/Feedback">Send feedback</a>. Please do not include passwords, recovery codes,
+        medical details or other sensitive information.
+    </p>
+</div>

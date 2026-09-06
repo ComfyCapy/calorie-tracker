@@ -153,8 +153,28 @@ public class RegisterModel : PageModel
                     values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                     protocol: Request.Scheme)!;
 
-                await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                await _emailSender.SendEmailAsync(
+                    Input.Email,
+                    "Confirm your Comfy Capy Calories account",
+                    $"""
+                    <p>Heya!</p>
+
+                    <p>This is Comfy Capy handing you your very own confirmation link!</p>
+
+                    <p>
+                        <a href="{HtmlEncoder.Default.Encode(callbackUrl)}">
+                            Confirm your email address
+                        </a>
+                    </p>
+
+                    <p>
+                        Feel free to give that link a click to confirm your account and finish setting everything up.
+                    </p>
+
+                    <p>We hope to see you soon~!</p>
+
+                    <p>~ Comfy Capy</p>
+                    """);
 
                 if (_userManager.Options.SignIn.RequireConfirmedAccount)
                 {
