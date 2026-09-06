@@ -72,8 +72,28 @@ public class ForgotPasswordModel : PageModel
 
             await _emailSender.SendEmailAsync(
                 Input.Email,
-                "Reset Password",
-                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                "Reset your Comfy Capy Calories password",
+                $"""
+                <p>Heya!</p>
+
+                <p>Looks like you asked us to help reset your Comfy Capy Calories password.</p>
+
+                <p>
+                    <a href="{HtmlEncoder.Default.Encode(callbackUrl)}">
+                        Choose a new password
+                    </a>
+                </p>
+
+                <p>
+                    Give that link a click and you can set a new password for your account.
+                </p>
+
+                <p>
+                    If you didn't request this, no worries — you can safely ignore this email and your password will stay exactly as it is.
+                </p>
+
+                <p>~ Comfy Capy</p>
+                """);
 
             return RedirectToPage("./ForgotPasswordConfirmation");
         }

@@ -91,7 +91,7 @@ public class FeedbackModel : PageModel
         {
             await _emailSender.SendEmailAsync(
                 recipient,
-                "CalorieTracker feedback",
+                "Comfy Capy Calories feedback",
                 $"<p>{encodedFeedback}</p>");
         }
         catch (Exception exception)

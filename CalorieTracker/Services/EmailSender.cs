@@ -22,7 +22,7 @@ namespace CalorieTracker.Services
             var message = new EmailMessage
             {
                 From = _configuration["Resend:FromAddress"]
-                    ?? "CalorieTracker <noreply@comfycapy.com>",
+                    ?? "Comfy Capy Calories <noreply@comfycapy.com>",
                 To = email,
                 Subject = subject,
                 HtmlBody = htmlMessage

@@ -22,6 +22,7 @@
     }
 
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+    var pageTitle = ViewData["Title"]?.ToString();
 }
 
 <!DOCTYPE html>
@@ -29,7 +30,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CalorieTracker</title>
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "Comfy Capy Calories" : $"{pageTitle} · Comfy Capy Calories")</title>
+    <meta name="application-name" content="Comfy Capy Calories" />
+    <meta name="description" content="Approachable calorie and nutrition tracking with a customisable Comfy Capy." />
+    <meta name="theme-color" content="#7b61a8" />
+    <link rel="icon" type="image/png" href="~/images/capy/expressions/Capy-Base.png" />
+    <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" />
     <script>
             (() => {
                 const accountTheme = "@(accountTheme?.ToLowerInvariant() ?? "")";
@@ -76,9 +82,14 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">
-                    CalorieTracker
-                </a>
+                <span class="navbar-brand">
+                    <img class="navbar-brand-mark"
+                         src="~/images/capy/expressions/Capy-Base.png"
+                         width="32"
+                         height="32"
+                         alt="" />
+                    <span>Comfy Capy Calories</span>
+                </span>
 
                 <button class="navbar-toggler"
                         type="button"
@@ -154,10 +165,14 @@
     <footer class="border-top footer text-muted">
         <div class="container d-flex flex-wrap justify-content-between gap-2">
             <span>
-                &copy; 2026 · CalorieTracker · A Comfy Capy project ·
-                <a asp-area="" asp-page="/Privacy">Privacy</a>
+                &copy; 2026 · Comfy Capy Calories · A Comfy Capy product
             </span>
-            <a asp-area="" asp-page="/Feedback">Feedback</a>
+            <nav class="footer-links" aria-label="Footer">
+                <a asp-area="" asp-page="/About">About</a>
+                <a asp-area="" asp-page="/Help">Help</a>
+                <a asp-area="" asp-page="/Privacy">Privacy</a>
+                <a asp-area="" asp-page="/Feedback">Feedback</a>
+            </nav>
         </div>
     </footer>
 

@@ -13,12 +13,12 @@ namespace CalorieTracker.Pages
         {
             if (code == StatusCodes.Status400BadRequest)
             {
-                Title = "Invalid request";
-                Message = "One or more values in the request were invalid.";
+                Title = "The Capy stares in confusion.";
+                Message = "Something about that request didn't look right. Try again or head back home.";
             }
             else if (code == StatusCodes.Status404NotFound)
             {
-                Title = "Not found";
+                Title = "The Capy you are looking for is in another sauna.";
                 Message = "The requested item could not be found.";
             }
         }

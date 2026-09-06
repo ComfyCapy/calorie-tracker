@@ -1,10 +1,12 @@
 ﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
 
-a.navbar-brand {
-  white-space: normal;
-  text-align: center;
-  word-break: break-all;
+.navbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  white-space: nowrap;
+  font-weight: 700;
 }
 
 a {
@@ -40,4 +42,25 @@ a {
   width: 100%;
   white-space: nowrap;
   line-height: 60px;
+}
+
+.footer-links {
+  display: inline-flex;
+  gap: 1rem;
+}
+
+@media (max-width: 575.98px) {
+  body {
+    margin-bottom: 100px;
+  }
+
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .footer {
+    white-space: normal;
+    line-height: 1.5;
+    padding: 1rem 0;
+  }
 }

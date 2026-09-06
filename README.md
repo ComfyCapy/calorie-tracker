@@ -1,10 +1,10 @@
-# CalorieTracker
+# Comfy Capy Calories
 
-A calorie and nutrition tracking web app I'm building with ASP.NET Core.
+A friendly, full-stack calorie and nutrition tracker built with ASP.NET Core. Comfy Capy Calories is the first product under the broader **Comfy Capy** brand.
 
-The main idea is to make food logging less tedious while still giving users control over how precise they want to be. Foods can be logged using exact quantities or more natural portions such as `1 banana`, `2 slices` or `1 bowl`.
+The aim is to make food logging approachable and less tedious without giving up useful detail. Foods can be logged using exact quantities or more natural portions such as `1 banana`, `2 slices` or `1 bowl`; the application still preserves server-authoritative nutrition and historical Diary snapshots.
 
-The project is still in active development and hasn't reached MVP yet.
+The repository keeps the internal .NET project and namespaces named `CalorieTracker`; that technical name is intentionally separate from the public product brand.
 
 ## Current features
 
@@ -26,10 +26,12 @@ The project is still in active development and hasn't reached MVP yet.
 - Soft deletion of custom foods to preserve diary history
 - Basic user profiles and calorie targets
 - Light, dark and system themes
+- Customisable Comfy Capy appearance and starter cosmetics
+- Email confirmation, password recovery and authenticator-app 2FA
 
 ## Food database
 
-CalorieTracker integrates with the USDA FoodData Central API to provide access to an external nutrition database.
+Comfy Capy Calories integrates with the USDA FoodData Central API to provide access to an external nutrition database.
 
 Users can search for foods, view their nutritional information and add them directly to their diary.
 
@@ -69,8 +71,14 @@ Foods without saved portions simply use exact quantity logging without displayin
 
 - Recipes and saved meals
 - Weight tracking
-- Mobile responsiveness
-- Additional tests and error handling
+- Commissioned brand and mascot artwork
+- Continued testing and deployment work
+
+## Brand and artwork
+
+The public product name is **Comfy Capy Calories**, created under **Comfy Capy**. The existing Capy customisation artwork and the base-Capy mark currently used for the navbar and browser icon are original project assets, but they are temporary integration assets rather than final commissioned branding. Their paths remain stable so final artwork can replace them without disturbing application behaviour.
+
+Calorie targets and nutrition values are estimates for general information and tracking, not medical advice. Food values may be user-entered or sourced externally and can contain inaccuracies.
 
 ## Tech
 

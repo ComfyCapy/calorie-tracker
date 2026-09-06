@@ -47,7 +47,7 @@ public class FeedbackTests
         Assert.IsType<RedirectToPageResult>(result);
         var email = Assert.Single(emailSender.SentEmails);
         Assert.Equal("owner@example.test", email.Recipient);
-        Assert.Equal("CalorieTracker feedback", email.Subject);
+        Assert.Equal("Comfy Capy Calories feedback", email.Subject);
         Assert.Contains("Helpful &lt;script&gt;", email.HtmlBody);
         Assert.Contains("<br />Thank you.", email.HtmlBody);
         Assert.DoesNotContain("<script>", email.HtmlBody);
