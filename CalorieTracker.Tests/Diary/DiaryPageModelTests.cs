@@ -71,6 +71,132 @@ public class DiaryPageModelTests
     }
 
     [Fact]
+    public async Task CreatePortion_TwoCinnamonRollsUseMeasuredWeightAndSnapshotLabel()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1", name: "Cinnamon roll");
+        var portion = new FoodPortion
+        {
+            Food = food,
+            Name = "1 roll",
+            Amount = 75
+        };
+        database.Context.AddRange(food, portion);
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(database, "user-1", food, 999);
+        model.MeasurementMode = "Portion";
+        model.SelectedPortionId = portion.Id;
+        model.PortionQuantity = 2;
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<RedirectToPageResult>(result);
+        var entry = await database.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(150, entry.Quantity);
+        Assert.Equal(2, entry.PortionQuantity);
+        Assert.Equal("1 roll", entry.PortionNameSnapshot);
+    }
+
+    [Fact]
+    public async Task CreateExact_FoodWithPortionsStillAllowsGramFallback()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1", name: "Cinnamon roll");
+        var portion = new FoodPortion
+        {
+            Food = food,
+            Name = "1 roll",
+            Amount = 75
+        };
+        database.Context.AddRange(food, portion);
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(database, "user-1", food, 50);
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<RedirectToPageResult>(result);
+        var entry = await database.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(50, entry.Quantity);
+        Assert.Null(entry.FoodPortionId);
+        Assert.Null(entry.PortionQuantity);
+        Assert.Null(entry.PortionNameSnapshot);
+    }
+
+    [Fact]
+    public async Task OnGet_SelectedFoodWithOnePortionPreselectsThatPortion()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1");
+        var portion = new FoodPortion
+        {
+            Food = food,
+            Name = "1 roll",
+            Amount = 75
+        };
+        database.Context.AddRange(food, portion);
+        await database.Context.SaveChangesAsync();
+        var model = CreateEmptyCreateModel(database, "user-1");
+
+        var result = await model.OnGetAsync(
+            new DateTime(2026, 9, 5),
+            "Lunch",
+            food.Id);
+
+        Assert.IsType<PageResult>(result);
+        Assert.Equal("Portion", model.MeasurementMode);
+        Assert.Equal(portion.Id, model.SelectedPortionId);
+        Assert.Equal(1, model.PortionQuantity);
+    }
+
+    [Fact]
+    public async Task OnGet_SelectedFoodWithMultiplePortionsDoesNotChooseOne()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1");
+        database.Context.AddRange(
+            food,
+            new FoodPortion { Food = food, Name = "1 roll", Amount = 75 },
+            new FoodPortion { Food = food, Name = "1 slice", Amount = 30 });
+        await database.Context.SaveChangesAsync();
+        var model = CreateEmptyCreateModel(database, "user-1");
+
+        var result = await model.OnGetAsync(
+            new DateTime(2026, 9, 5),
+            "Lunch",
+            food.Id);
+
+        Assert.IsType<PageResult>(result);
+        Assert.Equal("Portion", model.MeasurementMode);
+        Assert.Null(model.SelectedPortionId);
+        Assert.Equal(1, model.PortionQuantity);
+    }
+
+    [Fact]
+    public async Task OnGet_SelectedFoodWithoutPortionsUsesExactAmountOnly()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1");
+        database.Context.Add(food);
+        await database.Context.SaveChangesAsync();
+        var model = CreateEmptyCreateModel(database, "user-1");
+
+        var result = await model.OnGetAsync(
+            new DateTime(2026, 9, 5),
+            "Lunch",
+            food.Id);
+
+        Assert.IsType<PageResult>(result);
+        Assert.Equal("Exact", model.MeasurementMode);
+        Assert.Null(model.SelectedPortionId);
+        Assert.Null(model.PortionQuantity);
+    }
+
+    [Fact]
     public async Task EditExactToPortion_SetsPortionStateAndPreservesFoodSnapshot()
     {
         await using var database = await TestDatabase.CreateAsync();
@@ -214,6 +340,44 @@ public class DiaryPageModelTests
     }
 
     [Fact]
+    public async Task CreatePortion_WithAnotherUsersPortion_IsRejected()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1", "first");
+        await database.AddUserAsync("user-2", "second");
+        var selectedFood = TestData.Food("user-1", name: "Selected");
+        var otherFood = TestData.Food("user-2", name: "Other user's food");
+        var selectedPortion = new FoodPortion
+        {
+            Food = selectedFood,
+            Name = "1 serving",
+            Amount = 20
+        };
+        var otherPortion = new FoodPortion
+        {
+            Food = otherFood,
+            Name = "1 packet",
+            Amount = 25
+        };
+        database.Context.AddRange(
+            selectedFood,
+            selectedPortion,
+            otherFood,
+            otherPortion);
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(database, "user-1", selectedFood, 1);
+        model.MeasurementMode = "Portion";
+        model.SelectedPortionId = otherPortion.Id;
+        model.PortionQuantity = 1;
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<PageResult>(result);
+        Assert.Contains(nameof(model.SelectedPortionId), model.ModelState.Keys);
+        Assert.Empty(database.Context.DiaryEntries);
+    }
+
+    [Fact]
     public async Task Create_WithFoodOwnedByAnotherUser_IsRejected()
     {
         await using var database = await TestDatabase.CreateAsync();
@@ -293,6 +457,17 @@ public class DiaryPageModelTests
             },
             MeasurementMode = "Exact"
         };
+        PageModelTestContext.Attach(model, userId);
+        return model;
+    }
+
+    private static DiaryCreateModel CreateEmptyCreateModel(
+        TestDatabase database,
+        string userId)
+    {
+        var model = new DiaryCreateModel(
+            database.Context,
+            PageModelTestContext.CreateUserManager());
         PageModelTestContext.Attach(model, userId);
         return model;
     }

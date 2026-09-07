@@ -76,6 +76,146 @@ public class UsdaFoodServiceTests
     }
 
     [Fact]
+    public async Task GetFood_MapsOnlyValidMeasuredPortions()
+    {
+        const string responseJson = """
+            {
+              "fdcId": 789,
+              "description": "Banana, raw",
+              "dataType": "Foundation",
+              "foodNutrients": [
+                { "nutrient": { "id": 1008 }, "amount": 300 }
+              ],
+              "foodPortions": [
+                {
+                  "gramWeight": 75,
+                  "amount": 1,
+                  "measureUnit": { "name": "Banana" },
+                  "modifier": "Peeled"
+                },
+                {
+                  "gramWeight": 75.0,
+                  "amount": 1,
+                  "measureUnit": { "name": "banana" },
+                  "modifier": "peeled"
+                },
+                {
+                  "gramWeight": 30,
+                  "amount": 1,
+                  "modifier": "slice"
+                },
+                {
+                  "gramWeight": 28,
+                  "amount": 2,
+                  "measureUnit": { "name": "tbsp" }
+                },
+                {
+                  "gramWeight": 20,
+                  "portionDescription": "   "
+                },
+                {
+                  "gramWeight": 20,
+                  "portionDescription": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                {
+                  "gramWeight": 0,
+                  "portionDescription": "1 packet"
+                },
+                {
+                  "gramWeight": -10,
+                  "portionDescription": "1 bar"
+                },
+                {
+                  "gramWeight": "NaN",
+                  "portionDescription": "1 invalid serving"
+                },
+                {
+                  "gramWeight": 1e999,
+                  "portionDescription": "1 enormous serving"
+                }
+              ]
+            }
+            """;
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(responseJson));
+        var service = CreateService(handler);
+
+        var food = await service.GetFoodAsync("789");
+
+        Assert.NotNull(food);
+        Assert.Collection(
+            food.Portions,
+            portion =>
+            {
+                Assert.Equal("1 Banana, Peeled", portion.Name);
+                Assert.Equal(75, portion.GramWeight);
+            },
+            portion =>
+            {
+                Assert.Equal("1 slice", portion.Name);
+                Assert.Equal(30, portion.GramWeight);
+            },
+            portion =>
+            {
+                Assert.Equal("2 tbsp", portion.Name);
+                Assert.Equal(28, portion.GramWeight);
+            });
+    }
+
+    [Fact]
+    public async Task GetFood_FnddsUsesHouseholdDescriptionAndExcludesUnspecifiedPortion()
+    {
+        const string responseJson = """
+            {
+              "fdcId": 790,
+              "description": "Apple, candied",
+              "dataType": "Survey (FNDDS)",
+              "foodNutrients": [
+                { "nutrient": { "id": 1008 }, "amount": 300 }
+              ],
+              "foodPortions": [
+                {
+                  "gramWeight": 320,
+                  "portionDescription": "Quantity not specified",
+                  "modifier": "90000"
+                },
+                {
+                  "gramWeight": 150,
+                  "portionDescription": "  1   apple, any size "
+                }
+              ]
+            }
+            """;
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(responseJson));
+        var service = CreateService(handler);
+
+        var food = await service.GetFoodAsync("790");
+
+        Assert.NotNull(food);
+        var portion = Assert.Single(food.Portions);
+        Assert.Equal("1 apple, any size", portion.Name);
+        Assert.Equal(150, portion.GramWeight);
+    }
+
+    [Fact]
+    public async Task GetFood_MissingPortionsReturnsNoCandidates()
+    {
+        const string responseJson = """
+            {
+              "fdcId": 790,
+              "description": "Food without measured servings",
+              "foodNutrients": []
+            }
+            """;
+        var handler = new StubHttpMessageHandler(_ => JsonResponse(responseJson));
+        var service = CreateService(handler);
+
+        var food = await service.GetFoodAsync("790");
+
+        Assert.NotNull(food);
+        Assert.Empty(food.Portions);
+    }
+
+    [Fact]
     public async Task Search_BlankTermReturnsEmptyWithoutHttpRequestOrApiKey()
     {
         var handler = new StubHttpMessageHandler(_ =>

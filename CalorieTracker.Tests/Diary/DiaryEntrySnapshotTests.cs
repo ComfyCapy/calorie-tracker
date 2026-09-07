@@ -71,6 +71,33 @@ public class DiaryEntrySnapshotTests
     }
 
     [Fact]
+    public void PortionHistory_DoesNotChangeWhenPortionIsEditedOrDeletedLater()
+    {
+        var food = TestData.Food("user-1", name: "Cinnamon roll");
+        var portion = new FoodPortion
+        {
+            Name = "1 roll",
+            Amount = 75
+        };
+        var entry = TestData.DiaryEntry(
+            "user-1",
+            food,
+            150,
+            portion,
+            2);
+        var originalCalories = entry.CaloriesConsumed;
+
+        portion.Name = "renamed serving";
+        portion.Amount = 100;
+        portion.IsDeleted = true;
+
+        Assert.Equal(150, entry.Quantity);
+        Assert.Equal(2, entry.PortionQuantity);
+        Assert.Equal("1 roll", entry.PortionNameSnapshot);
+        Assert.Equal(originalCalories, entry.CaloriesConsumed);
+    }
+
+    [Fact]
     public void Nutrition_WithInvalidHistoricalDenominator_ReturnsZero()
     {
         var entry = new DiaryEntry
