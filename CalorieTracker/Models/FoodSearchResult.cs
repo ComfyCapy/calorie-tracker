@@ -21,5 +21,8 @@
         public decimal ServingSize { get; set; } = 100;
 
         public string ServingUnit { get; set; } = "g";
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public List<FoodPortionCandidate> Portions { get; set; } = [];
     }
 }

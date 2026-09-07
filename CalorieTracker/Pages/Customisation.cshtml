@@ -121,13 +121,52 @@
             <section class="capy-preview-panel">
 
                 <h2 class="capy-preview-title">
-                    @(Model.Username)'s Comfy Capy
+                    @Model.CapyAppearance.DisplayName
                 </h2>
 
                 <div class="capy-preview">
                     <partial name="_CapyAvatar"
                              model="Model.CapyAppearance" />
                 </div>
+
+                <details class="capy-name-editor">
+                    <summary>
+                        @(string.IsNullOrWhiteSpace(Model.CapyAppearance.Name)
+                            ? "Name your Capy"
+                            : $"Rename {Model.CapyAppearance.DisplayName}")
+                    </summary>
+
+                    <form method="post"
+                          asp-page-handler="Rename"
+                          class="capy-name-form">
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger"
+                             role="alert"></div>
+
+                        <label asp-for="CapyName"
+                               class="form-label">
+                            Capy name
+                        </label>
+
+                        <input asp-for="CapyName"
+                               class="form-control"
+                               maxlength="40"
+                               placeholder="Comfy Capy"
+                               autocomplete="nickname" />
+
+                        <div class="form-text">
+                            Clear the name to restore “Comfy Capy”.
+                        </div>
+
+                        <span asp-validation-for="CapyName"
+                              class="text-danger"></span>
+
+                        <button type="submit"
+                                class="btn btn-outline-primary mt-2">
+                            Save name
+                        </button>
+                    </form>
+                </details>
 
             </section>
 

@@ -38,6 +38,10 @@
 
     <hr />
 
+    <p class="text-muted">
+        Choose grams or an available named serving on the next step.
+    </p>
+
     <form method="post">
         <div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
         <input type="hidden"
@@ -45,22 +49,6 @@
 
         <input type="hidden"
                asp-for="SearchTerm" />
-
-        <div class="mb-3">
-            <label asp-for="Quantity"
-                   class="form-label">
-                Amount (g)
-            </label>
-
-            <input asp-for="Quantity"
-                   class="form-control"
-                   step="0.01"
-                   min="0.01" />
-
-            <span asp-validation-for="Quantity"
-                  class="text-danger">
-            </span>
-        </div>
 
         <div class="mb-3">
             <label asp-for="MealType"
@@ -124,11 +112,11 @@
 
             <button type="submit"
                     class="btn btn-primary"
-                    aria-label="Add @Model.Food.Name to Diary">
-                Add to Diary
+                    aria-label="Choose a serving for @Model.Food.Name">
+                Choose serving
             </button>
 
-            <a asp-page="./Index"
+            <a asp-page="./Search"
                asp-route-searchTerm="@Model.SearchTerm"
                asp-route-returnToDiary="true"
                asp-route-diaryDate="@Model.Date.ToString("yyyy-MM-dd")"

@@ -94,6 +94,24 @@ namespace CalorieTracker.Pages.Diary
                 return NotFound();
             }
 
+            var selectedFood = FoodOptions.FirstOrDefault(food =>
+                food.Id == foodId);
+
+            var availablePortions = selectedFood?.Portions
+                .Where(portion => !portion.IsDeleted)
+                .ToList() ?? [];
+
+            if (availablePortions.Count > 0)
+            {
+                MeasurementMode = "Portion";
+                PortionQuantity = 1;
+
+                if (availablePortions.Count == 1)
+                {
+                    SelectedPortionId = availablePortions[0].Id;
+                }
+            }
+
             return Page();
         }
 

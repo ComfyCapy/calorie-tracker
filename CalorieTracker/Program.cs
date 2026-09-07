@@ -189,6 +189,7 @@ ProductionConfiguration.ConfigureIdentityCookie(
 builder.Services.AddHttpClient<IFoodSearchService, UsdaFoodService>();
 builder.Services.AddScoped<ExternalFoodResolver>();
 builder.Services.AddScoped<CapyProvisioningService>();
+builder.Services.AddSingleton<GoalTimelineCalculator>();
 
 // Resend email service.
 builder.Services.AddOptions();
@@ -264,7 +265,7 @@ app.MapRazorPages()
                 "/Foods/ApiFood",
                 StringComparison.OrdinalIgnoreCase))
         {
-            // ApiFood's GET, log and favourite handlers can all resolve USDA
+            // ApiFood's GET, handoff and favourite handlers can all resolve USDA
             // data, so its endpoint must override the general page policy.
             endpointBuilder.Metadata.Add(
                 new EnableRateLimitingAttribute(

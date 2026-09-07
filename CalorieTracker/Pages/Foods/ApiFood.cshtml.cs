@@ -38,9 +38,6 @@ namespace CalorieTracker.Pages.Foods
         public string ExternalId { get; set; } = string.Empty;
 
         [BindProperty]
-        public decimal Quantity { get; set; } = 100;
-
-        [BindProperty]
         public string MealType { get; set; } = "Dinner";
 
         [BindProperty]
@@ -122,50 +119,22 @@ namespace CalorieTracker.Pages.Foods
                     "Please select a valid meal.");
             }
 
-            if (Quantity <= 0)
-            {
-                ModelState.AddModelError(
-                    nameof(Quantity),
-                    "Quantity must be greater than 0.");
-            }
-
-            if (!MeasurementUnits.TryToCanonical(
-                    Quantity,
-                    _resolvedFood!.ServingUnit,
-                    out var canonicalQuantity,
-                    out _,
-                    out _))
-            {
-                ModelState.AddModelError(
-                    nameof(Quantity),
-                    "The quantity could not be converted.");
-            }
-
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
-            var diaryEntry = new DiaryEntry
-            {
-                UserId = userId,
-                Date = Date.Date,
-                MealType = MealType,
-                Food = _resolvedFood,
-                Quantity = canonicalQuantity
-            };
-
-            diaryEntry.CaptureSnapshot(_resolvedFood, null);
-
-            _context.DiaryEntries.Add(diaryEntry);
             await _context.SaveChangesAsync();
-            TempData["UiStatusMessage"] = "Diary entry added.";
 
             return RedirectToPage(
-                "/Diary/Index",
+                "/Diary/Create",
                 new
                 {
-                    date = Date.ToString("yyyy-MM-dd")
+                    foodId = _resolvedFood!.Id,
+                    date = Date.ToString("yyyy-MM-dd"),
+                    meal = MealType,
+                    returnToFoodSearch = true,
+                    foodSearchTerm = SearchTerm
                 });
         }
 

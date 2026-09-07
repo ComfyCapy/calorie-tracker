@@ -4,10 +4,20 @@ namespace CalorieTracker.Models
 {
     public class UserCapyAppearance
     {
+        public const int MaxNameLength = 40;
+        public const string DefaultName = "Comfy Capy";
+
         public int Id { get; set; }
 
         [Required]
         public string UserId { get; set; } = string.Empty;
+
+        [MaxLength(MaxNameLength)]
+        public string? Name { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        public string DisplayName =>
+            string.IsNullOrWhiteSpace(Name) ? DefaultName : Name;
 
         public int? ExpressionId { get; set; }
         public CapyItem? Expression { get; set; }

@@ -35,6 +35,12 @@
         const portionSelect =
             document.getElementById("portionSelect");
 
+        const portionQuantity =
+            document.getElementById("portionQuantity");
+
+        const portionSummary =
+            document.getElementById("portionSummary");
+
         const foodSearchStatus =
             document.getElementById("foodSearchStatus");
 
@@ -331,6 +337,42 @@
         }
 
 
+        function updatePortionSummary() {
+            const selectedFood =
+                getSelectedFood();
+
+            const selectedPortion =
+                selectedFood?.portions.find(portion =>
+                    portion.id.toString() === portionSelect.value
+                );
+
+            const quantity =
+                Number.parseFloat(portionQuantity.value);
+
+            if (
+                !portionMode.checked ||
+                !selectedPortion ||
+                !Number.isFinite(quantity) ||
+                quantity <= 0
+            ) {
+                portionSummary.textContent = "";
+                return;
+            }
+
+            const numberFormat = new Intl.NumberFormat(
+                undefined,
+                { maximumFractionDigits: 4 }
+            );
+
+            const totalAmount =
+                quantity * selectedPortion.amount;
+
+            portionSummary.textContent =
+                `${numberFormat.format(quantity)} × ${selectedPortion.name} ` +
+                `(${numberFormat.format(totalAmount)} ${selectedFood.unit} total)`;
+        }
+
+
         function updateMeasurementMode() {
             const selectedFood =
                 getSelectedFood();
@@ -375,6 +417,7 @@
             updatePortionOptions();
             updatePortionAvailability();
             updateMeasurementMode();
+            updatePortionSummary();
         }
 
 
@@ -434,12 +477,28 @@
 
         exactMode.addEventListener(
             "change",
-            updateMeasurementMode
+            () => {
+                updateMeasurementMode();
+                updatePortionSummary();
+            }
         );
 
         portionMode.addEventListener(
             "change",
-            updateMeasurementMode
+            () => {
+                updateMeasurementMode();
+                updatePortionSummary();
+            }
+        );
+
+        portionSelect.addEventListener(
+            "change",
+            updatePortionSummary
+        );
+
+        portionQuantity.addEventListener(
+            "input",
+            updatePortionSummary
         );
 
 
