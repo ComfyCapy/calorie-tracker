@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /api
+Disallow: /Diary
+Disallow: /Foods
+Disallow: /Profile
+Disallow: /Customisation
+Disallow: /Identity/Account/Manage
+
+Sitemap: https://calories.comfycapy.com/sitemap.xml

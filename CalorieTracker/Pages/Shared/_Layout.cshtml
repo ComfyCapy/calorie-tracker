@@ -23,6 +23,10 @@
 
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
     var pageTitle = ViewData["Title"]?.ToString();
+    var metaDescription = ViewData["MetaDescription"]?.ToString()
+        ?? "Approachable calorie and nutrition tracking with a customisable Comfy Capy.";
+    var canonicalUrl = ViewData["CanonicalUrl"]?.ToString();
+    var robots = ViewData["Robots"]?.ToString() ?? "noindex,follow";
 }
 
 <!DOCTYPE html>
@@ -32,7 +36,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "Comfy Capy Calories" : $"{pageTitle} · Comfy Capy Calories")</title>
     <meta name="application-name" content="Comfy Capy Calories" />
-    <meta name="description" content="Approachable calorie and nutrition tracking with a customisable Comfy Capy." />
+    <meta name="description" content="@metaDescription" />
+    <meta name="robots" content="@robots" />
+    @if (!string.IsNullOrWhiteSpace(canonicalUrl))
+    {
+        <link rel="canonical" href="@canonicalUrl" />
+    }
     <meta name="theme-color" content="#7b61a8" />
     <link rel="icon" type="image/png" href="~/images/capy/expressions/Capy-Base.png" />
     <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" />
