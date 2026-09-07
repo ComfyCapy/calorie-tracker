@@ -49,6 +49,7 @@ namespace CalorieTracker.Services
             }
 
             var cachedFood = await _context.Foods
+                .Include(food => food.Portions)
                 .FirstOrDefaultAsync(food =>
                     food.UserId == userId &&
                     food.Source == FoodSources.Usda &&
@@ -95,9 +96,7 @@ namespace CalorieTracker.Services
                     cachedDimension != MeasurementDimension.Mass)
                 {
                     // Do not refresh a historical volume food to USDA's gram basis and reinterpret its history.
-                    var hasPortions = await _context.FoodPortions
-                        .AnyAsync(portion =>
-                            portion.FoodId == cachedFood.Id);
+                    var hasPortions = cachedFood.Portions.Count > 0;
 
                     var hasDiaryHistory = await _context.DiaryEntries
                         .AnyAsync(entry =>
@@ -125,6 +124,8 @@ namespace CalorieTracker.Services
                 food.ServingUnit = "g";
                 food.CanonicalServingSize = 100;
                 food.IsDeleted = false;
+
+                AddPortionsWhenNoneExist(food, result.Portions);
 
                 if (cachedFood == null)
                 {
@@ -190,5 +191,42 @@ namespace CalorieTracker.Services
             ServingSize = food.ServingSize,
             ServingUnit = food.ServingUnit
         };
+
+        private static void AddPortionsWhenNoneExist(
+            Food food,
+            IEnumerable<FoodPortionCandidate> candidates)
+        {
+            if (food.Portions.Count > 0)
+            {
+                return;
+            }
+
+            var seen = new HashSet<(string Name, decimal GramWeight)>();
+
+            foreach (var candidate in candidates)
+            {
+                var name = string.Join(
+                    " ",
+                    candidate.Name.Split(
+                        (char[]?)null,
+                        StringSplitOptions.RemoveEmptyEntries));
+                var key = (name.ToUpperInvariant(), candidate.GramWeight);
+
+                if (candidate.GramWeight <= 0 ||
+                    name.Length == 0 ||
+                    name.Length > FoodPortion.MaxNameLength ||
+                    name.Any(char.IsControl) ||
+                    !seen.Add(key))
+                {
+                    continue;
+                }
+
+                food.Portions.Add(new FoodPortion
+                {
+                    Name = name,
+                    Amount = candidate.GramWeight
+                });
+            }
+        }
     }
 }

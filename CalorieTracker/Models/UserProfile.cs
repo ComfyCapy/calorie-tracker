@@ -181,5 +181,21 @@ namespace CalorieTracker.Models
                 return CustomCalorieTarget ?? DailyCalorieTarget;
             }
         }
+
+        [NotMapped]
+        public bool HasUsableCalorieEstimates =>
+            DateOfBirth.HasValue &&
+            Age is >= 18 and <= 120 &&
+            HeightCm is >= 50 and <= 300 &&
+            WeightKg is >= 20 and <= 500 &&
+            (CalculationSex == ProfileOptions.Male ||
+             CalculationSex == ProfileOptions.Female) &&
+            ProfileOptions.ActivityLevels.Contains(ActivityLevel) &&
+            BMI > 0 &&
+            BMR > 0 &&
+            TDEE > 0 &&
+            EffectiveCalorieTarget > 0 &&
+            (!CustomCalorieTarget.HasValue ||
+             CustomCalorieTarget.Value is >= 500 and <= 10000);
     }
 }

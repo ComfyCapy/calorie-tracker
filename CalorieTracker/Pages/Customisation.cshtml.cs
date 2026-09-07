@@ -27,7 +27,9 @@ namespace CalorieTracker.Pages
         }
 
         public UserCapyAppearance? CapyAppearance { get; set; }
-        public string Username { get; set; } = string.Empty;
+
+        [BindProperty]
+        public string? CapyName { get; set; }
 
         public List<CapyItem> OwnedItems { get; set; } = [];
         public List<CapyItem> CatalogueItems { get; set; } = [];
@@ -41,7 +43,6 @@ namespace CalorieTracker.Pages
             if (userId == null)
                 return;
 
-            Username = _userManager.GetUserName(User) ?? "Your";
             HasUserProfile = await _context.UserProfiles
                 .AnyAsync(profile => profile.UserId == userId);
 
@@ -54,6 +55,8 @@ namespace CalorieTracker.Pages
                 .Include(appearance => appearance.Background)
                 .FirstOrDefaultAsync(appearance =>
                     appearance.UserId == userId);
+
+            CapyName = CapyAppearance?.Name;
 
             var ownedItems = await _context.UserCapyItems
                 .Where(userItem => userItem.UserId == userId)
@@ -82,6 +85,60 @@ namespace CalorieTracker.Pages
                 .OrderBy(item => item.Name)
                 .ToListAsync();
         }
+
+        public async Task<IActionResult> OnPostRenameAsync()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+                return Unauthorized();
+
+            if (CapyName != null && ContainsForbiddenCharacters(CapyName))
+            {
+                ModelState.AddModelError(
+                    nameof(CapyName),
+                    "Capy name cannot contain line breaks or control characters.");
+            }
+
+            var trimmedName = CapyName?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(trimmedName) &&
+                trimmedName.Length > UserCapyAppearance.MaxNameLength)
+            {
+                ModelState.AddModelError(
+                    nameof(CapyName),
+                    $"Capy name must be {UserCapyAppearance.MaxNameLength} characters or fewer.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await OnGetAsync();
+                CapyName = trimmedName;
+                return Page();
+            }
+
+            await _capyProvisioningService.ProvisionAsync(userId);
+
+            var appearance = await _context.UserCapyAppearances
+                .FirstOrDefaultAsync(item => item.UserId == userId);
+
+            if (appearance == null)
+                return NotFound();
+
+            appearance.Name = string.IsNullOrWhiteSpace(trimmedName)
+                ? null
+                : trimmedName;
+
+            await _context.SaveChangesAsync();
+
+            TempData["UiStatusMessage"] = "Capy name saved.";
+            return RedirectToPage();
+        }
+
+        private static bool ContainsForbiddenCharacters(string value) =>
+            value.Any(character =>
+                char.IsControl(character) ||
+                character is '\u2028' or '\u2029');
 
         public async Task<IActionResult> OnPostProvisionAsync()
         {

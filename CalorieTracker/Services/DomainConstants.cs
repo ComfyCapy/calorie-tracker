@@ -2,6 +2,8 @@ namespace CalorieTracker.Services;
 
 public static class ProfileOptions
 {
+    public const decimal PoundsPerKilogram = 2.2046226218m;
+
     public const string Metric = "Metric";
     public const string Imperial = "Imperial";
 

@@ -10,7 +10,7 @@
 
 <h1>My Foods</h1>
 
-<form method="get" class="mb-3">
+<form method="get" class="mb-2">
     <input type="hidden"
            asp-for="ReturnToDiary" />
 
@@ -31,10 +31,26 @@
 
         <button type="submit"
                 class="btn btn-outline-primary">
-            Search
+            Search your foods
         </button>
     </div>
 </form>
+
+<p class="text-body-secondary">
+    Search your favourites, custom foods, and recent foods saved to your collection.
+</p>
+
+<p class="mb-3">
+    <a asp-page="./Search"
+       asp-route-returnToDiary="@Model.ReturnToDiary"
+       asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+       asp-route-diaryMeal="@Model.DiaryMeal"
+       asp-route-searchTerm="@Model.SearchTerm"
+       class="btn btn-outline-primary">
+        Search all foods
+    </a>
+    <span class="text-body-secondary ms-2">Search the wider food catalogue.</span>
+</p>
 
 <p>
     <a asp-page="./Create"
@@ -52,7 +68,7 @@
     <div class="card my-4">
         <div class="card-body">
             <h2 class="h5">Start your food collection</h2>
-            <p class="mb-0 text-body-secondary">Search the USDA database above or add a custom food. Favourite foods you use often to find them here next time.</p>
+            <p class="mb-0 text-body-secondary">Search your foods above, search the wider food catalogue, or add a custom food. Favourite foods you use often to find them here next time.</p>
         </div>
     </div>
 }
@@ -140,11 +156,10 @@
 
                             @if (food.Source != null)
                             {
-                                <a asp-page="./ApiFood"
-                                   asp-route-id="@food.ExternalId"
+                                <a asp-page="../Diary/Create"
+                                   asp-route-foodId="@food.Id"
                                    asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
                                    asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                                   asp-route-searchTerm="@Model.SearchTerm"
                                    class="btn btn-primary btn-sm">
                                     Add to Diary
                                 </a>
@@ -529,11 +544,10 @@
                                 </button>
                             </form>
 
-                            <a asp-page="./ApiFood"
-                               asp-route-id="@food.ExternalId"
+                            <a asp-page="../Diary/Create"
+                               asp-route-foodId="@food.Id"
                                asp-route-date="@(Model.ReturnToDiary ? Model.DiaryDate?.ToString("yyyy-MM-dd") : null)"
                                asp-route-meal="@(Model.ReturnToDiary ? Model.DiaryMeal : null)"
-                               asp-route-searchTerm="@Model.SearchTerm"
                                class="btn btn-primary btn-sm"
                                aria-label="Add @food.Name to Diary">
                                 Add to Diary
@@ -611,26 +625,4 @@
             }
         </div>
     </section>
-}
-
-
-@* =========================
-   FOOD DATABASE
-   ========================= *@
-
-@if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
-{
-    <div id="react-food-search"
-         data-return-to-diary="@Model.ReturnToDiary.ToString().ToLowerInvariant()"
-         data-diary-date="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-         data-diary-meal="@Model.DiaryMeal"
-         data-initial-search-term="@Model.SearchTerm"
-         data-embedded="true">
-    </div>
-}
-
-@section Scripts {
-    <script type="module"
-            src="~/react-food-search/assets/food-search.js"
-            asp-append-version="true"></script>
 }

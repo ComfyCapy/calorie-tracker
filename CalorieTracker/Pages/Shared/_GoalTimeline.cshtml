@@ -1,0 +1,89 @@
+@model CalorieTracker.Services.GoalTimelineResult
+@using CalorieTracker.Services
+
+@{
+    var isImperial = Model.MeasurementSystem == ProfileOptions.Imperial;
+    var weeklyChange = Model.EstimatedWeeklyChangeKg.HasValue
+        ? Math.Abs(Model.EstimatedWeeklyChangeKg.Value) *
+          (isImperial ? ProfileOptions.PoundsPerKilogram : 1m)
+        : (decimal?)null;
+    var weeklyUnit = isImperial ? "lb/week" : "kg/week";
+    var supportedRate = isImperial ? "2.2 lb" : "1 kg";
+}
+
+<div class="goal-timeline mt-4 pt-3 border-top"
+     data-goal-timeline-status="@Model.Status">
+    <h3 class="h5">Estimated goal timeline</h3>
+
+    @if (Model.Status == GoalTimelineStatus.ProjectionAvailable &&
+         Model.EstimatedWeeks.HasValue &&
+         Model.EstimatedTargetDate.HasValue)
+    {
+        <p class="h4 mb-1">
+            Around @Model.EstimatedWeeks.Value
+            @(Model.EstimatedWeeks.Value == 1 ? "week" : "weeks")
+        </p>
+
+        <p class="mb-1">
+            At your current target, you may reach your goal around
+            @Model.EstimatedTargetDate.Value.ToString("MMMM yyyy").
+        </p>
+
+        @if (weeklyChange.HasValue)
+        {
+            <p class="text-muted small mb-1">
+                Estimated weekly change:
+                ~@weeklyChange.Value.ToString("0.##") @weeklyUnit.
+            </p>
+        }
+
+        <p class="text-muted small mb-0">
+            This is an estimate. Actual progress may vary.
+        </p>
+    }
+    else if (Model.Status == GoalTimelineStatus.Maintenance)
+    {
+        <p class="mb-0">
+            Your current goal is weight maintenance, so there is no target date to estimate.
+        </p>
+    }
+    else if (Model.Status == GoalTimelineStatus.GoalReached)
+    {
+        <p class="mb-0">
+            You have reached or passed your configured goal weight.
+        </p>
+    }
+    else if (Model.Status == GoalTimelineStatus.DirectionMismatch)
+    {
+        <p class="mb-0">
+            Your current calorie target does not match your selected goal,
+            so a target date cannot be estimated.
+        </p>
+    }
+    else if (Model.Status == GoalTimelineStatus.NoMeaningfulEnergyDifference)
+    {
+        <p class="mb-0">
+            Your current calorie target is too close to maintenance to estimate a meaningful timeline.
+        </p>
+    }
+    else if (Model.Status == GoalTimelineStatus.OutsideSupportedRate)
+    {
+        <p class="mb-0">
+            The estimated change is outside the supported range of up to @supportedRate per week,
+            so no target date is shown.
+        </p>
+    }
+    else if (Model.Status == GoalTimelineStatus.IncompleteProfile)
+    {
+        <p class="mb-0">
+            Complete or update your Profile to estimate a goal timeline.
+        </p>
+    }
+    else
+    {
+        <p class="mb-0">
+            A reliable timeline could not be calculated from these profile values.
+            Review your Profile before using this estimate.
+        </p>
+    }
+</div>

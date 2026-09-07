@@ -3,6 +3,7 @@ using CalorieTracker.Pages.Profile;
 using CalorieTracker.Services;
 using CalorieTracker.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace CalorieTracker.Tests.Calculations;
@@ -80,6 +81,76 @@ public class ProfilePageModelTests
                 .EffectiveCalorieTarget);
     }
 
+    [Theory]
+    [InlineData(ProfileOptions.Lose, 82d, 80d)]
+    [InlineData(ProfileOptions.Lose, 82d, 79.5d)]
+    [InlineData(ProfileOptions.Gain, 78d, 80d)]
+    [InlineData(ProfileOptions.Gain, 78d, 80.5d)]
+    public async Task ExistingUnchangedGoal_CanBeReachedOrOvershot(
+        string goal,
+        double previousWeight,
+        double updatedWeight)
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+
+        var existing = GoalProfile(
+            "user-1",
+            goal,
+            previousWeight,
+            80m);
+        database.Context.UserProfiles.Add(existing);
+        await database.Context.SaveChangesAsync();
+
+        var model = CreateModel(database, "user-1");
+        model.UserProfile = GoalProfile(
+            "user-1",
+            goal,
+            updatedWeight,
+            80m);
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<RedirectToPageResult>(result);
+        Assert.Equal(
+            (decimal)updatedWeight,
+            (await database.Context.UserProfiles.SingleAsync()).WeightKg);
+    }
+
+    [Theory]
+    [InlineData(ProfileOptions.Lose, 82d, 80.5d)]
+    [InlineData(ProfileOptions.Gain, 78d, 79.5d)]
+    public async Task NewlyChangedGoal_StillRejectsInvalidDirection(
+        string goal,
+        double previousWeight,
+        double changedGoalWeight)
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+
+        var existing = GoalProfile(
+            "user-1",
+            goal,
+            previousWeight,
+            80m);
+        database.Context.UserProfiles.Add(existing);
+        await database.Context.SaveChangesAsync();
+
+        var model = CreateModel(database, "user-1");
+        model.UserProfile = GoalProfile(
+            "user-1",
+            goal,
+            80d,
+            (decimal)changedGoalWeight);
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<PageResult>(result);
+        Assert.Equal(
+            (decimal)previousWeight,
+            (await database.Context.UserProfiles.SingleAsync()).WeightKg);
+    }
+
     [Fact]
     public async Task ProfilePost_IgnoresSubmittedUserIdAndUsesAuthenticatedUser()
     {
@@ -102,7 +173,8 @@ public class ProfilePageModelTests
     {
         var model = new IndexModel(
             database.Context,
-            PageModelTestContext.CreateUserManager());
+            PageModelTestContext.CreateUserManager(),
+            new GoalTimelineCalculator());
         PageModelTestContext.Attach(model, userId);
         return model;
     }
@@ -117,5 +189,24 @@ public class ProfilePageModelTests
         CalculationSex = ProfileOptions.Male,
         ActivityLevel = ProfileOptions.Sedentary,
         Goal = ProfileOptions.Maintain
+    };
+
+    private static UserProfile GoalProfile(
+        string userId,
+        string goal,
+        double weight,
+        decimal goalWeight) => new()
+    {
+        UserId = userId,
+        MeasurementSystem = ProfileOptions.Metric,
+        ThemePreference = ProfileOptions.SystemTheme,
+        DateOfBirth = DateTime.Today.AddYears(-30),
+        HeightCm = 180,
+        WeightKg = (decimal)weight,
+        GoalWeightKg = goalWeight,
+        CalculationSex = ProfileOptions.Male,
+        ActivityLevel = ProfileOptions.Sedentary,
+        Goal = goal,
+        WeeklyGoalKg = 0.5m
     };
 }

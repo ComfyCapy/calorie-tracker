@@ -1,10 +1,15 @@
 ﻿using CalorieTracker.Models;
 using System.Net.Http.Json;
+using System.Globalization;
+using System.Text.Json;
 
 namespace CalorieTracker.Services
 {
     public class UsdaFoodService : IFoodSearchService
     {
+        private const string FoundationDataType = "Foundation";
+        private const string FnddsDataType = "Survey (FNDDS)";
+
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
 
@@ -140,7 +145,8 @@ namespace CalorieTracker.Services
                 Fat = GetDetailNutrient(food, 1004),
 
                 ServingSize = 100,
-                ServingUnit = "g"
+                ServingUnit = "g",
+                Portions = GetPortions(food)
             };
         }
 
@@ -217,7 +223,31 @@ namespace CalorieTracker.Services
 
             public string Description { get; set; } = string.Empty;
 
+            public string DataType { get; set; } = string.Empty;
+
             public List<UsdaDetailNutrient> FoodNutrients { get; set; } = [];
+
+            public List<UsdaFoodPortion?>? FoodPortions { get; set; } = [];
+        }
+
+        private class UsdaFoodPortion
+        {
+            public JsonElement GramWeight { get; set; }
+
+            public string? PortionDescription { get; set; }
+
+            public string? Modifier { get; set; }
+
+            public JsonElement Amount { get; set; }
+
+            public UsdaMeasureUnit? MeasureUnit { get; set; }
+        }
+
+        private class UsdaMeasureUnit
+        {
+            public string? Name { get; set; }
+
+            public string? Abbreviation { get; set; }
         }
 
         private class UsdaDetailNutrient
@@ -233,8 +263,8 @@ namespace CalorieTracker.Services
         }
 
         private static decimal GetDetailNutrient(
-    UsdaFoodDetails food,
-    int nutrientId)
+            UsdaFoodDetails food,
+            int nutrientId)
         {
             var nutrient = food.FoodNutrients
                 .FirstOrDefault(foodNutrient =>
@@ -261,5 +291,211 @@ namespace CalorieTracker.Services
 
             return GetDetailNutrient(food, 2048);
         }
+
+        private static List<FoodPortionCandidate> GetPortions(
+            UsdaFoodDetails food)
+        {
+            var portions = new List<FoodPortionCandidate>();
+            var seen = new HashSet<(string Name, decimal GramWeight)>();
+
+            foreach (var portion in food.FoodPortions ?? [])
+            {
+                if (portion == null)
+                {
+                    continue;
+                }
+
+                if (!TryGetPositiveDecimal(
+                        portion.GramWeight,
+                        out var gramWeight))
+                {
+                    continue;
+                }
+
+                var label = GetPortionLabel(portion, food.DataType);
+
+                if (label.Length == 0 ||
+                    label.Length > FoodPortion.MaxNameLength ||
+                    label.Any(char.IsControl))
+                {
+                    continue;
+                }
+
+                var key = (label.ToUpperInvariant(), gramWeight);
+
+                if (!seen.Add(key))
+                {
+                    continue;
+                }
+
+                portions.Add(new FoodPortionCandidate(
+                    label,
+                    gramWeight));
+            }
+
+            return portions;
+        }
+
+        private static string GetPortionLabel(
+            UsdaFoodPortion portion,
+            string dataType)
+        {
+            var description = NormalizeWhitespace(
+                portion.PortionDescription);
+
+            if (string.Equals(
+                    dataType,
+                    FnddsDataType,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                if (description.Equals(
+                        "Quantity not specified",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return string.Empty;
+                }
+
+                if (description.Length > 0)
+                {
+                    return description;
+                }
+            }
+
+            if (string.Equals(
+                    dataType,
+                    FoundationDataType,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return GetFoundationPortionLabel(
+                    portion,
+                    description);
+            }
+
+            return GetGeneralPortionLabel(portion, description);
+        }
+
+        private static string GetFoundationPortionLabel(
+            UsdaFoodPortion portion,
+            string description)
+        {
+            var modifier = NormalizeWhitespace(portion.Modifier);
+            var measureUnit = GetMeasureUnitLabel(portion);
+            var hasAmount = TryGetPositiveDecimal(
+                portion.Amount,
+                out var amount);
+
+            var baseLabel = measureUnit.Length > 0
+                ? hasAmount
+                    ? $"{FormatAmount(amount)} {measureUnit}"
+                    : measureUnit
+                : string.Empty;
+
+            if (baseLabel.Length > 0)
+            {
+                if (modifier.Length > 0 &&
+                    !baseLabel.Contains(
+                        modifier,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return $"{baseLabel}, {modifier}";
+                }
+
+                return baseLabel;
+            }
+
+            if (description.Length > 0)
+            {
+                return description;
+            }
+
+            if (modifier.Length > 0)
+            {
+                if (hasAmount && !StartsWithNumber(modifier))
+                {
+                    return $"{FormatAmount(amount)} {modifier}";
+                }
+
+                return modifier;
+            }
+
+            return hasAmount ? FormatAmount(amount) : string.Empty;
+        }
+
+        private static string GetGeneralPortionLabel(
+            UsdaFoodPortion portion,
+            string description)
+        {
+            if (description.Length > 0)
+            {
+                return description;
+            }
+
+            var modifier = NormalizeWhitespace(portion.Modifier);
+
+            if (modifier.Length > 0)
+            {
+                if (TryGetPositiveDecimal(
+                        portion.Amount,
+                        out var modifierAmount) &&
+                    !StartsWithNumber(modifier))
+                {
+                    return $"{FormatAmount(modifierAmount)} {modifier}";
+                }
+
+                return modifier;
+            }
+
+            var measureUnit = GetMeasureUnitLabel(portion);
+
+            if (measureUnit.Length > 0 &&
+                TryGetPositiveDecimal(
+                    portion.Amount,
+                    out var measureAmount))
+            {
+                return $"{FormatAmount(measureAmount)} {measureUnit}";
+            }
+
+            return string.Empty;
+        }
+
+        private static string GetMeasureUnitLabel(
+            UsdaFoodPortion portion)
+        {
+            var measureUnit = NormalizeWhitespace(
+                portion.MeasureUnit?.Name);
+
+            return measureUnit.Length > 0
+                ? measureUnit
+                : NormalizeWhitespace(
+                    portion.MeasureUnit?.Abbreviation);
+        }
+
+        private static bool TryGetPositiveDecimal(
+            JsonElement element,
+            out decimal value)
+        {
+            value = 0;
+
+            return element.ValueKind == JsonValueKind.Number &&
+                element.TryGetDouble(out var doubleValue) &&
+                double.IsFinite(doubleValue) &&
+                doubleValue > 0 &&
+                element.TryGetDecimal(out value) &&
+                value > 0;
+        }
+
+        private static string NormalizeWhitespace(string? value) =>
+            string.Join(
+                " ",
+                (value ?? string.Empty).Split(
+                    (char[]?)null,
+                    StringSplitOptions.RemoveEmptyEntries));
+
+        private static bool StartsWithNumber(string value) =>
+            char.IsDigit(value[0]) ||
+            value[0] is '+' or '-' or '.';
+
+        private static string FormatAmount(decimal value) =>
+            value.ToString("G29", CultureInfo.InvariantCulture);
     }
 }

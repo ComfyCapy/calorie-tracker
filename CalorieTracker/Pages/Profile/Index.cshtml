@@ -425,7 +425,7 @@ else
 </form>
 
 
-@if (Model.EstimatesProfile != null)
+@if (Model.HasProfileEstimates && Model.EstimatesProfile != null)
 {
     <div class="card form-shell mt-4">
         <div class="card-body">
@@ -525,6 +525,9 @@ else
                 </div>
 
             </div>
+
+            <partial name="_GoalTimeline"
+                     model="Model.GoalTimeline" />
 
             <hr class="my-4" />
 

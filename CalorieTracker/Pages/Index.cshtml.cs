@@ -4,6 +4,7 @@ using CalorieTracker.Data;
 using CalorieTracker.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using CalorieTracker.Services;
 
 namespace CalorieTracker.Pages
 {
@@ -11,25 +12,35 @@ namespace CalorieTracker.Pages
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly GoalTimelineCalculator _goalTimelineCalculator;
         public UserProfile? UserProfile { get; set; }
         public UserCapyAppearance? CapyAppearance { get; set; }
+        public GoalTimelineResult GoalTimeline { get; set; } =
+            new(GoalTimelineStatus.IncompleteProfile, ProfileOptions.Metric);
         public decimal CaloriesConsumed { get; set; }
         public decimal ProteinConsumed { get; set; }
         public decimal CarbohydratesConsumed { get; set; }
         public decimal FatConsumed { get; set; }
 
+        public bool HasProfileEstimates =>
+            UserProfile?.HasUsableCalorieEstimates == true;
+
         public decimal? CalorieTarget =>
-            UserProfile?.EffectiveCalorieTarget;
+            HasProfileEstimates
+                ? UserProfile!.EffectiveCalorieTarget
+                : null;
 
         public decimal? CaloriesRemaining =>
             CalorieTarget - CaloriesConsumed;
 
         public IndexModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            GoalTimelineCalculator goalTimelineCalculator)
         {
             _context = context;
             _userManager = userManager;
+            _goalTimelineCalculator = goalTimelineCalculator;
         }
         public async Task OnGetAsync()
         {
@@ -48,6 +59,7 @@ namespace CalorieTracker.Pages
             UserProfile = await _context.UserProfiles
                 .FirstOrDefaultAsync(profile =>
                     profile.UserId == userId);
+            GoalTimeline = _goalTimelineCalculator.Calculate(UserProfile);
             CapyAppearance = await _context.UserCapyAppearances
             .Include(appearance => appearance.Background)
             .Include(appearance => appearance.Expression)

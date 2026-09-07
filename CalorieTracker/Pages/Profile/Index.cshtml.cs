@@ -15,17 +15,19 @@ namespace CalorieTracker.Pages.Profile
     {
         private const decimal CentimetresPerInch = 2.54m;
         private const decimal InchesPerFoot = 12m;
-        private const decimal PoundsPerKilogram = 2.2046226218m;
 
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly GoalTimelineCalculator _goalTimelineCalculator;
 
         public IndexModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            GoalTimelineCalculator goalTimelineCalculator)
         {
             _context = context;
             _userManager = userManager;
+            _goalTimelineCalculator = goalTimelineCalculator;
         }
 
         [BindProperty]
@@ -67,6 +69,10 @@ namespace CalorieTracker.Pages.Profile
 
         public bool IsFirstTimeSetup { get; set; }
         public UserProfile? EstimatesProfile { get; set; }
+        public bool HasProfileEstimates =>
+            EstimatesProfile?.HasUsableCalorieEstimates == true;
+        public GoalTimelineResult GoalTimeline { get; set; } =
+            new(GoalTimelineStatus.IncompleteProfile, ProfileOptions.Metric);
 
         public async Task OnGetAsync()
         {
@@ -83,6 +89,7 @@ namespace CalorieTracker.Pages.Profile
 
             UserProfile = profile;
             EstimatesProfile = profile;
+            GoalTimeline = _goalTimelineCalculator.Calculate(profile);
 
             UseCustomCalorieTarget =
                 profile.CustomCalorieTarget.HasValue;
@@ -94,26 +101,18 @@ namespace CalorieTracker.Pages.Profile
                 HeightFeet = (int)(totalInches / 12);
                 HeightInches = totalInches - (HeightFeet.Value * 12);
 
-                WeightLb = profile.WeightKg * PoundsPerKilogram;
+                WeightLb = profile.WeightKg * ProfileOptions.PoundsPerKilogram;
 
                 if (profile.GoalWeightKg.HasValue)
                 {
                     GoalWeightLb =
-                        profile.GoalWeightKg.Value * PoundsPerKilogram;
+                        profile.GoalWeightKg.Value * ProfileOptions.PoundsPerKilogram;
                 }
             }
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // Convert alternate-unit inputs before cross-field goal checks,
-            // then apply target-mode cleanup before the final validity check.
-            ValidateBasicProfileFields();
-            ApplyImperialConversions();
-            ValidateGoalFields();
-            ApplyCalorieTargetMode();
-            ValidateCalculatedTarget();
-
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -124,10 +123,19 @@ namespace CalorieTracker.Pages.Profile
             var existingProfile = await _context.UserProfiles
                 .FirstOrDefaultAsync(profile => profile.UserId == userId);
 
+            // Convert alternate-unit inputs before cross-field goal checks,
+            // then apply target-mode cleanup before the final validity check.
+            ValidateBasicProfileFields();
+            ApplyImperialConversions();
+            ValidateGoalFields(existingProfile);
+            ApplyCalorieTargetMode();
+            ValidateCalculatedTarget();
+
             if (!ModelState.IsValid)
             {
                 IsFirstTimeSetup = existingProfile == null;
                 EstimatesProfile = existingProfile;
+                GoalTimeline = _goalTimelineCalculator.Calculate(existingProfile);
                 return Page();
             }
 
@@ -262,7 +270,8 @@ namespace CalorieTracker.Pages.Profile
             }
             else
             {
-                UserProfile.WeightKg = WeightLb.Value / PoundsPerKilogram;
+                UserProfile.WeightKg =
+                    WeightLb.Value / ProfileOptions.PoundsPerKilogram;
 
                 ModelState.Remove("UserProfile.WeightKg");
 
@@ -278,7 +287,7 @@ namespace CalorieTracker.Pages.Profile
             if (GoalWeightLb.HasValue)
             {
                 UserProfile.GoalWeightKg =
-                    GoalWeightLb.Value / PoundsPerKilogram;
+                    GoalWeightLb.Value / ProfileOptions.PoundsPerKilogram;
 
                 ModelState.Remove("UserProfile.GoalWeightKg");
 
@@ -297,7 +306,7 @@ namespace CalorieTracker.Pages.Profile
             }
         }
 
-        private void ValidateGoalFields()
+        private void ValidateGoalFields(UserProfile? existingProfile)
         {
             if ((UserProfile.Goal == ProfileOptions.Lose ||
                  UserProfile.Goal == ProfileOptions.Gain) &&
@@ -329,9 +338,19 @@ namespace CalorieTracker.Pages.Profile
                     "Please select a valid weekly weight change.");
             }
 
+            var existingGoalIsUnchanged =
+                existingProfile != null &&
+                existingProfile.Goal == UserProfile.Goal &&
+                existingProfile.GoalWeightKg.HasValue &&
+                UserProfile.GoalWeightKg.HasValue &&
+                Math.Abs(
+                    existingProfile.GoalWeightKg.Value -
+                    UserProfile.GoalWeightKg.Value) < 0.01m;
+
             if (UserProfile.Goal == ProfileOptions.Lose &&
                 UserProfile.GoalWeightKg.HasValue &&
-                UserProfile.GoalWeightKg.Value >= UserProfile.WeightKg)
+                UserProfile.GoalWeightKg.Value >= UserProfile.WeightKg &&
+                !existingGoalIsUnchanged)
             {
                 var fieldName = UserProfile.MeasurementSystem == ProfileOptions.Imperial
                     ? nameof(GoalWeightLb)
@@ -344,7 +363,8 @@ namespace CalorieTracker.Pages.Profile
 
             if (UserProfile.Goal == ProfileOptions.Gain &&
                 UserProfile.GoalWeightKg.HasValue &&
-                UserProfile.GoalWeightKg.Value <= UserProfile.WeightKg)
+                UserProfile.GoalWeightKg.Value <= UserProfile.WeightKg &&
+                !existingGoalIsUnchanged)
             {
                 var fieldName = UserProfile.MeasurementSystem == ProfileOptions.Imperial
                     ? nameof(GoalWeightLb)

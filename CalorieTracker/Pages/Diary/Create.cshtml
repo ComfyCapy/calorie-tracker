@@ -134,10 +134,11 @@
     <div class="mt-2">
         <small class="text-muted">
             Can't find it?
-            <a asp-page="/Foods/Index"
+            <a asp-page="/Foods/Search"
                asp-route-returnToDiary="true"
                asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
-               asp-route-diaryMeal="@Model.DiaryEntry.MealType">
+               asp-route-diaryMeal="@Model.DiaryEntry.MealType"
+               asp-route-searchTerm="@Model.FoodSearchTerm">
                 Search all foods
             </a>
             or
@@ -170,7 +171,7 @@
 
                 <label class="form-check-label"
                        for="exactMode">
-                    Exact amount
+                    Weight or exact amount
                 </label>
             </div>
 
@@ -183,7 +184,7 @@
 
                 <label class="form-check-label"
                        for="portionMode">
-                    Portion
+                    Named portion
                 </label>
             </div>
         </div>
@@ -214,7 +215,7 @@
 
         <label asp-for="SelectedPortionId"
                class="form-label">
-            Portion
+            Serving
         </label>
 
         <select asp-for="SelectedPortionId"
@@ -232,10 +233,11 @@
 
         <div class="mt-2">
             <label asp-for="PortionQuantity">
-                Quantity
+                Number of servings
             </label>
 
             <input asp-for="PortionQuantity"
+                   id="portionQuantity"
                    class="form-control"
                    step="0.01"
                    min="0.01" />
@@ -243,6 +245,11 @@
             <span asp-validation-for="PortionQuantity"
                   class="text-danger">
             </span>
+
+            <div id="portionSummary"
+                 class="form-text"
+                 aria-live="polite">
+            </div>
         </div>
     </div>
 

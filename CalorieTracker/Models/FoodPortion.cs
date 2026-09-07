@@ -6,6 +6,8 @@ namespace CalorieTracker.Models
 {
     public class FoodPortion
     {
+        public const int MaxNameLength = 50;
+
         [BindNever]
         public int Id { get; set; }
 
@@ -16,7 +18,7 @@ namespace CalorieTracker.Models
         public Food? Food { get; set; }
 
         [Required]
-        [StringLength(50)]
+        [StringLength(MaxNameLength)]
         public string Name { get; set; } = string.Empty;
 
         // Portion amounts are stored in the food's canonical grams or millilitres.

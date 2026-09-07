@@ -29,7 +29,7 @@ function App({
             setIsLoading(true)
             setError('')
             setHasSearched(true)
-            setStatusMessage('Searching the USDA food database...')
+            setStatusMessage('Searching the wider food catalogue...')
 
             try {
                 const params = new URLSearchParams({
@@ -63,10 +63,10 @@ function App({
                 setTotalPages(0)
                 setTotalResults(0)
                 setStatusMessage(
-                    'We could not search the USDA database. Please try again.'
+                    'We could not search the wider food catalogue. Please try again.'
                 )
                 setError(
-                    'We could not search the USDA database. Please try again.'
+                    'We could not search the wider food catalogue. Please try again.'
                 )
             } finally {
                 setIsLoading(false)
@@ -235,11 +235,11 @@ function App({
             {!embedded && (
                 <>
                     <section className="food-search-header">
-                        <p className="food-search-eyebrow">
-                            Nutrition Database
-                        </p>
+                        <h1>Search all foods</h1>
 
-                        <h1>Food Search</h1>
+                        <p className="food-search-attribution">
+                            Nutrition data from USDA.
+                        </p>
                     </section>
 
                     <form
@@ -250,7 +250,7 @@ function App({
                             className="visually-hidden"
                             htmlFor="food-search-input"
                         >
-                            Search foods
+                            Search the wider food catalogue
                         </label>
                         <input
                             id="food-search-input"
@@ -260,7 +260,7 @@ function App({
                             onChange={(event) =>
                                 setSearchTerm(event.target.value)}
                             placeholder="Try chicken, spaghetti, banana..."
-                            aria-label="Search foods"
+                            aria-label="Search the wider food catalogue"
                         />
 
                         <button
@@ -288,7 +288,7 @@ function App({
                     className="food-search-message"
                     aria-hidden="true"
                 >
-                    Searching the USDA food database...
+                    Searching the wider food catalogue...
                 </div>
             )}
 
@@ -309,7 +309,7 @@ function App({
                         className="food-search-message"
                         aria-hidden="true"
                     >
-                        No matching USDA foods found.
+                        No matching foods found in the wider catalogue.
                     </div>
                 )}
 
@@ -321,7 +321,7 @@ function App({
                     <div className="food-search-results-toolbar">
                         <div className="food-search-results-heading">
                             <h2>
-                                {embedded ? 'Food Database' : 'Results'}
+                                Search results
                             </h2>
 
                             <span>
