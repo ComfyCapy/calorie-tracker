@@ -235,6 +235,75 @@ public class FoodsApiTests
         Assert.Equal(0, factory.FoodSearchService.GetCallCount);
     }
 
+    [Theory]
+    [InlineData("/api/foods/select/123")]
+    [InlineData("/api/foods/favourites/123")]
+    public async Task ResolverApiMutation_IsProtectedByFoodSearchRateLimit(
+        string path)
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
+        client.DefaultRequestHeaders.Add("X-Test-User", "rate-limit-user");
+
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            using var response = await client.PostAsync(path, content: null);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        using var limitedResponse = await client.PostAsync(path, content: null);
+
+        Assert.Equal(
+            HttpStatusCode.TooManyRequests,
+            limitedResponse.StatusCode);
+        Assert.Equal(0, factory.FoodSearchService.GetCallCount);
+    }
+
+    [Fact]
+    public async Task ApiFoodResolver_IsRateLimitedPerAuthenticatedUser()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var firstClient = factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                BaseAddress = new Uri("https://localhost")
+            });
+        firstClient.DefaultRequestHeaders.Add("X-Test-User", "first-rate-user");
+
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            using var response = await firstClient.GetAsync(
+                "/Foods/ApiFood?id=123&searchTerm=apple");
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        using var limitedResponse = await firstClient.GetAsync(
+            "/Foods/ApiFood?id=123&searchTerm=apple");
+        Assert.Equal(
+            HttpStatusCode.TooManyRequests,
+            limitedResponse.StatusCode);
+
+        using var secondClient = factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                BaseAddress = new Uri("https://localhost")
+            });
+        secondClient.DefaultRequestHeaders.Add(
+            "X-Test-User",
+            "second-rate-user");
+        using var independentResponse = await secondClient.GetAsync(
+            "/Foods/ApiFood?id=123&searchTerm=apple");
+
+        Assert.Equal(HttpStatusCode.NotFound, independentResponse.StatusCode);
+        Assert.Equal(61, factory.FoodSearchService.GetCallCount);
+    }
+
     private static FoodsApiController CreateController(
         TestDatabase database,
         FakeFoodSearchService service,

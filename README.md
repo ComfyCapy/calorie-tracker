@@ -223,8 +223,21 @@ The HTTPS launch profile uses `https://localhost:7259` (and also listens on `htt
 | `Resend:FromAddress` | Verified sender used by Resend | Override when the configured default is not verified for your account |
 | `Feedback:RecipientAddress` | Destination for anonymous feedback | For feedback delivery |
 | `ReverseProxy:KnownProxies` | Explicit IP allow-list for forwarded headers | Only behind a trusted reverse proxy |
+| `DataProtection:KeysPath` | Persistent ASP.NET Core keyring directory | Production |
 
 In environment variables, .NET configuration separators use double underscores, for example `ConnectionStrings__DefaultConnection` and `FoodDataCentral__ApiKey`. Keep connection strings, API credentials, email settings and production ASP.NET Core data-protection keys outside source control.
+
+On Linux, the configured Data Protection directory must be owned by the
+application service account with mode `0700`; key files must remain mode
+`0600` (a systemd `UMask=0077` keeps newly written keys restrictive). The
+production environment file must remain owned by `root` with mode `0600`.
+Verify metadata without printing secret contents:
+
+~~~bash
+sudo stat -c '%a %U:%G %n' /srv/comfycapy/dataprotection
+sudo find /srv/comfycapy/dataprotection -maxdepth 1 -type f -name '*.xml' -printf '%m %u:%g %p\n'
+sudo stat -c '%a %U:%G %n' /path/to/comfycapy.env
+~~~
 
 ## Database and deployment notes
 

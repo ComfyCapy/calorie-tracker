@@ -265,8 +265,7 @@
                 <button type="button"
                         class="capy-theme-option theme-option"
                         data-theme="light"
-                        aria-pressed="false"
-                        disabled="@(!Model.HasUserProfile)">
+                        aria-pressed="false">
                     <span class="capy-theme-option-title">
                         Light
                     </span>
@@ -279,8 +278,7 @@
                 <button type="button"
                         class="capy-theme-option theme-option"
                         data-theme="dark"
-                        aria-pressed="false"
-                        disabled="@(!Model.HasUserProfile)">
+                        aria-pressed="false">
                     <span class="capy-theme-option-title">
                         Dark
                     </span>
@@ -293,8 +291,7 @@
                 <button type="button"
                         class="capy-theme-option theme-option"
                         data-theme="system"
-                        aria-pressed="false"
-                        disabled="@(!Model.HasUserProfile)">
+                        aria-pressed="false">
                     <span class="capy-theme-option-title">
                         System
                     </span>
@@ -308,7 +305,7 @@
             @if (!Model.HasUserProfile)
             {
                 <p class="text-body-secondary small mt-2 mb-0">
-                    Complete your profile to choose and save an account theme.
+                    Your browser theme is saved now; complete your profile to also save it to your account.
                 </p>
             }
         </section>
