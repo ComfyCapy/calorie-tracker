@@ -1,7 +1,11 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Calorie & Macro Tracker";
+    ViewData["MetaDescription"] =
+        "Track calories, macros and daily food with a customisable Comfy Capy.";
+    ViewData["CanonicalUrl"] = "https://calories.comfycapy.com/";
+    ViewData["Robots"] = "index,follow";
 }
 
 @if (User.Identity?.IsAuthenticated == true)
