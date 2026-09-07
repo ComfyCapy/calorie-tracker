@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using CalorieTracker.Data;
 
@@ -16,15 +17,18 @@ public class DeletePersonalDataModel : PageModel
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<DeletePersonalDataModel> _logger;
 
     public DeletePersonalDataModel(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
+        ApplicationDbContext context,
         ILogger<DeletePersonalDataModel> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _context = context;
         _logger = logger;
     }
 
@@ -86,12 +90,31 @@ public class DeletePersonalDataModel : PageModel
             }
         }
 
-        var result = await _userManager.DeleteAsync(user);
         var userId = await _userManager.GetUserIdAsync(user);
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        // Diary rows restrict physical deletion of their foods and portions.
+        // Remove only this user's owned graph, from leaves to root, before
+        // allowing the existing Identity/user cascades to do their work.
+        await _context.DiaryEntries
+            .Where(entry => entry.UserId == userId)
+            .ExecuteDeleteAsync();
+        await _context.FoodPortions
+            .Where(portion => portion.Food!.UserId == userId)
+            .ExecuteDeleteAsync();
+        await _context.Foods
+            .Where(food => food.UserId == userId)
+            .ExecuteDeleteAsync();
+
+        var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
             throw new InvalidOperationException($"Unexpected error occurred deleting user.");
         }
+
+        await transaction.CommitAsync();
 
         await _signInManager.SignOutAsync();
 

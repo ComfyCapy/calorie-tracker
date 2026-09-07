@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
@@ -213,6 +214,22 @@ using (var scope = app.Services.CreateScope())
     _ = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 }
 
+// Establish the original scheme and client address before any middleware
+// makes HTTPS-sensitive decisions such as applying HSTS or redirecting.
+app.UseForwardedHeaders();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+    context.Response.Headers["Referrer-Policy"] =
+        "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] =
+        "camera=(), geolocation=(), microphone=()";
+
+    await next();
+});
+
 app.UseStatusCodePagesWithReExecute("/StatusCode/{0}");
 
 if (!app.Environment.IsDevelopment())
@@ -223,7 +240,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 
 app.UseRouting();
@@ -236,7 +252,25 @@ app.MapStaticAssets();
 
 app.MapRazorPages()
     .WithStaticAssets()
-    .RequireRateLimiting(RateLimitPolicies.IdentityOperations);
+    .RequireRateLimiting(RateLimitPolicies.IdentityOperations)
+    .Add(endpointBuilder =>
+    {
+        var page = endpointBuilder.Metadata
+            .OfType<PageActionDescriptor>()
+            .LastOrDefault();
+
+        if (string.Equals(
+                page?.ViewEnginePath,
+                "/Foods/ApiFood",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            // ApiFood's GET, log and favourite handlers can all resolve USDA
+            // data, so its endpoint must override the general page policy.
+            endpointBuilder.Metadata.Add(
+                new EnableRateLimitingAttribute(
+                    RateLimitPolicies.FoodSearch));
+        }
+    });
 
 app.MapControllers();
 

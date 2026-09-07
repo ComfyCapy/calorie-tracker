@@ -91,6 +91,26 @@ public class BrandingTests
     }
 
     [Fact]
+    public async Task RegisterPage_UsesLocalValidationScriptsWithoutFallbackIntegrityMetadata()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = CreateClient(factory);
+
+        var html = await client.GetStringAsync("/Identity/Account/Register");
+
+        Assert.Contains(
+            "/lib/jquery-validation/dist/jquery.validate.min.",
+            html);
+        Assert.Contains(
+            "/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.",
+            html);
+        Assert.DoesNotContain(
+            "cdnjs.cloudflare.com/ajax/libs/jquery-validation",
+            html);
+        Assert.DoesNotContain("integrity=\"sha384-DU2a51", html);
+    }
+
+    [Fact]
     public async Task FocusedCopyPages_KeepRequestedText()
     {
         using var factory = new IntegrationTestFactory();

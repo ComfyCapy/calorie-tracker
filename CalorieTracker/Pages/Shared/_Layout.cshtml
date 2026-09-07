@@ -39,18 +39,20 @@
     <script>
             (() => {
                 const accountTheme = "@(accountTheme?.ToLowerInvariant() ?? "")";
-                const isAuthenticated =
-                        @(User.Identity?.IsAuthenticated == true ? "true" : "false");
 
-                // Signed-in users load the account preference; localStorage is only the anonymous fallback.
-                let anonymousTheme = "system";
-                if (!isAuthenticated) {
-                    try { anonymousTheme = localStorage.getItem("theme") || "system"; } catch { }
-                }
-                const savedTheme =
-                    isAuthenticated
-                        ? accountTheme || "system"
-                        : (["light", "dark", "system"].includes(anonymousTheme) ? anonymousTheme : "system");
+                const validThemes = ["light", "dark", "system"];
+                let storedTheme = "";
+                try {
+                    storedTheme = localStorage.getItem("theme")?.toLowerCase() || "";
+                } catch { }
+
+                // Theme is a browser preference. The account value remains a fallback
+                // for a new browser and continues to be synchronised for signed-in users.
+                const savedTheme = validThemes.includes(storedTheme)
+                    ? storedTheme
+                    : (validThemes.includes(accountTheme) ? accountTheme : "system");
+
+                try { localStorage.setItem("theme", savedTheme); } catch { }
 
                 let themeToApply = savedTheme;
 
@@ -188,10 +190,8 @@
                 button.addEventListener("click", async () => {
                     const selectedTheme = button.dataset.theme;
 
-                    // Apply immediately to prevent a flash; anonymous preference is persisted locally.
-                    if (!@(User.Identity?.IsAuthenticated == true ? "true" : "false")) {
-                        try { localStorage.setItem("theme", selectedTheme); } catch { }
-                    }
+                    // Apply immediately to prevent a flash and persist the browser preference.
+                    try { localStorage.setItem("theme", selectedTheme); } catch { }
 
                     let themeToApply = selectedTheme;
 

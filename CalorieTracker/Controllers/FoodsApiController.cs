@@ -114,6 +114,7 @@ namespace CalorieTracker.Controllers
         }
 
         [HttpPost("select/{externalId}")]
+        [EnableRateLimiting(RateLimitPolicies.FoodSearch)]
         public async Task<IActionResult> Select(
             string externalId)
         {
@@ -163,6 +164,7 @@ namespace CalorieTracker.Controllers
         }
 
         [HttpPost("favourites/{externalId}")]
+        [EnableRateLimiting(RateLimitPolicies.FoodSearch)]
         public async Task<IActionResult> Favourite(
             string externalId)
         {

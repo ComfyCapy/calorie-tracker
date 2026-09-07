@@ -148,6 +148,28 @@ public class AccountSecurityTests
         Assert.Equal("+44 7700 900123", user.PhoneNumber);
     }
 
+    [Fact]
+    public async Task ManageEmailPage_UsesLocalValidationScriptsWithoutFallbackIntegrityMetadata()
+    {
+        using var factory = new IntegrationTestFactory();
+        await SeedIdentityUserAsync(factory);
+        using var client = CreateClient(factory, UserId);
+
+        var html = await client.GetStringAsync(
+            "/Identity/Account/Manage/Email");
+
+        Assert.Contains(
+            "/lib/jquery-validation/dist/jquery.validate.min.",
+            html);
+        Assert.Contains(
+            "/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.",
+            html);
+        Assert.DoesNotContain(
+            "cdnjs.cloudflare.com/ajax/libs/jquery-validation",
+            html);
+        Assert.DoesNotContain("integrity=\"sha384-DU2a51", html);
+    }
+
     private static HttpClient CreateClient(
         IntegrationTestFactory factory,
         string? userId = null)
