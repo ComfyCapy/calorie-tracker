@@ -26,6 +26,13 @@
             })
         })
     );
+
+    var selectedFood = Model.FoodOptions
+        .FirstOrDefault(food => food.Id == Model.DiaryEntry.FoodId);
+    var hasAvailablePortions = selectedFood?.Portions
+        .Any(portion =>
+            !portion.IsDeleted ||
+            portion.Id == Model.OriginalPortionId) == true;
 }
 
 <h1>Edit Diary Entry</h1>
@@ -89,6 +96,8 @@
             <input type="text"
                    id="foodSearch"
                    class="form-control"
+                   value="@Model.SelectedFoodName"
+                   data-initial-name="@Model.SelectedFoodName"
                    placeholder="Search your foods..."
                    autocomplete="off"
                    role="combobox"
@@ -131,10 +140,13 @@
 
 
     </fieldset>
-    <fieldset id="measurementFields" class="form-section" hidden>
+    <fieldset id="measurementFields"
+              class="form-section"
+              hidden="@(string.IsNullOrWhiteSpace(Model.SelectedFoodName) ? "hidden" : null)">
         <legend>Amount</legend>
     <div id="measurementModeSection"
-         class="mb-3 mt-3">
+         class="mb-3 mt-3"
+         style="@(hasAvailablePortions ? null : "display: none;")">
 
         <fieldset class="border-0 p-0 m-0">
             <legend class="form-label">How would you like to log this?</legend>
@@ -170,10 +182,12 @@
     </div>
 
     <div id="exactQuantitySection"
-         class="mb-3 mt-3">
+         class="mb-3 mt-3"
+         style="@(Model.MeasurementMode == "Portion" ? "display: none;" : null)">
 
         <label asp-for="DiaryEntry.Quantity">
-            Quantity (<span id="quantityUnit"></span>)
+            Quantity (<span id="quantityUnit"
+                            data-initial-unit="@Model.SelectedServingUnit">@Model.SelectedServingUnit</span>)
         </label>
 
         <input asp-for="DiaryEntry.Quantity"
@@ -188,7 +202,7 @@
 
     <div id="portionSection"
          class="mb-3 mt-3"
-         style="display: none;">
+         style="@(Model.MeasurementMode == "Portion" ? null : "display: none;")">
 
         <label asp-for="SelectedPortionId"
                class="form-label">
@@ -197,11 +211,20 @@
 
         <select asp-for="SelectedPortionId"
                 id="portionSelect"
-                class="form-select">
+                class="form-select"
+                data-initial-portion-name="@Model.SelectedPortionName">
 
             <option value="">
                 Select a portion...
             </option>
+
+            @if (Model.SelectedPortionId.HasValue &&
+                 !string.IsNullOrWhiteSpace(Model.SelectedPortionName))
+            {
+                <option value="@Model.SelectedPortionId.Value" selected>
+                    @Model.SelectedPortionName
+                </option>
+            }
         </select>
 
         <span asp-validation-for="SelectedPortionId"
@@ -221,6 +244,16 @@
             <span asp-validation-for="PortionQuantity"
                   class="text-danger">
             </span>
+
+            <div id="portionSummary"
+                 class="form-text"
+                 aria-live="polite">
+                @if (Model.PortionQuantity.HasValue &&
+                     !string.IsNullOrWhiteSpace(Model.SelectedPortionName))
+                {
+                    <text>@Model.PortionQuantity.Value.ToString("0.##") × @Model.SelectedPortionName</text>
+                }
+            </div>
         </div>
     </div>
 

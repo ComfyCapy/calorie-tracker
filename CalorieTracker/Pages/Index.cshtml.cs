@@ -14,6 +14,7 @@ namespace CalorieTracker.Pages
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly GoalTimelineCalculator _goalTimelineCalculator;
         private readonly CalorieBalanceYearService _calorieBalanceYearService;
+        private readonly MacroTargetCalculator _macroTargetCalculator;
         public UserProfile? UserProfile { get; set; }
         public UserCapyAppearance? CapyAppearance { get; set; }
         public CalorieBalanceYear? CalorieBalanceYear { get; set; }
@@ -32,6 +33,7 @@ namespace CalorieTracker.Pages
         public decimal ProteinConsumed { get; set; }
         public decimal CarbohydratesConsumed { get; set; }
         public decimal FatConsumed { get; set; }
+        public MacroGoalProgress? MacroGoalProgress { get; set; }
 
         public bool HasProfileEstimates =>
             UserProfile?.HasUsableCalorieEstimates == true;
@@ -48,12 +50,14 @@ namespace CalorieTracker.Pages
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             GoalTimelineCalculator goalTimelineCalculator,
-            CalorieBalanceYearService calorieBalanceYearService)
+            CalorieBalanceYearService calorieBalanceYearService,
+            MacroTargetCalculator macroTargetCalculator)
         {
             _context = context;
             _userManager = userManager;
             _goalTimelineCalculator = goalTimelineCalculator;
             _calorieBalanceYearService = calorieBalanceYearService;
+            _macroTargetCalculator = macroTargetCalculator;
         }
         public async Task<IActionResult> OnGetAsync()
         {
@@ -114,6 +118,13 @@ namespace CalorieTracker.Pages
                 CarbohydratesConsumed += entry.CarbohydratesConsumed;
                 FatConsumed += entry.FatConsumed;
             }
+
+            MacroGoalProgress = _macroTargetCalculator
+                .Calculate(UserProfile)?
+                .CreateProgress(
+                    ProteinConsumed,
+                    CarbohydratesConsumed,
+                    FatConsumed);
 
             return Page();
         }

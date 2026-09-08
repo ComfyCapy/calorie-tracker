@@ -192,6 +192,7 @@ builder.Services.AddScoped<CapyProvisioningService>();
 builder.Services.AddScoped<DailyMaintenanceSnapshotService>();
 builder.Services.AddScoped<CalorieBalanceYearService>();
 builder.Services.AddSingleton<GoalTimelineCalculator>();
+builder.Services.AddSingleton<MacroTargetCalculator>();
 
 // Resend email service.
 builder.Services.AddOptions();

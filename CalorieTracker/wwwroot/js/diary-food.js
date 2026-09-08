@@ -226,19 +226,21 @@
         }
 
 
-        function selectFood(food) {
+        function selectFood(food, preserveInitialValue = false) {
             foodId.value =
                 food.id;
 
             foodSearch.value =
-                food.name;
+                preserveInitialValue && foodSearch.dataset.initialName
+                    ? foodSearch.dataset.initialName
+                    : food.name;
 
             setSuggestionsVisibility(false);
 
             foodSearchStatus.textContent =
                 `Selected ${food.name}.`;
 
-            updateFood();
+            updateFood(preserveInitialValue);
         }
 
         function updateSelectedFoodDisplay() {
@@ -256,22 +258,24 @@
             }
 
             selectedFoodName.textContent =
-                selectedFood.name;
+                foodSearch.value || selectedFood.name;
 
             selectedFoodDisplay.style.display =
                 "block";
         }
 
-        function updateQuantityUnit() {
+        function updateQuantityUnit(preserveInitialValue = false) {
             const selectedFood =
                 getSelectedFood();
 
             quantityUnit.textContent =
-                selectedFood?.unit || "";
+                preserveInitialValue && quantityUnit.dataset.initialUnit
+                    ? quantityUnit.dataset.initialUnit
+                    : selectedFood?.unit || "";
         }
 
 
-        function updatePortionOptions() {
+        function updatePortionOptions(preserveInitialValue = false) {
             const selectedFood =
                 getSelectedFood();
 
@@ -291,8 +295,15 @@
                     option.value =
                         portion.id;
 
+                    const portionName =
+                        preserveInitialValue &&
+                        portion.id.toString() === selectedPortionId &&
+                        portionSelect.dataset.initialPortionName
+                            ? portionSelect.dataset.initialPortionName
+                            : portion.name;
+
                     option.textContent =
-                        `${portion.name} (${portion.amount} ${selectedFood.unit})`;
+                        `${portionName} (${portion.amount} ${selectedFood.unit})`;
 
                     if (
                         portion.id.toString() ===
@@ -367,8 +378,14 @@
             const totalAmount =
                 quantity * selectedPortion.amount;
 
+            const portionName =
+                selectedPortion.id.toString() === selectedPortionId &&
+                portionSelect.dataset.initialPortionName
+                    ? portionSelect.dataset.initialPortionName
+                    : selectedPortion.name;
+
             portionSummary.textContent =
-                `${numberFormat.format(quantity)} × ${selectedPortion.name} ` +
+                `${numberFormat.format(quantity)} × ${portionName} ` +
                 `(${numberFormat.format(totalAmount)} ${selectedFood.unit} total)`;
         }
 
@@ -410,11 +427,11 @@
         }
 
 
-        function updateFood() {
+        function updateFood(preserveInitialValue = false) {
             document.getElementById("measurementFields").hidden = !getSelectedFood();
             updateSelectedFoodDisplay();
-            updateQuantityUnit();
-            updatePortionOptions();
+            updateQuantityUnit(preserveInitialValue);
+            updatePortionOptions(preserveInitialValue);
             updatePortionAvailability();
             updateMeasurementMode();
             updatePortionSummary();
@@ -519,7 +536,7 @@
             getSelectedFood();
 
         if (initialFood) {
-            selectFood(initialFood);
+            selectFood(initialFood, true);
         }
 
 })();

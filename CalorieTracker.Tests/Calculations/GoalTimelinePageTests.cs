@@ -26,7 +26,8 @@ public class GoalTimelinePageTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             calculator,
-            new CalorieBalanceYearService(database.Context));
+            new CalorieBalanceYearService(database.Context),
+            new MacroTargetCalculator());
         PageModelTestContext.Attach(dashboard, "user-1");
         await dashboard.OnGetAsync();
 

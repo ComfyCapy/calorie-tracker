@@ -24,7 +24,8 @@ public class CalorieBalanceDashboardTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
-            new CalorieBalanceYearService(database.Context));
+            new CalorieBalanceYearService(database.Context),
+            new MacroTargetCalculator());
         PageModelTestContext.Attach(model, "user-1");
 
         await model.OnGetAsync();
@@ -314,7 +315,8 @@ public class CalorieBalanceDashboardTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
-            new CalorieBalanceYearService(database.Context))
+            new CalorieBalanceYearService(database.Context),
+            new MacroTargetCalculator())
         {
             Year = ValidationRules.MinimumDiaryDate.Year
         };
@@ -366,7 +368,8 @@ public class CalorieBalanceDashboardTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
-            new CalorieBalanceYearService(database.Context))
+            new CalorieBalanceYearService(database.Context),
+            new MacroTargetCalculator())
         {
             Year = ValidationRules.MinimumDiaryDate.Year - 1
         };
@@ -491,7 +494,8 @@ public class CalorieBalanceDashboardTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
-            new CalorieBalanceYearService(database.Context))
+            new CalorieBalanceYearService(database.Context),
+            new MacroTargetCalculator())
         {
             Year = DateTime.Today.Year + 1
         };

@@ -4,6 +4,9 @@ html {
 
 :root {
   --ct-empty-favourite-color: #8a6500;
+  --ct-macro-protein: #d63384;
+  --ct-macro-carbohydrates: #ffc107;
+  --ct-macro-fat: #198754;
   --ct-balance-heavy-cut: #696fb5;
   --ct-balance-light-cut: #a5a9d7;
   --ct-balance-maintenance: #70ae8a;
@@ -771,6 +774,80 @@ body {
     font-size: 1.35rem;
 }
 
+.dashboard-macro-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.dashboard-macro-goal {
+    width: 100%;
+}
+
+.dashboard-macro-goal .dashboard-macro-value {
+    font-size: 1.05rem;
+    white-space: nowrap;
+}
+
+.dashboard-macro-goal .macro-goal-progress {
+    margin-top: 0.45rem;
+}
+
+.daily-progress-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.macro-goal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.macro-goal-item {
+    min-width: 0;
+}
+
+.macro-goal-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.macro-goal-heading strong {
+    white-space: nowrap;
+}
+
+.macro-goal-progress {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--bs-secondary-bg);
+}
+
+.macro-goal-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.macro-goal-item--protein > span {
+    background: var(--ct-macro-protein);
+}
+
+.macro-goal-item--carbohydrates > span {
+    background: var(--ct-macro-carbohydrates);
+}
+
+.macro-goal-item--fat > span {
+    background: var(--ct-macro-fat);
+}
+
 .dashboard-year-card {
     min-width: 0;
     margin-top: 1rem;
@@ -1046,6 +1123,16 @@ a.calorie-year-day:focus-visible {
     }
 
     .dashboard-macro-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .daily-progress-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .macro-goal-grid {
         grid-template-columns: 1fr;
     }
 

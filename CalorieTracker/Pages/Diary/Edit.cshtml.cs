@@ -42,6 +42,9 @@ namespace CalorieTracker.Pages.Diary
         public List<Food> FoodOptions { get; set; } = [];
 
         public int? OriginalPortionId { get; set; }
+        public string SelectedFoodName { get; set; } = string.Empty;
+        public string SelectedServingUnit { get; set; } = string.Empty;
+        public string? SelectedPortionName { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -71,6 +74,10 @@ namespace CalorieTracker.Pages.Diary
 
             DiaryEntry = diaryEntry;
             OriginalPortionId = diaryEntry.FoodPortionId;
+            SetSelectedFoodDisplay(
+                diaryEntry,
+                diaryEntry.Food,
+                diaryEntry.FoodPortion);
 
             if (diaryEntry.Food?.ServingBasis == FoodServingBasis.Measured &&
                 MeasurementUnits.TryToCanonical(
@@ -280,6 +287,10 @@ namespace CalorieTracker.Pages.Diary
             if (!ModelState.IsValid)
             {
                 DiaryEntry.Id = existingEntry.Id;
+                SetSelectedFoodDisplay(
+                    existingEntry,
+                    selectedFood,
+                    selectedPortion);
                 await LoadFoodOptionsAsync(
                     userId,
                     DiaryEntry.FoodId);
@@ -361,6 +372,33 @@ namespace CalorieTracker.Pages.Diary
                      food.Id == currentFoodId))
                 .OrderBy(food => food.Name)
                 .ToListAsync();
+        }
+
+        private void SetSelectedFoodDisplay(
+            DiaryEntry existingEntry,
+            Food? selectedFood,
+            FoodPortion? selectedPortion)
+        {
+            var isOriginalFood =
+                selectedFood?.Id == existingEntry.FoodId;
+
+            SelectedFoodName = isOriginalFood &&
+                !string.IsNullOrWhiteSpace(existingEntry.FoodNameSnapshot)
+                    ? existingEntry.FoodNameSnapshot
+                    : selectedFood?.Name ?? string.Empty;
+
+            SelectedServingUnit = isOriginalFood
+                ? existingEntry.ServingBasisSnapshot == FoodServingBasis.Portion
+                    ? existingEntry.PortionLabelSnapshot ??
+                      selectedFood?.DisplayServingUnit ??
+                      "portion"
+                    : existingEntry.ServingUnitSnapshot
+                : selectedFood?.DisplayServingUnit ?? string.Empty;
+
+            SelectedPortionName = isOriginalFood &&
+                !string.IsNullOrWhiteSpace(existingEntry.PortionNameSnapshot)
+                    ? existingEntry.PortionNameSnapshot
+                    : selectedPortion?.Name;
         }
     }
 }

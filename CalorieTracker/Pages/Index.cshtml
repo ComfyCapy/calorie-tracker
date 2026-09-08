@@ -11,6 +11,7 @@
 
 @section Scripts {
     <script src="~/js/calorie-year-map.js" asp-append-version="true"></script>
+    <script src="~/js/macro-goals-preference.js" asp-append-version="true"></script>
 }
 
 @if (User.Identity?.IsAuthenticated == true)
@@ -23,6 +24,7 @@
                 (double)(Model.CaloriesConsumed /
                     Model.CalorieTarget.Value * 100))
             : 0;
+    var macroGoals = Model.MacroGoalProgress;
 
     <div class="dashboard-page">
 
@@ -159,14 +161,36 @@
                     P
                 </div>
 
-                <div>
+                <div class="dashboard-macro-content">
                     <span class="dashboard-macro-label">
                         Protein
                     </span>
 
-                    <strong class="dashboard-macro-value">
+                    <strong class="dashboard-macro-value"
+                            data-macro-goals-compact>
                         @Model.ProteinConsumed.ToString("0.0") g
                     </strong>
+
+                    @if (macroGoals != null)
+                    {
+                        <div class="dashboard-macro-goal"
+                             data-macro-goals-content
+                             hidden>
+                            <strong class="dashboard-macro-value">
+                                @macroGoals.Protein.ConsumedGrams.ToString("0.0") /
+                                @macroGoals.Protein.TargetGrams.ToString("0.#") g
+                            </strong>
+                            <div class="macro-goal-progress macro-goal-item--protein"
+                                 role="progressbar"
+                                 aria-label="Protein macro goal progress"
+                                 aria-valuenow="@macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuetext="@macroGoals.Protein.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Protein.TargetGrams.ToString("0.#") grams">
+                                <span style="width: @macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                            </div>
+                        </div>
+                    }
                 </div>
 
             </div>
@@ -178,14 +202,36 @@
                     C
                 </div>
 
-                <div>
+                <div class="dashboard-macro-content">
                     <span class="dashboard-macro-label">
                         Carbohydrates
                     </span>
 
-                    <strong class="dashboard-macro-value">
+                    <strong class="dashboard-macro-value"
+                            data-macro-goals-compact>
                         @Model.CarbohydratesConsumed.ToString("0.0") g
                     </strong>
+
+                    @if (macroGoals != null)
+                    {
+                        <div class="dashboard-macro-goal"
+                             data-macro-goals-content
+                             hidden>
+                            <strong class="dashboard-macro-value">
+                                @macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") /
+                                @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") g
+                            </strong>
+                            <div class="macro-goal-progress macro-goal-item--carbohydrates"
+                                 role="progressbar"
+                                 aria-label="Carbohydrates macro goal progress"
+                                 aria-valuenow="@macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuetext="@macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") grams">
+                                <span style="width: @macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                            </div>
+                        </div>
+                    }
                 </div>
 
             </div>
@@ -197,14 +243,36 @@
                     F
                 </div>
 
-                <div>
+                <div class="dashboard-macro-content">
                     <span class="dashboard-macro-label">
                         Fat
                     </span>
 
-                    <strong class="dashboard-macro-value">
+                    <strong class="dashboard-macro-value"
+                            data-macro-goals-compact>
                         @Model.FatConsumed.ToString("0.0") g
                     </strong>
+
+                    @if (macroGoals != null)
+                    {
+                        <div class="dashboard-macro-goal"
+                             data-macro-goals-content
+                             hidden>
+                            <strong class="dashboard-macro-value">
+                                @macroGoals.Fat.ConsumedGrams.ToString("0.0") /
+                                @macroGoals.Fat.TargetGrams.ToString("0.#") g
+                            </strong>
+                            <div class="macro-goal-progress macro-goal-item--fat"
+                                 role="progressbar"
+                                 aria-label="Fat macro goal progress"
+                                 aria-valuenow="@macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuetext="@macroGoals.Fat.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Fat.TargetGrams.ToString("0.#") grams">
+                                <span style="width: @macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                            </div>
+                        </div>
+                    }
                 </div>
 
             </div>

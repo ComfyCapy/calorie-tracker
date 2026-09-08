@@ -14,11 +14,16 @@ namespace CalorieTracker.Pages.Diary
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly MacroTargetCalculator _macroTargetCalculator;
 
-        public IndexModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public IndexModel(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            MacroTargetCalculator macroTargetCalculator)
         {
             _context = context;
             _userManager = userManager;
+            _macroTargetCalculator = macroTargetCalculator;
         }
 
         public List<DiaryEntry> Entries { get; set; } = [];
@@ -31,6 +36,7 @@ namespace CalorieTracker.Pages.Diary
         public decimal DailyCalorieTarget { get; set; }
         public decimal CaloriesRemaining { get; set; }
         public decimal CalorieProgressPercent { get; set; }
+        public MacroGoalProgress? MacroGoalProgress { get; set; }
 
         public DateTime SelectedDate { get; set; }
 
@@ -89,6 +95,13 @@ namespace CalorieTracker.Pages.Diary
                     CalorieProgressPercent =
                         Math.Min(CalorieProgressPercent, 100);
                 }
+
+                MacroGoalProgress = _macroTargetCalculator
+                    .Calculate(profile)?
+                    .CreateProgress(
+                        TotalProtein,
+                        TotalCarbohydrates,
+                        TotalFat);
             }
 
             return Page();
