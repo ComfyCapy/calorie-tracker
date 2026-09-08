@@ -49,15 +49,52 @@
     </div>
 
     </fieldset>
-    <fieldset class="form-section">
+    <fieldset class="form-section" data-serving-basis-form>
         <legend>Serving basis</legend>
+        <p class="form-text">
+            Choose whether the nutrition above is for a measured amount or a named portion.
+        </p>
+
     <div class="mb-3">
-        <label asp-for="Food.ServingSize" class="form-label"></label>
-        <input asp-for="Food.ServingSize" class="form-control" />
-        <span asp-validation-for="Food.ServingSize" class="text-danger"></span>
+        <div class="form-check form-check-inline">
+            <input asp-for="Food.ServingBasis"
+                   class="form-check-input"
+                   type="radio"
+                   value="Measured"
+                   id="measuredServingBasis"
+                   aria-controls="measuredServingFields portionServingFields" />
+            <label class="form-check-label" for="measuredServingBasis">
+                Weight / volume
+            </label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input asp-for="Food.ServingBasis"
+                   class="form-check-input"
+                   type="radio"
+                   value="Portion"
+                   id="portionServingBasis"
+                   aria-controls="measuredServingFields portionServingFields" />
+            <label class="form-check-label" for="portionServingBasis">
+                Portion
+            </label>
+        </div>
+
+        <span asp-validation-for="Food.ServingBasis" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
+        <label asp-for="Food.ServingSize" class="form-label"></label>
+        <input asp-for="Food.ServingSize"
+               class="form-control"
+               min="0.01"
+               step="0.01" />
+        <span asp-validation-for="Food.ServingSize" class="text-danger"></span>
+    </div>
+
+    <div id="measuredServingFields"
+         class="mb-3"
+         hidden="@(Model.Food.ServingBasis == CalorieTracker.Models.FoodServingBasis.Portion)">
         <label asp-for="Food.ServingUnit" class="form-label"></label>
 
         <select asp-for="Food.ServingUnit" class="form-select">
@@ -71,6 +108,20 @@
         </select>
 
         <span asp-validation-for="Food.ServingUnit" class="text-danger"></span>
+    </div>
+
+    <div id="portionServingFields"
+         class="mb-3"
+         hidden="@(Model.Food.ServingBasis != CalorieTracker.Models.FoodServingBasis.Portion)">
+        <label asp-for="Food.PortionLabel" class="form-label"></label>
+        <input asp-for="Food.PortionLabel"
+               class="form-control"
+               maxlength="@CalorieTracker.Models.Food.MaxPortionLabelLength"
+               placeholder="e.g. sandwich" />
+        <span asp-validation-for="Food.PortionLabel" class="text-danger"></span>
+        <div class="form-text">
+            No weight is required. The nutrition above applies directly to this portion.
+        </div>
     </div>
 
     </fieldset>
@@ -103,6 +154,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/food-serving-basis.js" asp-append-version="true"></script>
 
     <script>
         const favouriteInput =

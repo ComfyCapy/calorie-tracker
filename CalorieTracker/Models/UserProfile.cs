@@ -67,28 +67,7 @@ namespace CalorieTracker.Models
         public decimal? CustomCalorieTarget { get; set; }
 
         [NotMapped]
-        public int Age
-        {
-            get
-            {
-                if (!DateOfBirth.HasValue)
-                {
-                    return 0;
-                }
-
-                var today = DateTime.Today;
-                var dateOfBirth = DateOfBirth.Value;
-
-                var age = today.Year - dateOfBirth.Year;
-
-                if (dateOfBirth.Date > today.AddYears(-age))
-                {
-                    age--;
-                }
-
-                return age;
-            }
-        }
+        public int Age => CalculateAge(DateOnly.FromDateTime(DateTime.Today));
 
         [NotMapped]
         public decimal BMI
@@ -107,42 +86,104 @@ namespace CalorieTracker.Models
         }
 
         [NotMapped]
-        public decimal BMR
-        {
-            get
-            {
-                var baseBmr =
-                    (10 * WeightKg) +
-                    (6.25m * HeightCm) -
-                    (5 * Age);
-
-                return CalculationSex switch
-                {
-                    ProfileOptions.Male => baseBmr + 5,
-                    ProfileOptions.Female => baseBmr - 161,
-                    _ => 0
-                };
-            }
-        }
+        public decimal BMR => CalculateBmr(DateOnly.FromDateTime(DateTime.Today));
 
         [NotMapped]
-        public decimal TDEE
-        {
-            get
-            {
-                var activityMultiplier = ActivityLevel switch
-                {
-                    ProfileOptions.Sedentary => 1.2m,
-                    ProfileOptions.LightlyActive => 1.375m,
-                    ProfileOptions.ModeratelyActive => 1.55m,
-                    ProfileOptions.VeryActive => 1.725m,
-                    ProfileOptions.ExtraActive => 1.9m,
-                    _ => 0
-                };
+        public decimal TDEE => CalculateTdee(DateOnly.FromDateTime(DateTime.Today));
 
-                return BMR * activityMultiplier;
+        /// <summary>
+        /// Calculates completed years of age on a specific calendar date.
+        /// </summary>
+        public int CalculateAge(DateOnly date)
+        {
+            if (!DateOfBirth.HasValue)
+            {
+                return 0;
             }
+
+            var dateOfBirth = DateOfBirth.Value;
+            var age = date.Year - dateOfBirth.Year;
+            // DateTime.AddYears (used by the original current-day calculation) advances
+            // a Feb 29 birthday on Mar 1 in non-leap years; retain that behavior here.
+            var birthdayThisYear = dateOfBirth.Month == 2 &&
+                                   dateOfBirth.Day == 29 &&
+                                   !DateTime.IsLeapYear(date.Year)
+                ? new DateOnly(date.Year, 3, 1)
+                : new DateOnly(date.Year, dateOfBirth.Month, dateOfBirth.Day);
+
+            if (date < birthdayThisYear)
+            {
+                age--;
+            }
+
+            return age;
         }
+
+        /// <summary>
+        /// Calculates BMR using this profile's inputs as they apply on a specific date.
+        /// </summary>
+        public decimal CalculateBmr(DateOnly date)
+        {
+            var baseBmr =
+                (10 * WeightKg) +
+                (6.25m * HeightCm) -
+                (5 * CalculateAge(date));
+
+            return CalculationSex switch
+            {
+                ProfileOptions.Male => baseBmr + 5,
+                ProfileOptions.Female => baseBmr - 161,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Calculates maintenance calories (TDEE) using this profile's inputs as they apply on a specific date.
+        /// </summary>
+        public decimal CalculateTdee(DateOnly date)
+        {
+            return CalculateBmr(date) * GetActivityMultiplier();
+        }
+
+        /// <summary>
+        /// Tries to calculate maintenance calories for a date when the profile has supported maintenance inputs.
+        /// Goal and calorie-target settings are intentionally not considered.
+        /// </summary>
+        public bool TryCalculateMaintenance(DateOnly date, out decimal maintenanceCalories)
+        {
+            maintenanceCalories = 0;
+
+            if (!DateOfBirth.HasValue ||
+                CalculateAge(date) is < 18 or > 120 ||
+                HeightCm is < 50 or > 300 ||
+                WeightKg is < 20 or > 500 ||
+                (CalculationSex != ProfileOptions.Male &&
+                 CalculationSex != ProfileOptions.Female) ||
+                !ProfileOptions.ActivityLevels.Contains(ActivityLevel))
+            {
+                return false;
+            }
+
+            var tdee = CalculateTdee(date);
+
+            if (tdee <= 0)
+            {
+                return false;
+            }
+
+            maintenanceCalories = tdee;
+            return true;
+        }
+
+        private decimal GetActivityMultiplier() => ActivityLevel switch
+        {
+            ProfileOptions.Sedentary => 1.2m,
+            ProfileOptions.LightlyActive => 1.375m,
+            ProfileOptions.ModeratelyActive => 1.55m,
+            ProfileOptions.VeryActive => 1.725m,
+            ProfileOptions.ExtraActive => 1.9m,
+            _ => 0
+        };
         [NotMapped]
         public decimal DailyCalorieTarget
         {

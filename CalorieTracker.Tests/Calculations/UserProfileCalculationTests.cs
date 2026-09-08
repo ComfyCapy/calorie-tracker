@@ -102,6 +102,87 @@ public class UserProfileCalculationTests
         Assert.Equal(30, profile.Age);
     }
 
+    [Fact]
+    public void DateAwareCalculations_ForTodayMatchCurrentProperties()
+    {
+        var profile = CreateProfile();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        Assert.Equal(profile.Age, profile.CalculateAge(today));
+        Assert.Equal(profile.BMR, profile.CalculateBmr(today));
+        Assert.Equal(profile.TDEE, profile.CalculateTdee(today));
+    }
+
+    [Fact]
+    public void CalculateAge_HandlesDatesAroundBirthday()
+    {
+        var profile = CreateProfile();
+        profile.DateOfBirth = new DateTime(1990, 6, 15);
+
+        Assert.Equal(29, profile.CalculateAge(new DateOnly(2020, 6, 14)));
+        Assert.Equal(30, profile.CalculateAge(new DateOnly(2020, 6, 15)));
+        Assert.Equal(30, profile.CalculateAge(new DateOnly(2020, 6, 16)));
+    }
+
+    [Fact]
+    public void CalculateAge_HandlesLeapDayBirthdaysUsingExistingDateSemantics()
+    {
+        var profile = CreateProfile();
+        profile.DateOfBirth = new DateTime(2000, 2, 29);
+
+        Assert.Equal(23, profile.CalculateAge(new DateOnly(2024, 2, 28)));
+        Assert.Equal(24, profile.CalculateAge(new DateOnly(2024, 2, 29)));
+        Assert.Equal(24, profile.CalculateAge(new DateOnly(2024, 3, 1)));
+        Assert.Equal(24, profile.CalculateAge(new DateOnly(2025, 2, 28)));
+        Assert.Equal(25, profile.CalculateAge(new DateOnly(2025, 3, 1)));
+    }
+
+    [Fact]
+    public void TryCalculateMaintenance_UsesHistoricalAgeAndExistingFormula()
+    {
+        var profile = CreateProfile();
+        profile.DateOfBirth = new DateTime(1980, 6, 15);
+        var historicalDate = new DateOnly(2010, 6, 14);
+
+        Assert.True(profile.TryCalculateMaintenance(historicalDate, out var maintenance));
+        Assert.Equal(29, profile.CalculateAge(historicalDate));
+        Assert.Equal(2142m, maintenance);
+        Assert.Equal(profile.CalculateBmr(historicalDate) * 1.2m, maintenance);
+    }
+
+    [Fact]
+    public void TryCalculateMaintenance_RejectsMissingOrUnsupportedProfileInputs()
+    {
+        var profile = CreateProfile();
+        profile.DateOfBirth = null;
+
+        Assert.False(profile.TryCalculateMaintenance(new DateOnly(2026, 1, 1), out var missingDateOfBirth));
+        Assert.Equal(0, missingDateOfBirth);
+
+        profile.DateOfBirth = new DateTime(2010, 1, 1);
+        Assert.False(profile.TryCalculateMaintenance(new DateOnly(2026, 1, 1), out var unsupportedAge));
+        Assert.Equal(0, unsupportedAge);
+
+        profile.DateOfBirth = new DateTime(1990, 1, 1);
+        profile.HeightCm = 0;
+        Assert.False(profile.TryCalculateMaintenance(new DateOnly(2026, 1, 1), out var invalidHeight));
+        Assert.Equal(0, invalidHeight);
+    }
+
+    [Fact]
+    public void TryCalculateMaintenance_DoesNotUseGoalOrCustomTarget()
+    {
+        var profile = CreateProfile();
+        profile.Goal = string.Empty;
+        profile.WeeklyGoalKg = null;
+        profile.CustomCalorieTarget = 100;
+
+        Assert.True(profile.TryCalculateMaintenance(
+            DateOnly.FromDateTime(DateTime.Today),
+            out var maintenance));
+        Assert.Equal(profile.TDEE, maintenance);
+    }
+
     private static UserProfile CreateProfile() => new()
     {
         DateOfBirth = DateTime.Today.AddYears(-30),

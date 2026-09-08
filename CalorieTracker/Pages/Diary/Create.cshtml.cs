@@ -15,13 +15,16 @@ namespace CalorieTracker.Pages.Diary
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly DailyMaintenanceSnapshotService _snapshotService;
 
         public CreateModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            DailyMaintenanceSnapshotService snapshotService)
         {
             _context = context;
             _userManager = userManager;
+            _snapshotService = snapshotService;
         }
 
         [BindProperty]
@@ -249,6 +252,11 @@ namespace CalorieTracker.Pages.Diary
                         "Quantity must be greater than 0.");
                 }
 
+                else if (selectedFood?.ServingBasis == FoodServingBasis.Portion)
+                {
+                    // Direct portion foods use unitless portion counts; no gram/ml conversion exists.
+                    canonicalQuantity = DiaryEntry.Quantity;
+                }
                 else if (selectedFood != null &&
                     !MeasurementUnits.TryToCanonical(
                         DiaryEntry.Quantity,
@@ -280,7 +288,10 @@ namespace CalorieTracker.Pages.Diary
 
             _context.DiaryEntries.Add(DiaryEntry);
 
-            await _context.SaveChangesAsync();
+            await _snapshotService.EnsureSnapshotAsync(
+                userId,
+                DateOnly.FromDateTime(DiaryEntry.Date));
+            await _snapshotService.SaveChangesAsync();
             TempData["UiStatusMessage"] = "Diary entry added.";
 
             return RedirectToPage("./Index", new

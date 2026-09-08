@@ -4,8 +4,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CalorieTracker.Models
 {
+    public enum FoodServingBasis
+    {
+        Measured = 0,
+        Portion = 1
+    }
+
     public class Food
     {
+        public const int MaxPortionLabelLength = 40;
+
         [BindNever]
         public int Id { get; set; }
 
@@ -41,8 +49,16 @@ namespace CalorieTracker.Models
         [Display(Name = "Amount")]
         public decimal ServingSize { get; set; } = 100;
 
-        // Nutrition calculations use canonical grams or millilitres;
-        // ServingSize/ServingUnit retain the user's preferred display basis.
+        [Display(Name = "Serving basis")]
+        public FoodServingBasis ServingBasis { get; set; } =
+            FoodServingBasis.Measured;
+
+        [Display(Name = "Portion name")]
+        public string? PortionLabel { get; set; }
+
+        // Measured foods store canonical grams or millilitres. Direct-portion
+        // foods store the portion amount itself because no measured equivalent
+        // is required or inferred.
         [BindNever]
         public decimal CanonicalServingSize { get; set; } = 100;
 
@@ -51,5 +67,10 @@ namespace CalorieTracker.Models
 
         [BindNever]
         public List<FoodPortion> Portions { get; set; } = [];
+
+        public string DisplayServingUnit =>
+            ServingBasis == FoodServingBasis.Portion
+                ? PortionLabel ?? "portion"
+                : ServingUnit;
     }
 }

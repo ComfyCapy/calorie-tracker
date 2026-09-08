@@ -28,7 +28,7 @@ public class ProductionReadinessTests
             .ToListAsync();
 
         Assert.Equal(availableMigrations, appliedMigrations);
-        Assert.Equal(28, appliedMigrations.Count);
+        Assert.Equal(30, appliedMigrations.Count);
         Assert.Equal(14, items.Count);
 
         var defaultExpression = Assert.Single(items, item =>
@@ -174,6 +174,24 @@ public class ProductionReadinessTests
         duplicate.ExternalId = "123";
 
         database.Context.Foods.AddRange(first, duplicate);
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => database.Context.SaveChangesAsync());
+    }
+
+    [Fact]
+    public async Task FreshMigratedDatabase_RejectsDuplicateMaintenanceSnapshotsPerUserDate()
+    {
+        await using var database = await TestDatabase.CreateMigratedAsync();
+        await database.AddUserAsync("user-1");
+        var date = new DateOnly(2026, 9, 5);
+
+        database.Context.DailyMaintenanceSnapshots.Add(
+            new DailyMaintenanceSnapshot("user-1", date, 2000));
+        await database.Context.SaveChangesAsync();
+        database.Context.ChangeTracker.Clear();
+        database.Context.DailyMaintenanceSnapshots.Add(
+            new DailyMaintenanceSnapshot("user-1", date, 2100));
 
         await Assert.ThrowsAsync<DbUpdateException>(
             () => database.Context.SaveChangesAsync());

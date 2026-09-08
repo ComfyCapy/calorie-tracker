@@ -1,4 +1,5 @@
 using CalorieTracker.Models;
+using CalorieTracker.Services;
 using CalorieTracker.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -59,7 +60,8 @@ public class OwnershipTests
         await database.Context.SaveChangesAsync();
         var model = new DiaryEditModel(
             database.Context,
-            PageModelTestContext.CreateUserManager())
+            PageModelTestContext.CreateUserManager(),
+            new DailyMaintenanceSnapshotService(database.Context))
         {
             DiaryEntry = new DiaryEntry
             {

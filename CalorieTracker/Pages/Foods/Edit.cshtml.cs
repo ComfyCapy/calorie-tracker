@@ -89,15 +89,36 @@ namespace CalorieTracker.Pages.Foods
                 nameof(Food),
                 out var newDimension);
 
-            if (MeasurementUnits.TryNormalize(
-                    Food.ServingUnit,
-                    out _,
-                    out newDimension) &&
-                MeasurementUnits.TryNormalize(
-                    existingFood.ServingUnit,
-                    out _,
-                out var existingDimension) &&
-                existingDimension != newDimension)
+            var servingBasisChanged =
+                Food.ServingBasis != existingFood.ServingBasis;
+
+            if (servingBasisChanged)
+            {
+                var hasPortions = await _context.FoodPortions
+                    .AnyAsync(portion =>
+                        portion.FoodId == existingFood.Id);
+
+                var hasDiaryHistory = await _context.DiaryEntries
+                    .AnyAsync(entry =>
+                        entry.FoodId == existingFood.Id);
+
+                if (hasPortions || hasDiaryHistory)
+                {
+                    ModelState.AddModelError(
+                        "Food.ServingBasis",
+                        "A food with measured portions or diary history cannot change serving basis.");
+                }
+            }
+            else if (Food.ServingBasis == FoodServingBasis.Measured &&
+                     MeasurementUnits.TryNormalize(
+                         Food.ServingUnit,
+                         out _,
+                         out newDimension) &&
+                     MeasurementUnits.TryNormalize(
+                         existingFood.ServingUnit,
+                         out _,
+                         out var existingDimension) &&
+                     existingDimension != newDimension)
             {
                 // A dimension change would reinterpret stored portions and diary quantities.
                 var hasPortions = await _context.FoodPortions
@@ -128,6 +149,8 @@ namespace CalorieTracker.Pages.Foods
             existingFood.Carbohydrates = Food.Carbohydrates;
             existingFood.Fat = Food.Fat;
             existingFood.ServingSize = Food.ServingSize;
+            existingFood.ServingBasis = Food.ServingBasis;
+            existingFood.PortionLabel = Food.PortionLabel;
             existingFood.ServingUnit = Food.ServingUnit;
             existingFood.CanonicalServingSize =
                 Food.CanonicalServingSize;

@@ -13,8 +13,19 @@ namespace CalorieTracker.Pages
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly GoalTimelineCalculator _goalTimelineCalculator;
+        private readonly CalorieBalanceYearService _calorieBalanceYearService;
         public UserProfile? UserProfile { get; set; }
         public UserCapyAppearance? CapyAppearance { get; set; }
+        public CalorieBalanceYear? CalorieBalanceYear { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public int? Year { get; set; }
+        public int SelectedYear { get; private set; }
+        public int MinimumSupportedYear =>
+            ValidationRules.MinimumDiaryDate.Year;
+        public bool CanNavigatePrevious =>
+            SelectedYear > MinimumSupportedYear;
+        public bool CanNavigateNext =>
+            SelectedYear < DateTime.Today.Year;
         public GoalTimelineResult GoalTimeline { get; set; } =
             new(GoalTimelineStatus.IncompleteProfile, ProfileOptions.Metric);
         public decimal CaloriesConsumed { get; set; }
@@ -36,25 +47,44 @@ namespace CalorieTracker.Pages
         public IndexModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            GoalTimelineCalculator goalTimelineCalculator)
+            GoalTimelineCalculator goalTimelineCalculator,
+            CalorieBalanceYearService calorieBalanceYearService)
         {
             _context = context;
             _userManager = userManager;
             _goalTimelineCalculator = goalTimelineCalculator;
+            _calorieBalanceYearService = calorieBalanceYearService;
         }
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
             if (!User.Identity?.IsAuthenticated ?? true)
             {
-                return;
+                return Page();
             }
 
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
             {
-                return;
+                return Page();
             }
+
+            if (ValidationRules.HasBindingError(ModelState, nameof(Year)))
+            {
+                return BadRequest();
+            }
+
+            var currentYear = DateTime.Today.Year;
+            SelectedYear = Year ?? currentYear;
+
+            if (SelectedYear < MinimumSupportedYear ||
+                SelectedYear > currentYear)
+            {
+                return BadRequest();
+            }
+
+            CalorieBalanceYear = await _calorieBalanceYearService
+                .GetYearAsync(userId, SelectedYear);
 
             UserProfile = await _context.UserProfiles
                 .FirstOrDefaultAsync(profile =>
@@ -85,7 +115,7 @@ namespace CalorieTracker.Pages
                 FatConsumed += entry.FatConsumed;
             }
 
-
+            return Page();
         }
     }
 }

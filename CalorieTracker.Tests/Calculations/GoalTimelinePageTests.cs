@@ -25,14 +25,16 @@ public class GoalTimelinePageTests
         var dashboard = new DashboardModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            calculator);
+            calculator,
+            new CalorieBalanceYearService(database.Context));
         PageModelTestContext.Attach(dashboard, "user-1");
         await dashboard.OnGetAsync();
 
         var profilePage = new ProfileModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            calculator);
+            calculator,
+            new DailyMaintenanceSnapshotService(database.Context));
         PageModelTestContext.Attach(profilePage, "user-1");
         await profilePage.OnGetAsync();
 
@@ -101,11 +103,15 @@ public class GoalTimelinePageTests
         var estimatesIndex = dashboard.IndexOf(
             "dashboard-estimates-card",
             StringComparison.Ordinal);
+        var yearMapIndex = dashboard.IndexOf(
+            "dashboard-year-card",
+            StringComparison.Ordinal);
         var actionsIndex = dashboard.IndexOf(
             "dashboard-actions",
             StringComparison.Ordinal);
 
-        Assert.True(macrosIndex >= 0 && macrosIndex < estimatesIndex);
+        Assert.True(macrosIndex >= 0 && macrosIndex < yearMapIndex);
+        Assert.True(yearMapIndex < estimatesIndex);
         Assert.True(estimatesIndex < actionsIndex);
     }
 

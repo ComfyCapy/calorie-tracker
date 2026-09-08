@@ -56,6 +56,7 @@ namespace CalorieTracker.Pages.Foods
                 .FirstOrDefaultAsync(food =>
                     food.Id == id &&
                     food.UserId == userId &&
+                    food.ServingBasis == FoodServingBasis.Measured &&
                     !food.IsDeleted);
 
             if (food == null)
@@ -92,6 +93,7 @@ namespace CalorieTracker.Pages.Foods
                 .FirstOrDefaultAsync(food =>
                     food.Id == id &&
                     food.UserId == userId &&
+                    food.ServingBasis == FoodServingBasis.Measured &&
                     !food.IsDeleted);
 
             if (food == null)
@@ -181,6 +183,7 @@ namespace CalorieTracker.Pages.Foods
                     portion.FoodId == id &&
                     portion.Food != null &&
                     portion.Food.UserId == userId &&
+                    portion.Food.ServingBasis == FoodServingBasis.Measured &&
                     !portion.IsDeleted &&
                     !portion.Food.IsDeleted);
 
@@ -228,6 +231,7 @@ namespace CalorieTracker.Pages.Foods
                     portion.FoodId == id &&
                     portion.Food != null &&
                     portion.Food.UserId == userId &&
+                    portion.Food.ServingBasis == FoodServingBasis.Measured &&
                     !portion.IsDeleted &&
                     !portion.Food.IsDeleted);
 
