@@ -189,6 +189,8 @@ ProductionConfiguration.ConfigureIdentityCookie(
 builder.Services.AddHttpClient<IFoodSearchService, UsdaFoodService>();
 builder.Services.AddScoped<ExternalFoodResolver>();
 builder.Services.AddScoped<CapyProvisioningService>();
+builder.Services.AddScoped<DailyMaintenanceSnapshotService>();
+builder.Services.AddScoped<CalorieBalanceYearService>();
 builder.Services.AddSingleton<GoalTimelineCalculator>();
 
 // Resend email service.

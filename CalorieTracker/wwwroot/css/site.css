@@ -4,10 +4,26 @@ html {
 
 :root {
   --ct-empty-favourite-color: #8a6500;
+  --ct-balance-heavy-cut: #696fb5;
+  --ct-balance-light-cut: #a5a9d7;
+  --ct-balance-maintenance: #70ae8a;
+  --ct-balance-light-gain: #e2b565;
+  --ct-balance-heavy-gain: #d27870;
+  --ct-balance-no-data: #e4e7ea;
+  --ct-balance-unclassified: #d7d0c2;
+  --ct-balance-cell-border: rgba(33, 37, 41, 0.18);
 }
 
 [data-bs-theme="dark"] {
   --ct-empty-favourite-color: #ffc107;
+  --ct-balance-heavy-cut: #7d83cd;
+  --ct-balance-light-cut: #5f658f;
+  --ct-balance-maintenance: #579671;
+  --ct-balance-light-gain: #aa7f3f;
+  --ct-balance-heavy-gain: #ae5e59;
+  --ct-balance-no-data: #343a40;
+  --ct-balance-unclassified: #625b50;
+  --ct-balance-cell-border: rgba(255, 255, 255, 0.2);
 }
 
 @media (min-width: 768px) {
@@ -755,6 +771,244 @@ body {
     font-size: 1.35rem;
 }
 
+.dashboard-year-card {
+    min-width: 0;
+    margin-top: 1rem;
+    padding: 1.35rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 20px;
+    background: var(--bs-body-bg);
+}
+
+.dashboard-year-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dashboard-year-heading h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.calorie-year-navigation {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calorie-year-navigation strong {
+    min-width: 3rem;
+    text-align: center;
+}
+
+.dashboard-year-heading p {
+    margin: 0.3rem 0 0;
+    color: var(--bs-secondary-color);
+    font-size: 0.9rem;
+}
+
+.calorie-year-scroll {
+    max-width: 100%;
+    margin-top: 0.65rem;
+    overflow: auto;
+    overscroll-behavior-inline: contain;
+}
+
+.calorie-year-scroll:focus-visible {
+    border-radius: var(--bs-border-radius-sm);
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+.calorie-year-grid {
+    display: grid;
+    grid-template-columns: var(--calorie-year-grid-columns);
+    grid-template-rows: 1.25rem repeat(7, 0.78rem);
+    column-gap: 0.2rem;
+    row-gap: 0.2rem;
+    width: max-content;
+    min-width: 0;
+    padding: 0.5rem 0;
+}
+
+@media (min-width: 60rem) {
+    .calorie-year-grid {
+        column-gap: 0.1rem;
+    }
+}
+
+.calorie-year-month {
+    grid-column: var(--calorie-year-month-column);
+    grid-row: 1;
+    align-self: end;
+    color: var(--bs-secondary-color);
+    font-size: 0.72rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.calorie-year-weekday {
+    grid-column: 1;
+    grid-row: var(--calorie-year-weekday);
+    align-self: center;
+    color: var(--bs-secondary-color);
+    font-size: 0.62rem;
+    line-height: 1;
+}
+
+.calorie-year-day {
+    position: relative;
+    grid-column: var(--calorie-year-column);
+    grid-row: var(--calorie-year-weekday);
+    display: block;
+    width: 0.78rem;
+    height: 0.78rem;
+    border: 1px solid var(--ct-balance-cell-border);
+    border-radius: 3px;
+    text-decoration: none;
+}
+
+a.calorie-year-day {
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+a.calorie-year-day:hover {
+    z-index: 4;
+    transform: scale(1.25);
+}
+
+a.calorie-year-day:focus-visible {
+    z-index: 5;
+    outline: 2px solid var(--bs-emphasis-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.35);
+}
+
+.calorie-year-day.is-heavy-cut,
+.calorie-year-legend-swatch.is-heavy-cut {
+    background: var(--ct-balance-heavy-cut);
+}
+
+.calorie-year-day.is-light-cut,
+.calorie-year-legend-swatch.is-light-cut {
+    background: var(--ct-balance-light-cut);
+}
+
+.calorie-year-day.is-maintenance,
+.calorie-year-legend-swatch.is-maintenance {
+    background: var(--ct-balance-maintenance);
+}
+
+.calorie-year-day.is-light-gain,
+.calorie-year-legend-swatch.is-light-gain {
+    background: var(--ct-balance-light-gain);
+}
+
+.calorie-year-day.is-heavy-gain,
+.calorie-year-legend-swatch.is-heavy-gain {
+    background: var(--ct-balance-heavy-gain);
+}
+
+.calorie-year-day.is-no-data,
+.calorie-year-legend-swatch.is-no-data {
+    background: var(--ct-balance-no-data);
+}
+
+.calorie-year-day.is-unclassified,
+.calorie-year-legend-swatch.is-unclassified {
+    background-color: var(--ct-balance-unclassified);
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent,
+        transparent 3px,
+        var(--ct-balance-cell-border) 3px,
+        var(--ct-balance-cell-border) 5px);
+}
+
+.calorie-year-tooltip {
+    display: block;
+    width: 14rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 10px;
+    background: var(--bs-emphasis-color);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+    color: var(--bs-body-bg);
+    font-size: 0.75rem;
+    line-height: 1.35;
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.calorie-year-day > .calorie-year-tooltip {
+    display: none;
+}
+
+.calorie-year-tooltip-layer {
+    position: fixed;
+    z-index: 20;
+    inset: 0;
+    pointer-events: none;
+}
+
+.calorie-year-tooltip-layer .calorie-year-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+}
+
+.calorie-year-tooltip strong,
+.calorie-year-tooltip span {
+    display: block;
+}
+
+.calorie-year-tooltip strong {
+    margin-bottom: 0.2rem;
+}
+
+.calorie-year-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1rem;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.calorie-year-legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.72rem;
+}
+
+.calorie-year-legend strong,
+.calorie-year-legend small {
+    display: block;
+}
+
+.calorie-year-legend strong {
+    color: var(--bs-body-color);
+    font-size: 0.75rem;
+}
+
+.calorie-year-legend-swatch {
+    width: 0.85rem;
+    height: 0.85rem;
+    flex: 0 0 0.85rem;
+    border: 1px solid var(--ct-balance-cell-border);
+    border-radius: 3px;
+}
+
 .dashboard-estimates-summary {
     padding: 0.9rem 1.25rem;
     color: var(--bs-body-color);
@@ -793,6 +1047,10 @@ body {
 
     .dashboard-macro-grid {
         grid-template-columns: 1fr;
+    }
+
+    .dashboard-year-card {
+        padding: 1rem;
     }
 
     .dashboard-progress-details {

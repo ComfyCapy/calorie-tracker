@@ -1,11 +1,16 @@
 ﻿@page
 @model IndexModel
+@using CalorieTracker.Services
 @{
     ViewData["Title"] = "Calorie & Macro Tracker";
     ViewData["MetaDescription"] =
         "Track calories, macros and daily food with a customisable Comfy Capy.";
     ViewData["CanonicalUrl"] = "https://calories.comfycapy.com/";
     ViewData["Robots"] = "index,follow";
+}
+
+@section Scripts {
+    <script src="~/js/calorie-year-map.js" asp-append-version="true"></script>
 }
 
 @if (User.Identity?.IsAuthenticated == true)
@@ -205,6 +210,259 @@
             </div>
 
         </div>
+
+        @if (Model.CalorieBalanceYear is { } balanceYear)
+        {
+            var firstDayOffset = ((int)balanceYear.Days[0].Date.DayOfWeek + 6) % 7;
+            var weekCount =
+                (firstDayOffset + balanceYear.Days.Count + 6) / 7;
+            var monthBoundaryWeeks = Enumerable.Range(2, 11)
+                .Select(month =>
+                {
+                    var monthDate = new DateOnly(balanceYear.Year, month, 1);
+                    return (firstDayOffset + monthDate.DayOfYear - 1) / 7 + 1;
+                })
+                .Where(week => week > 1)
+                .Distinct()
+                .ToHashSet();
+            var gridColumns = "2rem";
+
+            for (var week = 1; week <= weekCount; week++)
+            {
+                if (monthBoundaryWeeks.Contains(week))
+                {
+                    gridColumns += " 0.3rem";
+                }
+
+                gridColumns += " 0.78rem";
+            }
+
+            int VisualWeekColumn(int week) =>
+                week + 1 + monthBoundaryWeeks.Count(boundaryWeek => boundaryWeek <= week);
+
+            var weekdayNames = new[]
+            {
+                "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+            };
+
+            string StateClass(CalorieBalanceClassification classification) =>
+                classification switch
+                {
+                    CalorieBalanceClassification.HeavyCut => "is-heavy-cut",
+                    CalorieBalanceClassification.LightCut => "is-light-cut",
+                    CalorieBalanceClassification.Maintenance => "is-maintenance",
+                    CalorieBalanceClassification.LightGain => "is-light-gain",
+                    CalorieBalanceClassification.HeavyGain => "is-heavy-gain",
+                    _ => "is-unclassified"
+                };
+
+            <section class="dashboard-year-card calorie-year-map"
+                     aria-labelledby="calorie-year-heading"
+                     data-calorie-balance-year="@balanceYear.Year">
+
+                <div class="dashboard-year-heading">
+                    <div>
+                        <h2 id="calorie-year-heading">Your year</h2>
+                        <p>
+                            See how your logged calorie intake has compared with
+                            your maintenance throughout @balanceYear.Year.
+                        </p>
+                    </div>
+
+                    <nav class="calorie-year-navigation"
+                         aria-label="Calorie balance year">
+                        @if (Model.CanNavigatePrevious)
+                        {
+                            <a asp-page="/Index"
+                               asp-route-year="@(balanceYear.Year - 1)"
+                               class="btn btn-sm btn-outline-secondary"
+                               aria-label="View @(balanceYear.Year - 1)">
+                                &lsaquo;
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="btn btn-sm btn-outline-secondary disabled"
+                                  aria-hidden="true">
+                                &lsaquo;
+                            </span>
+                        }
+
+                        <strong aria-current="page">@Model.SelectedYear</strong>
+
+                        @if (Model.CanNavigateNext)
+                        {
+                            <a asp-page="/Index"
+                               asp-route-year="@(balanceYear.Year + 1)"
+                               class="btn btn-sm btn-outline-secondary"
+                               aria-label="View @(balanceYear.Year + 1)">
+                                &rsaquo;
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="btn btn-sm btn-outline-secondary disabled"
+                                  aria-hidden="true">
+                                &rsaquo;
+                            </span>
+                        }
+                    </nav>
+                </div>
+
+                <div class="calorie-year-scroll"
+                     role="region"
+                     aria-label="Calorie balance calendar for @balanceYear.Year"
+                     tabindex="0">
+                    <div class="calorie-year-grid"
+                         style="--calorie-year-weeks: @weekCount; --calorie-year-grid-columns: @gridColumns;">
+
+                        @for (var month = 1; month <= 12; month++)
+                        {
+                            var monthDate = new DateOnly(
+                                balanceYear.Year,
+                                month,
+                                1);
+                            var monthWeek =
+                                (firstDayOffset + monthDate.DayOfYear - 1) / 7 + 2;
+                            var monthColumn = VisualWeekColumn(monthWeek - 1);
+
+                            <span class="calorie-year-month"
+                                  data-month="@month"
+                                  style="--calorie-year-month-week: @monthWeek; --calorie-year-month-column: @monthColumn;"
+                                  aria-hidden="true">
+                                @monthDate.ToString(
+                                    "MMM",
+                                    System.Globalization.CultureInfo.InvariantCulture)
+                            </span>
+                        }
+
+                        @for (var weekday = 0;
+                              weekday < weekdayNames.Length;
+                              weekday++)
+                        {
+                            <span class="calorie-year-weekday"
+                                  style="--calorie-year-weekday: @(weekday + 2);"
+                                  aria-hidden="true">
+                                @weekdayNames[weekday]
+                            </span>
+                        }
+
+                        @foreach (var day in balanceYear.Days)
+                        {
+                            var week =
+                                (firstDayOffset + day.Date.DayOfYear - 1) / 7 + 2;
+                            var calendarColumn = VisualWeekColumn(week - 1);
+                            var weekday = ((int)day.Date.DayOfWeek + 6) % 7 + 2;
+                            var geometryStyle =
+                                $"--calorie-year-week: {week}; --calorie-year-weekday: {weekday}; --calorie-year-column: {calendarColumn};";
+
+                            if (!day.HasDiaryData)
+                            {
+                                <span class="calorie-year-day is-no-data"
+                                      style="@geometryStyle"
+                                      data-date="@day.Date.ToString("yyyy-MM-dd")"
+                                      data-state="no-data"
+                                      aria-hidden="true">
+                                </span>
+                                continue;
+                            }
+
+                            var dateText = day.Date.ToString("d MMMM yyyy");
+                            var loggedText = day.CaloriesConsumed!.Value
+                                .ToString("0");
+
+                            if (!day.Classification.HasValue)
+                            {
+                                var unavailableDescription =
+                                    $"{dateText}. Logged: {loggedText} kcal. " +
+                                    "No maintenance data is available.";
+
+                                <a asp-page="/Diary/Index"
+                                   asp-route-date="@day.Date.ToString("yyyy-MM-dd")"
+                                   class="calorie-year-day is-unclassified"
+                                   style="@geometryStyle"
+                                   data-date="@day.Date.ToString("yyyy-MM-dd")"
+                                   data-state="unclassified"
+                                   aria-label="@unavailableDescription">
+                                    <span class="calorie-year-tooltip"
+                                          aria-hidden="true">
+                                        <strong>@dateText</strong>
+                                        <span>Logged: @loggedText kcal</span>
+                                        <span>No maintenance data</span>
+                                    </span>
+                                </a>
+                                continue;
+                            }
+
+                            var definition = CalorieBalanceClassifier
+                                .GetDefinition(day.Classification.Value);
+                            var maintenanceText = day.MaintenanceCalories!.Value
+                                .ToString("0");
+                            var differenceText = day.Difference!.Value >= 0
+                                ? $"+{day.Difference.Value:0}"
+                                : day.Difference.Value.ToString("0");
+                            var percentageText = day.BalancePercentage!.Value >= 0
+                                ? $"+{day.BalancePercentage.Value:0.#}"
+                                : day.BalancePercentage.Value.ToString("0.#");
+                            var description =
+                                $"{dateText}. Logged: {loggedText} kcal. " +
+                                $"Maintenance: {maintenanceText} kcal. " +
+                                $"Balance: {differenceText} kcal ({percentageText}%). " +
+                                $"{definition.DisplayName}.";
+
+                            <a asp-page="/Diary/Index"
+                               asp-route-date="@day.Date.ToString("yyyy-MM-dd")"
+                               class="calorie-year-day @StateClass(day.Classification.Value)"
+                               style="@geometryStyle"
+                               data-date="@day.Date.ToString("yyyy-MM-dd")"
+                               data-state="@day.Classification.Value.ToString().ToLowerInvariant()"
+                               aria-label="@description">
+                                <span class="calorie-year-tooltip"
+                                      aria-hidden="true">
+                                    <strong>@dateText</strong>
+                                    <span>Logged: @loggedText kcal</span>
+                                    <span>Maintenance: @maintenanceText kcal</span>
+                                    <span>
+                                        Balance: @differenceText kcal (@percentageText%)
+                                    </span>
+                                    <span>@definition.DisplayName</span>
+                                </span>
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <div class="calorie-year-tooltip-layer"
+                     aria-hidden="true"></div>
+
+                <ul class="calorie-year-legend"
+                    aria-label="Calorie balance legend">
+                    @foreach (var definition in
+                              CalorieBalanceClassifier.LegendDefinitions)
+                    {
+                        <li>
+                            <span class="calorie-year-legend-swatch @StateClass(definition.Classification)"
+                                  aria-hidden="true"></span>
+                            <span>
+                                <strong>@definition.DisplayName</strong>
+                                <small>@definition.PercentageRange</small>
+                            </span>
+                        </li>
+                    }
+                    <li>
+                        <span class="calorie-year-legend-swatch is-no-data"
+                              aria-hidden="true"></span>
+                        <span><strong>No Data</strong></span>
+                    </li>
+                    <li>
+                        <span class="calorie-year-legend-swatch is-unclassified"
+                              aria-hidden="true"></span>
+                        <span><strong>No maintenance data</strong></span>
+                    </li>
+                </ul>
+
+            </section>
+        }
 
         @if (Model.HasProfileEstimates && Model.UserProfile != null)
         {

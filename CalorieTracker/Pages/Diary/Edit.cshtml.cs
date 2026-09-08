@@ -15,13 +15,16 @@ namespace CalorieTracker.Pages.Diary
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly DailyMaintenanceSnapshotService _snapshotService;
 
         public EditModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            DailyMaintenanceSnapshotService snapshotService)
         {
             _context = context;
             _userManager = userManager;
+            _snapshotService = snapshotService;
         }
 
         [BindProperty]
@@ -69,7 +72,7 @@ namespace CalorieTracker.Pages.Diary
             DiaryEntry = diaryEntry;
             OriginalPortionId = diaryEntry.FoodPortionId;
 
-            if (diaryEntry.Food != null &&
+            if (diaryEntry.Food?.ServingBasis == FoodServingBasis.Measured &&
                 MeasurementUnits.TryToCanonical(
                     1,
                     diaryEntry.Food.ServingUnit,
@@ -251,6 +254,11 @@ namespace CalorieTracker.Pages.Diary
                         "DiaryEntry.Quantity",
                         "Quantity must be greater than 0.");
                 }
+                else if (selectedFood?.ServingBasis == FoodServingBasis.Portion)
+                {
+                    // Direct portion foods use unitless portion counts; no gram/ml conversion exists.
+                    canonicalQuantity = DiaryEntry.Quantity;
+                }
                 else if (selectedFood != null &&
                     !MeasurementUnits.TryToCanonical(
                         DiaryEntry.Quantity,
@@ -328,7 +336,10 @@ namespace CalorieTracker.Pages.Diary
                 existingEntry.PortionNameSnapshot = null;
             }
 
-            await _context.SaveChangesAsync();
+            await _snapshotService.EnsureSnapshotAsync(
+                userId,
+                DateOnly.FromDateTime(existingEntry.Date));
+            await _snapshotService.SaveChangesAsync();
             TempData["UiStatusMessage"] = "Diary entry updated.";
 
             return RedirectToPage("./Index", new

@@ -2,6 +2,7 @@
 using CalorieTracker.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using CalorieTracker.Services;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace CalorieTracker.Data
 {
@@ -16,6 +17,7 @@ namespace CalorieTracker.Data
         public DbSet<Food> Foods { get; set; }
         public DbSet<DiaryEntry> DiaryEntries { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<DailyMaintenanceSnapshot> DailyMaintenanceSnapshots { get; set; }
         public DbSet<FoodPortion> FoodPortions { get; set; }
 
         public DbSet<CapyItem> CapyItems { get; set; }
@@ -31,6 +33,23 @@ namespace CalorieTracker.Data
                 .WithOne(user => user.UserProfile)
                 .HasForeignKey<UserProfile>(
                     profile => profile.UserId);
+
+            builder.Entity<DailyMaintenanceSnapshot>()
+                .HasKey(snapshot => new
+                {
+                    snapshot.UserId,
+                    snapshot.Date
+                });
+
+            builder.Entity<DailyMaintenanceSnapshot>()
+                .HasOne(snapshot => snapshot.User)
+                .WithMany()
+                .HasForeignKey(snapshot => snapshot.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<DailyMaintenanceSnapshot>()
+                .Property(snapshot => snapshot.MaintenanceCalories)
+                .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
 
             // Restrict physical deletes for food/portion references so historical diary
             // foreign keys remain resolvable; the UI soft-deletes instead.
@@ -64,6 +83,10 @@ namespace CalorieTracker.Data
                     "\"UserId\" IS NOT NULL AND " +
                     "\"Source\" IS NOT NULL AND " +
                     "\"ExternalId\" IS NOT NULL");
+
+            builder.Entity<Food>()
+                .Property(food => food.PortionLabel)
+                .HasMaxLength(Food.MaxPortionLabelLength);
 
             // A user should only own each Capy item once.
             builder.Entity<UserCapyItem>()

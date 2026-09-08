@@ -19,15 +19,18 @@ namespace CalorieTracker.Pages.Profile
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly GoalTimelineCalculator _goalTimelineCalculator;
+        private readonly DailyMaintenanceSnapshotService _snapshotService;
 
         public IndexModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            GoalTimelineCalculator goalTimelineCalculator)
+            GoalTimelineCalculator goalTimelineCalculator,
+            DailyMaintenanceSnapshotService snapshotService)
         {
             _context = context;
             _userManager = userManager;
             _goalTimelineCalculator = goalTimelineCalculator;
+            _snapshotService = snapshotService;
         }
 
         [BindProperty]
@@ -139,10 +142,13 @@ namespace CalorieTracker.Pages.Profile
                 return Page();
             }
 
+            UserProfile profileToSave;
+
             if (existingProfile == null)
             {
                 UserProfile.UserId = userId;
                 _context.UserProfiles.Add(UserProfile);
+                profileToSave = UserProfile;
             }
             else
             {
@@ -156,9 +162,13 @@ namespace CalorieTracker.Pages.Profile
                 existingProfile.GoalWeightKg = UserProfile.GoalWeightKg;
                 existingProfile.WeeklyGoalKg = UserProfile.WeeklyGoalKg;
                 existingProfile.CustomCalorieTarget = UserProfile.CustomCalorieTarget;
+                profileToSave = existingProfile;
             }
 
-            await _context.SaveChangesAsync();
+            await _snapshotService.FillMissingSnapshotsAsync(
+                userId,
+                profileToSave);
+            await _snapshotService.SaveChangesAsync();
 
             ProfileStatusMessage = "Profile saved successfully.";
 

@@ -22,7 +22,16 @@
 
 <div class="mb-3">
     <strong>Quantity:</strong>
-    @CalorieTracker.Services.MeasurementUnits.FromCanonical(Model.DiaryEntry.Quantity, Model.DiaryEntry.ServingUnitSnapshot).ToString("0.##") @Model.DiaryEntry.ServingUnitSnapshot
+    @if (Model.DiaryEntry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion)
+    {
+        @Model.DiaryEntry.Quantity.ToString("0.##")
+        @Model.DiaryEntry.PortionLabelSnapshot
+    }
+    else
+    {
+        @CalorieTracker.Services.MeasurementUnits.FromCanonical(Model.DiaryEntry.Quantity, Model.DiaryEntry.ServingUnitSnapshot).ToString("0.##")
+        @Model.DiaryEntry.ServingUnitSnapshot
+    }
 </div>
 
 <form method="post">

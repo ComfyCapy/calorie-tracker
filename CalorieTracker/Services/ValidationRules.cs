@@ -67,6 +67,13 @@ namespace CalorieTracker.Services
                 "Fat",
                 modelState);
 
+            if (!Enum.IsDefined(food.ServingBasis))
+            {
+                modelState.AddModelError(
+                    $"{prefix}.ServingBasis",
+                    "Select a supported serving basis.");
+            }
+
             if (food.ServingSize <= 0)
             {
                 modelState.AddModelError(
@@ -74,10 +81,42 @@ namespace CalorieTracker.Services
                     "Serving size must be greater than 0.");
             }
 
-            if (!MeasurementUnits.TryNormalize(
-                    food.ServingUnit,
-                    out var normalizedUnit,
-                    out dimension))
+            if (food.ServingBasis == FoodServingBasis.Portion)
+            {
+                var portionLabel = food.PortionLabel?.Trim() ?? string.Empty;
+
+                if (portionLabel.Length == 0)
+                {
+                    modelState.AddModelError(
+                        $"{prefix}.PortionLabel",
+                        "Please enter a portion name.");
+                }
+                else if (portionLabel.Length > Food.MaxPortionLabelLength)
+                {
+                    modelState.AddModelError(
+                        $"{prefix}.PortionLabel",
+                        $"Portion name must be {Food.MaxPortionLabelLength} characters or fewer.");
+                }
+                else if (portionLabel.Any(char.IsControl))
+                {
+                    modelState.AddModelError(
+                        $"{prefix}.PortionLabel",
+                        "Portion name cannot contain line breaks or control characters.");
+                }
+                else
+                {
+                    food.PortionLabel = portionLabel;
+                }
+
+                if (food.ServingSize > 0)
+                {
+                    food.CanonicalServingSize = food.ServingSize;
+                }
+            }
+            else if (!MeasurementUnits.TryNormalize(
+                         food.ServingUnit,
+                         out var normalizedUnit,
+                         out dimension))
             {
                 modelState.AddModelError(
                     $"{prefix}.ServingUnit",
@@ -104,6 +143,7 @@ namespace CalorieTracker.Services
             {
                 food.ServingUnit = normalizedUnit;
                 food.CanonicalServingSize = canonicalServingSize;
+                food.PortionLabel = null;
             }
 
             if (!string.IsNullOrWhiteSpace(food.Name))

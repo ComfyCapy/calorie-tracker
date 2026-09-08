@@ -107,7 +107,7 @@
                             <h3>@food.Name</h3>
 
                             <p>
-                                Per @food.ServingSize.ToString("0.##")@food.ServingUnit
+                                Per @food.ServingSize.ToString("0.##") @food.DisplayServingUnit
                             </p>
                         </div>
 
@@ -192,13 +192,16 @@
                                             </a>
                                         </li>
 
-                                        <li>
-                                            <a asp-page="./Portions"
-                                               asp-route-id="@food.Id"
-                                               class="dropdown-item">
-                                                Manage portions
-                                            </a>
-                                        </li>
+                                        @if (food.ServingBasis == CalorieTracker.Models.FoodServingBasis.Measured)
+                                        {
+                                            <li>
+                                                <a asp-page="./Portions"
+                                                   asp-route-id="@food.Id"
+                                                   class="dropdown-item">
+                                                    Manage portions
+                                                </a>
+                                            </li>
+                                        }
 
                                         <li>
                                             <hr class="dropdown-divider" />
@@ -308,7 +311,7 @@
                             <h3>@food.Name</h3>
 
                             <p>
-                                Per @food.ServingSize.ToString("0.##")@food.ServingUnit
+                                Per @food.ServingSize.ToString("0.##") @food.DisplayServingUnit
                             </p>
                         </div>
 
@@ -382,13 +385,16 @@
                                         </a>
                                     </li>
 
-                                    <li>
-                                        <a asp-page="./Portions"
-                                           asp-route-id="@food.Id"
-                                           class="dropdown-item">
-                                            Manage portions
-                                        </a>
-                                    </li>
+                                    @if (food.ServingBasis == CalorieTracker.Models.FoodServingBasis.Measured)
+                                    {
+                                        <li>
+                                            <a asp-page="./Portions"
+                                               asp-route-id="@food.Id"
+                                               class="dropdown-item">
+                                                Manage portions
+                                            </a>
+                                        </li>
+                                    }
 
                                     <li>
                                         <hr class="dropdown-divider" />
@@ -497,7 +503,7 @@
                             <h3>@food.Name</h3>
 
                             <p>
-                                Per @food.ServingSize.ToString("0.##")@food.ServingUnit
+                                Per @food.ServingSize.ToString("0.##") @food.DisplayServingUnit
                             </p>
                         </div>
 

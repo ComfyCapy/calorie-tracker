@@ -1,4 +1,5 @@
 using CalorieTracker.Models;
+using CalorieTracker.Services;
 using CalorieTracker.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -446,7 +447,8 @@ public class DiaryPageModelTests
     {
         var model = new DiaryCreateModel(
             database.Context,
-            PageModelTestContext.CreateUserManager())
+            PageModelTestContext.CreateUserManager(),
+            new DailyMaintenanceSnapshotService(database.Context))
         {
             DiaryEntry = new DiaryEntry
             {
@@ -467,7 +469,8 @@ public class DiaryPageModelTests
     {
         var model = new DiaryCreateModel(
             database.Context,
-            PageModelTestContext.CreateUserManager());
+            PageModelTestContext.CreateUserManager(),
+            new DailyMaintenanceSnapshotService(database.Context));
         PageModelTestContext.Attach(model, userId);
         return model;
     }
@@ -480,7 +483,8 @@ public class DiaryPageModelTests
     {
         var model = new DiaryEditModel(
             database.Context,
-            PageModelTestContext.CreateUserManager())
+            PageModelTestContext.CreateUserManager(),
+            new DailyMaintenanceSnapshotService(database.Context))
         {
             DiaryEntry = new DiaryEntry
             {

@@ -174,7 +174,8 @@ public class ProfilePageModelTests
         var model = new IndexModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            new GoalTimelineCalculator());
+            new GoalTimelineCalculator(),
+            new DailyMaintenanceSnapshotService(database.Context));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

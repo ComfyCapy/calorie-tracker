@@ -204,7 +204,14 @@
                             <div>
                                 <h3>@entry.FoodNameSnapshot</h3>
 
-                                @if (entry.PortionQuantity.HasValue &&
+                                @if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion)
+                                {
+                                    <p>
+                                        @entry.Quantity.ToString("0.##")
+                                        @entry.PortionLabelSnapshot
+                                    </p>
+                                }
+                                else if (entry.PortionQuantity.HasValue &&
                                      !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
                                 {
                                     <p>

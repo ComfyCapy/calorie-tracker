@@ -54,6 +54,8 @@ public sealed class AccountDeletionTests
             .AnyAsync(profile => profile.UserId == DeletedUserId));
         Assert.False(await context.DiaryEntries
             .AnyAsync(entry => entry.UserId == DeletedUserId));
+        Assert.False(await context.DailyMaintenanceSnapshots
+            .AnyAsync(snapshot => snapshot.UserId == DeletedUserId));
         Assert.False(await context.Foods
             .AnyAsync(food => food.UserId == DeletedUserId));
         Assert.False(await context.UserCapyItems
@@ -67,6 +69,8 @@ public sealed class AccountDeletionTests
             .AnyAsync(profile => profile.UserId == SurvivingUserId));
         Assert.True(await context.DiaryEntries
             .AnyAsync(entry => entry.UserId == SurvivingUserId));
+        Assert.True(await context.DailyMaintenanceSnapshots
+            .AnyAsync(snapshot => snapshot.UserId == SurvivingUserId));
         Assert.True(await context.Foods
             .AnyAsync(food => food.UserId == SurvivingUserId));
         Assert.True(await context.FoodPortions
@@ -195,6 +199,10 @@ public sealed class AccountDeletionTests
                 ActivityLevel = ProfileOptions.ModeratelyActive,
                 Goal = ProfileOptions.Maintain
             },
+            new DailyMaintenanceSnapshot(
+                userId,
+                new DateOnly(2026, 9, 5),
+                2000),
             new UserCapyItem
             {
                 UserId = userId,
