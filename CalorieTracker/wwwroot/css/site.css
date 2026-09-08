@@ -117,6 +117,97 @@ body {
     object-fit: contain;
 }
 
+.development-banner {
+    --ct-development-banner-background: #fff3cd;
+    --ct-development-banner-border: #ffecb5;
+    --ct-development-banner-color: #664d03;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--ct-development-banner-border);
+    background: var(--ct-development-banner-background);
+    color: var(--ct-development-banner-color);
+}
+
+[data-bs-theme="dark"] .development-banner {
+    --ct-development-banner-background: #3d3217;
+    --ct-development-banner-border: #705d2a;
+    --ct-development-banner-color: #ffda6a;
+}
+
+.development-banner-inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 2.75rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
+.development-banner-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.development-banner-message {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.development-banner-link {
+    color: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.development-banner-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.development-banner-dismiss:hover {
+    background: rgba(102, 77, 3, 0.12);
+}
+
+[data-bs-theme="dark"] .development-banner-dismiss:hover {
+    background: rgba(255, 218, 106, 0.15);
+}
+
+.development-banner-dismiss:focus-visible,
+.development-banner-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+    .development-banner-inner {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: start;
+        row-gap: 0.2rem;
+    }
+
+    .development-banner-link {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    .development-banner-dismiss {
+        grid-column: 3;
+        grid-row: 1;
+    }
+}
+
 .navbar-nav .dropdown-toggle,
 .navbar-nav .dropdown-toggle:hover,
 .navbar-nav .dropdown-toggle:focus {

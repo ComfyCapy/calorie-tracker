@@ -46,6 +46,17 @@ public class BrandingTests
         Assert.Contains("A Comfy Capy product", html);
         Assert.Contains("href=\"/About\"", html);
         Assert.Contains("href=\"/Help\"", html);
+        Assert.Contains("id=\"developmentBanner\"", html);
+        Assert.Contains(
+            "Comfy Capy Calories is in active development.",
+            html);
+        Assert.Contains("href=\"/Feedback\"", html);
+        Assert.Contains("Send feedback →", html);
+        Assert.Contains("data-development-banner-dismiss", html);
+        Assert.Contains(
+            "aria-label=\"Dismiss active development notice\"",
+            html);
+        Assert.Contains("development-banner.", html);
         Assert.Single(Regex.Matches(html, @">\s*About\s*</a>"));
         Assert.Single(Regex.Matches(html, @">\s*Help\s*</a>"));
 

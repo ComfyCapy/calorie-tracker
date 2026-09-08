@@ -91,7 +91,7 @@
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow">
             <div class="container">
                 <span class="navbar-brand">
                     <img class="navbar-brand-mark"
@@ -158,6 +158,32 @@
                 </div>
             </div>
         </nav>
+
+        <div id="developmentBanner"
+             class="development-banner"
+             role="status"
+             aria-labelledby="developmentBannerMessage"
+             data-development-banner>
+            <div class="container development-banner-inner">
+                <span class="development-banner-icon" aria-hidden="true">🚧</span>
+                <p id="developmentBannerMessage" class="development-banner-message">
+                    Comfy Capy Calories is in active development. Things may change,
+                    and you might encounter the occasional bug while we keep improving
+                    the app.
+                </p>
+                <a class="development-banner-link"
+                   asp-area=""
+                   asp-page="/Feedback">
+                    Send feedback →
+                </a>
+                <button type="button"
+                        class="development-banner-dismiss"
+                        data-development-banner-dismiss
+                        aria-label="Dismiss active development notice">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+        </div>
     </header>
 
     <div class="container">
@@ -189,6 +215,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/development-banner.js" asp-append-version="true"></script>
 
     <form id="themeAntiForgeryForm" method="post" style="display: none;">
         @Html.AntiForgeryToken()
