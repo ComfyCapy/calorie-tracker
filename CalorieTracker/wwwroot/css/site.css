@@ -718,7 +718,16 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
+}
+
+.dashboard-macro-section {
     margin-top: 1rem;
+}
+
+.dashboard-macro-heading {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
 }
 
 .dashboard-macro-card {

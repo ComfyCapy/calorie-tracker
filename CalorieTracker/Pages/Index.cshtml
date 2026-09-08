@@ -152,7 +152,31 @@
 
         </div>
 
-        <div class="dashboard-macro-grid">
+        <section class="dashboard-macro-section"
+                 aria-labelledby="dashboard-macro-heading">
+
+            <div class="dashboard-macro-heading">
+                <h2 id="dashboard-macro-heading" class="visually-hidden">
+                    Macronutrients
+                </h2>
+
+                @if (macroGoals != null)
+                {
+                    <div class="form-check form-switch mb-0">
+                        <input id="dashboardShowMacroGoals"
+                               class="form-check-input"
+                               type="checkbox"
+                               role="switch"
+                               data-macro-goals-toggle
+                               aria-controls="dashboardMacroCards" />
+                        <label class="form-check-label" for="dashboardShowMacroGoals">
+                            Show macro goals
+                        </label>
+                    </div>
+                }
+            </div>
+
+            <div id="dashboardMacroCards" class="dashboard-macro-grid">
 
             <div class="dashboard-macro-card">
 
@@ -277,7 +301,9 @@
 
             </div>
 
-        </div>
+            </div>
+
+        </section>
 
         @if (Model.CalorieBalanceYear is { } balanceYear)
         {

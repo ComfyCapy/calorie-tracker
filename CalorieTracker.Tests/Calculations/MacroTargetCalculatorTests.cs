@@ -178,6 +178,11 @@ public class MacroTargetCalculatorTests
         Assert.Contains("data-macro-goals-content", diary);
         Assert.Contains("hidden", diary);
 
+        Assert.Contains("id=\"dashboardShowMacroGoals\"", dashboard);
+        Assert.Contains("data-macro-goals-toggle", dashboard);
+        Assert.Contains("Show macro goals", dashboard);
+        Assert.Contains("aria-controls=\"dashboardMacroCards\"", dashboard);
+        Assert.Contains("id=\"dashboardMacroCards\"", dashboard);
         foreach (var macro in new[] { "Protein", "Carbohydrates", "Fat" })
         {
             Assert.Contains($"aria-label=\"{macro} macro goal progress\"", diary);
