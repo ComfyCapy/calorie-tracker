@@ -56,6 +56,35 @@ public class CalorieBalanceDashboardTests
         Assert.DoesNotContain("dashboard-year-card", html);
     }
 
+    [Theory]
+    [InlineData(1426, "574", "remaining")]
+    [InlineData(2000, "0", "remaining")]
+    [InlineData(2666, "666", "over")]
+    public async Task Dashboard_CalorieStatusUsesPositiveSemanticWording(
+        decimal caloriesConsumed,
+        string expectedAmount,
+        string expectedStatus)
+    {
+        using var factory = new IntegrationTestFactory();
+        const string userId = "calorie-status-user";
+        await SeedCalorieStatusDataAsync(factory, userId, caloriesConsumed);
+
+        using var client = AuthenticatedClient(factory, userId);
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+
+        Assert.Matches(
+            new Regex($@"\b{expectedAmount}\s+kcal\s+{expectedStatus}\b"),
+            html);
+
+        if (expectedStatus == "over")
+        {
+            Assert.DoesNotMatch(
+                new Regex($@"-{expectedAmount}\s+kcal\s+remaining\b"),
+                html);
+            Assert.Contains("style=\"width: 100%\"", html);
+        }
+    }
+
     [Fact]
     public async Task Dashboard_RendersCalendarGeometryMonthsAndAuthoritativeLegend()
     {
@@ -638,6 +667,42 @@ public class CalorieBalanceDashboardTests
                 1000));
         await context.SaveChangesAsync();
         return dates;
+    }
+
+    private static async Task SeedCalorieStatusDataAsync(
+        IntegrationTestFactory factory,
+        string userId,
+        decimal caloriesConsumed)
+    {
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+
+        AddUser(context, userId);
+        context.UserProfiles.Add(new UserProfile
+        {
+            UserId = userId,
+            MeasurementSystem = ProfileOptions.Metric,
+            ThemePreference = ProfileOptions.SystemTheme,
+            DateOfBirth = DateTime.Today.AddYears(-35),
+            HeightCm = 180m,
+            WeightKg = 80m,
+            CalculationSex = ProfileOptions.Male,
+            ActivityLevel = ProfileOptions.ModeratelyActive,
+            Goal = ProfileOptions.Maintain,
+            CustomCalorieTarget = 2000m
+        });
+
+        var food = TestData.Food(userId);
+        food.Calories = 1;
+        food.CanonicalServingSize = 1;
+        context.Foods.Add(food);
+        await context.SaveChangesAsync();
+
+        var entry = TestData.DiaryEntry(userId, food, caloriesConsumed);
+        entry.Date = DateTime.Today;
+        context.DiaryEntries.Add(entry);
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedHistoricalDayAsync(

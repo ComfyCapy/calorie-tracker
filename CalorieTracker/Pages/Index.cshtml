@@ -109,10 +109,20 @@
                             @caloriePercentage.ToString("0")% of daily target
                         </span>
 
-                        <strong>
-                            @Model.CaloriesRemaining?.ToString("0")
-                            kcal remaining
-                        </strong>
+                        @if (Model.CaloriesRemaining >= 0)
+                        {
+                            <strong>
+                                @Model.CaloriesRemaining?.ToString("0")
+                                kcal remaining
+                            </strong>
+                        }
+                        else
+                        {
+                            <strong>
+                                @Math.Abs(Model.CaloriesRemaining!.Value).ToString("0")
+                                kcal over
+                            </strong>
+                        }
 
                     </div>
                 }
