@@ -127,6 +127,10 @@ body {
     color: var(--ct-development-banner-color);
 }
 
+html[data-development-banner-dismissed="true"] .development-banner {
+    display: none;
+}
+
 [data-bs-theme="dark"] .development-banner {
     --ct-development-banner-background: #3d3217;
     --ct-development-banner-border: #705d2a;

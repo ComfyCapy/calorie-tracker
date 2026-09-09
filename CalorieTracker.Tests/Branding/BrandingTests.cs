@@ -48,6 +48,12 @@ public class BrandingTests
         Assert.Contains("href=\"/Help\"", html);
         Assert.Contains("id=\"developmentBanner\"", html);
         Assert.Contains(
+            "sessionStorage.getItem(\"comfyCapy.developmentBannerDismissed\")",
+            html);
+        Assert.Contains(
+            "document.documentElement.dataset.developmentBannerDismissed",
+            html);
+        Assert.Contains(
             "Comfy Capy Calories is in active development.",
             html);
         Assert.Contains("href=\"/Feedback\"", html);
@@ -57,6 +63,16 @@ public class BrandingTests
             "aria-label=\"Dismiss active development notice\"",
             html);
         Assert.Contains("development-banner.", html);
+
+        var bootstrapIndex = html.IndexOf(
+            "sessionStorage.getItem(\"comfyCapy.developmentBannerDismissed\")",
+            StringComparison.Ordinal);
+        var bannerIndex = html.IndexOf(
+            "id=\"developmentBanner\"",
+            StringComparison.Ordinal);
+
+        Assert.True(bootstrapIndex >= 0);
+        Assert.True(bannerIndex > bootstrapIndex);
         Assert.Single(Regex.Matches(html, @">\s*About\s*</a>"));
         Assert.Single(Regex.Matches(html, @">\s*Help\s*</a>"));
 

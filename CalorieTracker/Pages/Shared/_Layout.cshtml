@@ -50,6 +50,16 @@
     <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" />
     <script src="~/js/browser-time-zone.js" asp-append-version="true"></script>
     <script>
+        (() => {
+            try {
+                if (sessionStorage.getItem("comfyCapy.developmentBannerDismissed") === "true") {
+                    document.documentElement.dataset.developmentBannerDismissed = "true";
+                }
+            }
+            catch { }
+        })();
+    </script>
+    <script>
             (() => {
                 const accountTheme = "@(accountTheme?.ToLowerInvariant() ?? "")";
 
