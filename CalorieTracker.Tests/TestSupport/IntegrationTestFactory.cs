@@ -25,9 +25,12 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>
 
     private readonly SqliteConnection _connection =
         new("Data Source=:memory:");
+    private readonly TimeProvider _timeProvider;
 
-    public IntegrationTestFactory()
+    public IntegrationTestFactory(TimeProvider? timeProvider = null)
     {
+        _timeProvider = timeProvider ?? new FixedTimeProvider(
+            new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero));
         _connection.Open();
     }
 
@@ -64,6 +67,9 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(EmailSender);
+
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton(_timeProvider);
 
             services.AddAuthentication(options =>
                 {

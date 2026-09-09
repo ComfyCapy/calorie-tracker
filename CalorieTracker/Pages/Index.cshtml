@@ -33,7 +33,7 @@
                 <h1 class="dashboard-title">Today</h1>
 
                 <p class="dashboard-date">
-                    @DateTime.Today.ToString("dddd, d MMMM")
+                    @Model.CurrentDate.ToString("dddd, d MMMM")
                 </p>
             </div>
         </div>
@@ -586,7 +586,7 @@
                         <div class="col-6 col-lg-3">
                             <strong>Maintenance Calories</strong>
                             <p class="mb-1">
-                                ~@Model.UserProfile.TDEE.ToString("0") kcal/day
+                                ~@Model.UserProfile.CalculateTdee(Model.CurrentDate).ToString("0") kcal/day
                             </p>
                             <small class="text-muted">
                                 Estimated calories needed to maintain your current weight.
@@ -596,7 +596,7 @@
                         <div class="col-6 col-lg-3">
                             <strong>BMR</strong>
                             <p class="mb-1">
-                                ~@Model.UserProfile.BMR.ToString("0") kcal/day
+                                ~@Model.UserProfile.CalculateBmr(Model.CurrentDate).ToString("0") kcal/day
                             </p>
                             <small class="text-muted">
                                 Estimated calories your body uses at rest.
@@ -616,7 +616,7 @@
                         <div class="col-6 col-lg-3">
                             <strong>Age</strong>
                             <p class="mb-1">
-                                @Model.UserProfile.Age years
+                                @Model.UserProfile.CalculateAge(Model.CurrentDate) years
                             </p>
                             <small class="text-muted">
                                 Used as part of your calorie estimate.
@@ -633,13 +633,13 @@
         <div class="dashboard-actions">
 
             <a asp-page="/Diary/Create"
-               asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")"
+               asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
                class="btn btn-primary dashboard-action-primary">
                 + Quick Add Food
             </a>
 
             <a asp-page="/Diary/Index"
-               asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")"
+               asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
                class="btn btn-outline-primary">
                 View Today's Diary
             </a>

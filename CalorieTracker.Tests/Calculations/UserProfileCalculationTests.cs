@@ -5,6 +5,8 @@ namespace CalorieTracker.Tests.Calculations;
 
 public class UserProfileCalculationTests
 {
+    private static readonly DateOnly CurrentDate = new(2026, 9, 9);
+
     [Fact]
     public void Bmi_UsesMetricHeightAndWeight()
     {
@@ -32,7 +34,7 @@ public class UserProfileCalculationTests
         var profile = CreateProfile();
         profile.CalculationSex = calculationSex;
 
-        Assert.Equal(expected, profile.BMR);
+        Assert.Equal(expected, profile.CalculateBmr(CurrentDate));
     }
 
     [Theory]
@@ -48,7 +50,7 @@ public class UserProfileCalculationTests
         var profile = CreateProfile();
         profile.ActivityLevel = activityLevel;
 
-        Assert.Equal((decimal)expected, profile.TDEE, 2);
+        Assert.Equal((decimal)expected, profile.CalculateTdee(CurrentDate), 2);
     }
 
     [Fact]
@@ -57,7 +59,9 @@ public class UserProfileCalculationTests
         var profile = CreateProfile();
         profile.Goal = ProfileOptions.Maintain;
 
-        Assert.Equal(profile.TDEE, profile.DailyCalorieTarget);
+        Assert.Equal(
+            profile.CalculateTdee(CurrentDate),
+            profile.CalculateDailyCalorieTarget(CurrentDate));
     }
 
     [Theory]
@@ -71,7 +75,7 @@ public class UserProfileCalculationTests
         profile.Goal = goal;
         profile.WeeklyGoalKg = 0.5m;
 
-        Assert.Equal(expected, profile.DailyCalorieTarget);
+        Assert.Equal(expected, profile.CalculateDailyCalorieTarget(CurrentDate));
     }
 
     [Fact]
@@ -81,7 +85,9 @@ public class UserProfileCalculationTests
         profile.Goal = ProfileOptions.Lose;
         profile.WeeklyGoalKg = null;
 
-        Assert.Equal(profile.TDEE, profile.DailyCalorieTarget);
+        Assert.Equal(
+            profile.CalculateTdee(CurrentDate),
+            profile.CalculateDailyCalorieTarget(CurrentDate));
     }
 
     [Fact]
@@ -90,27 +96,26 @@ public class UserProfileCalculationTests
         var profile = CreateProfile();
         profile.CustomCalorieTarget = 1950;
 
-        Assert.Equal(1950, profile.EffectiveCalorieTarget);
+        Assert.Equal(1950, profile.CalculateEffectiveCalorieTarget(CurrentDate));
     }
 
     [Fact]
     public void Age_UsesCompletedYears()
     {
         var profile = CreateProfile();
-        profile.DateOfBirth = DateTime.Today.AddYears(-30);
+        profile.DateOfBirth = CurrentDate.AddYears(-30).ToDateTime(TimeOnly.MinValue);
 
-        Assert.Equal(30, profile.Age);
+        Assert.Equal(30, profile.CalculateAge(CurrentDate));
     }
 
     [Fact]
-    public void DateAwareCalculations_ForTodayMatchCurrentProperties()
+    public void DateAwareCalculations_AreDeterministicForExplicitDate()
     {
         var profile = CreateProfile();
-        var today = DateOnly.FromDateTime(DateTime.Today);
 
-        Assert.Equal(profile.Age, profile.CalculateAge(today));
-        Assert.Equal(profile.BMR, profile.CalculateBmr(today));
-        Assert.Equal(profile.TDEE, profile.CalculateTdee(today));
+        Assert.Equal(30, profile.CalculateAge(CurrentDate));
+        Assert.Equal(1780m, profile.CalculateBmr(CurrentDate));
+        Assert.Equal(2136m, profile.CalculateTdee(CurrentDate));
     }
 
     [Fact]
@@ -178,14 +183,14 @@ public class UserProfileCalculationTests
         profile.CustomCalorieTarget = 100;
 
         Assert.True(profile.TryCalculateMaintenance(
-            DateOnly.FromDateTime(DateTime.Today),
+            CurrentDate,
             out var maintenance));
-        Assert.Equal(profile.TDEE, maintenance);
+        Assert.Equal(profile.CalculateTdee(CurrentDate), maintenance);
     }
 
     private static UserProfile CreateProfile() => new()
     {
-        DateOfBirth = DateTime.Today.AddYears(-30),
+        DateOfBirth = CurrentDate.AddYears(-30).ToDateTime(TimeOnly.MinValue),
         HeightCm = 180,
         WeightKg = 80,
         CalculationSex = ProfileOptions.Male,

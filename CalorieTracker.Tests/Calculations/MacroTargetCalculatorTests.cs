@@ -12,6 +12,7 @@ namespace CalorieTracker.Tests.Calculations;
 
 public class MacroTargetCalculatorTests
 {
+    private static readonly DateOnly CurrentDate = TestTime.Today;
     private readonly MacroTargetCalculator _calculator = new();
 
     [Fact]
@@ -20,8 +21,8 @@ public class MacroTargetCalculatorTests
         var profile = ValidProfile();
         profile.CustomCalorieTarget = 2376m;
 
-        var first = _calculator.Calculate(profile);
-        var second = _calculator.Calculate(profile);
+        var first = _calculator.Calculate(profile, CurrentDate);
+        var second = _calculator.Calculate(profile, CurrentDate);
 
         Assert.NotNull(first);
         Assert.Equal(first, second);
@@ -38,7 +39,7 @@ public class MacroTargetCalculatorTests
         profile.WeightKg = 80.06m;
         profile.CustomCalorieTarget = 2377m;
 
-        var targets = _calculator.Calculate(profile);
+        var targets = _calculator.Calculate(profile, CurrentDate);
 
         Assert.NotNull(targets);
         Assert.InRange(
@@ -56,10 +57,12 @@ public class MacroTargetCalculatorTests
         profile.Goal = ProfileOptions.Lose;
         profile.WeeklyGoalKg = 0.5m;
 
-        var targets = _calculator.Calculate(profile);
+        var targets = _calculator.Calculate(profile, CurrentDate);
 
         Assert.NotNull(targets);
-        Assert.Equal(profile.DailyCalorieTarget, targets.DailyCalorieTarget);
+        Assert.Equal(
+            profile.CalculateDailyCalorieTarget(CurrentDate),
+            targets.DailyCalorieTarget);
     }
 
     [Fact]
@@ -67,10 +70,10 @@ public class MacroTargetCalculatorTests
     {
         var profile = ValidProfile();
         profile.CustomCalorieTarget = 2400m;
-        var first = _calculator.Calculate(profile)!;
+        var first = _calculator.Calculate(profile, CurrentDate)!;
         profile.CustomCalorieTarget = 2800m;
 
-        var second = _calculator.Calculate(profile);
+        var second = _calculator.Calculate(profile, CurrentDate);
 
         Assert.NotNull(second);
         Assert.Equal(first.ProteinGrams, second.ProteinGrams);
@@ -81,17 +84,17 @@ public class MacroTargetCalculatorTests
     [Fact]
     public void Calculate_MissingOrInvalidProfileReturnsNoTargets()
     {
-        Assert.Null(_calculator.Calculate(null));
-        Assert.Null(_calculator.Calculate(new UserProfile()));
+        Assert.Null(_calculator.Calculate(null, CurrentDate));
+        Assert.Null(_calculator.Calculate(new UserProfile(), CurrentDate));
 
         var invalid = ValidProfile();
         invalid.CustomCalorieTarget = 100m;
-        Assert.Null(_calculator.Calculate(invalid));
+        Assert.Null(_calculator.Calculate(invalid, CurrentDate));
 
         var impossible = ValidProfile();
         impossible.WeightKg = 500m;
         impossible.CustomCalorieTarget = 500m;
-        Assert.Null(_calculator.Calculate(impossible));
+        Assert.Null(_calculator.Calculate(impossible, CurrentDate));
     }
 
     [Fact]
@@ -99,7 +102,7 @@ public class MacroTargetCalculatorTests
     {
         var profile = ValidProfile();
         profile.CustomCalorieTarget = 2376m;
-        var targets = _calculator.Calculate(profile)!;
+        var targets = _calculator.Calculate(profile, CurrentDate)!;
 
         var progress = targets.CreateProgress(256m, 0m, 64m);
 
@@ -114,7 +117,7 @@ public class MacroTargetCalculatorTests
     {
         var profile = ValidProfile();
         profile.CustomCalorieTarget = 2376m;
-        var targets = _calculator.Calculate(profile)!;
+        var targets = _calculator.Calculate(profile, CurrentDate)!;
 
         var progress = targets.CreateProgress(64m, 161m, 16m);
 
@@ -136,17 +139,19 @@ public class MacroTargetCalculatorTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new CalorieBalanceYearService(database.Context),
-            _calculator);
+            _calculator,
+            new TestUserLocalTimeProvider(CurrentDate));
         PageModelTestContext.Attach(dashboard, "user-1");
 
         var diary = new DiaryModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            _calculator);
+            _calculator,
+            new TestUserLocalTimeProvider(CurrentDate));
         PageModelTestContext.Attach(diary, "user-1");
 
         await dashboard.OnGetAsync();
-        await diary.OnGetAsync(DateTime.Today);
+        await diary.OnGetAsync(CurrentDate.ToDateTime(TimeOnly.MinValue));
 
         Assert.NotNull(dashboard.MacroGoalProgress);
         Assert.NotNull(diary.MacroGoalProgress);
@@ -216,7 +221,7 @@ public class MacroTargetCalculatorTests
             context.AddRange(user, food);
             await context.SaveChangesAsync();
             var entry = TestData.DiaryEntry(userId, food, 100m);
-            entry.Date = DateTime.Today;
+            entry.Date = CurrentDate.ToDateTime(TimeOnly.MinValue);
             context.DiaryEntries.Add(entry);
             await context.SaveChangesAsync();
         }
@@ -237,7 +242,7 @@ public class MacroTargetCalculatorTests
         UserId = userId,
         MeasurementSystem = ProfileOptions.Metric,
         ThemePreference = ProfileOptions.SystemTheme,
-        DateOfBirth = DateTime.Today.AddYears(-35),
+        DateOfBirth = CurrentDate.AddYears(-35).ToDateTime(TimeOnly.MinValue),
         HeightCm = 180m,
         WeightKg = 80m,
         CalculationSex = ProfileOptions.Male,

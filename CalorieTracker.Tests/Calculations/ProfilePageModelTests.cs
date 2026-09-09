@@ -39,7 +39,7 @@ public class ProfilePageModelTests
             UserId = "user-1",
             MeasurementSystem = ProfileOptions.Imperial,
             ThemePreference = ProfileOptions.SystemTheme,
-            DateOfBirth = DateTime.Today.AddYears(-30),
+            DateOfBirth = TestTime.Today.AddYears(-30).ToDateTime(TimeOnly.MinValue),
             HeightCm = 177.8m,
             WeightKg = 70m,
             GoalWeightKg = 65m,
@@ -66,7 +66,9 @@ public class ProfilePageModelTests
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
         model.UserProfile = ValidProfile(ProfileOptions.Metric);
-        model.UserProfile.DateOfBirth = DateTime.Today.AddYears(-120);
+        model.UserProfile.DateOfBirth = TestTime.Today
+            .AddYears(-120)
+            .ToDateTime(TimeOnly.MinValue);
         model.UserProfile.HeightCm = 50;
         model.UserProfile.WeightKg = 20;
         model.UserProfile.CustomCalorieTarget = 500;
@@ -78,7 +80,7 @@ public class ProfilePageModelTests
         Assert.Equal(
             500,
             (await database.Context.UserProfiles.SingleAsync())
-                .EffectiveCalorieTarget);
+                .CalculateEffectiveCalorieTarget(TestTime.Today));
     }
 
     [Theory]
@@ -175,7 +177,8 @@ public class ProfilePageModelTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
-            new DailyMaintenanceSnapshotService(database.Context));
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider());
         PageModelTestContext.Attach(model, userId);
         return model;
     }
@@ -184,7 +187,7 @@ public class ProfilePageModelTests
     {
         MeasurementSystem = measurementSystem,
         ThemePreference = ProfileOptions.SystemTheme,
-        DateOfBirth = DateTime.Today.AddYears(-30),
+        DateOfBirth = TestTime.Today.AddYears(-30).ToDateTime(TimeOnly.MinValue),
         HeightCm = 180,
         WeightKg = 80,
         CalculationSex = ProfileOptions.Male,
@@ -201,7 +204,7 @@ public class ProfilePageModelTests
         UserId = userId,
         MeasurementSystem = ProfileOptions.Metric,
         ThemePreference = ProfileOptions.SystemTheme,
-        DateOfBirth = DateTime.Today.AddYears(-30),
+        DateOfBirth = TestTime.Today.AddYears(-30).ToDateTime(TimeOnly.MinValue),
         HeightCm = 180,
         WeightKg = (decimal)weight,
         GoalWeightKg = goalWeight,

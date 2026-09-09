@@ -16,15 +16,18 @@ namespace CalorieTracker.Pages.Diary
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly DailyMaintenanceSnapshotService _snapshotService;
+        private readonly IUserLocalTimeProvider _userLocalTimeProvider;
 
         public CreateModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            DailyMaintenanceSnapshotService snapshotService)
+            DailyMaintenanceSnapshotService snapshotService,
+            IUserLocalTimeProvider userLocalTimeProvider)
         {
             _context = context;
             _userManager = userManager;
             _snapshotService = snapshotService;
+            _userLocalTimeProvider = userLocalTimeProvider;
         }
 
         [BindProperty]
@@ -66,7 +69,8 @@ namespace CalorieTracker.Pages.Diary
                 return Challenge();
             }
 
-            DiaryEntry.Date = date ?? DateTime.Today;
+            DiaryEntry.Date = date ??
+                _userLocalTimeProvider.Today.ToDateTime(TimeOnly.MinValue);
 
             if (DiaryEntry.Date.Date < ValidationRules.MinimumDiaryDate ||
                 DiaryEntry.Date.Date > ValidationRules.MaximumDiaryDate)

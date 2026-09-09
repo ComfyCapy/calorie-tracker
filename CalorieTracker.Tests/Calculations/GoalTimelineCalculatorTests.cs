@@ -12,7 +12,7 @@ public class GoalTimelineCalculatorTests
     public void NormalWeightLoss_ReturnsProjection()
     {
         var profile = Profile(ProfileOptions.Lose, 71m);
-        profile.CustomCalorieTarget = profile.TDEE - 550m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 550m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -26,7 +26,7 @@ public class GoalTimelineCalculatorTests
     public void NormalWeightGain_ReturnsProjection()
     {
         var profile = Profile(ProfileOptions.Gain, 81m);
-        profile.CustomCalorieTarget = profile.TDEE + 385m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) + 385m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -40,7 +40,7 @@ public class GoalTimelineCalculatorTests
     {
         var profile = Profile(ProfileOptions.Lose, 77m);
         profile.WeeklyGoalKg = 0.25m;
-        profile.CustomCalorieTarget = profile.TDEE - 825m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 825m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -69,7 +69,7 @@ public class GoalTimelineCalculatorTests
         GoalTimelineStatus expectedStatus)
     {
         var profile = Profile(ProfileOptions.Maintain, null);
-        profile.CustomCalorieTarget = profile.TDEE + calorieDelta;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) + calorieDelta;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -81,7 +81,7 @@ public class GoalTimelineCalculatorTests
     public void MaintenanceGoal_WithMeaningfulCustomDeficit_IsNotReportedAsMaintenance()
     {
         var profile = Profile(ProfileOptions.Maintain, null);
-        profile.CustomCalorieTarget = profile.TDEE - 110m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 110m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -94,7 +94,7 @@ public class GoalTimelineCalculatorTests
     public void MaintenanceGoal_WithMeaningfulCustomSurplus_IsNotReportedAsMaintenance()
     {
         var profile = Profile(ProfileOptions.Maintain, null);
-        profile.CustomCalorieTarget = profile.TDEE + 110m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) + 110m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -142,7 +142,7 @@ public class GoalTimelineCalculatorTests
     public void ZeroEnergyDifference_HasNoMeaningfulProjection()
     {
         var profile = Profile(ProfileOptions.Lose, 75m);
-        profile.CustomCalorieTarget = profile.TDEE;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today);
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -155,7 +155,7 @@ public class GoalTimelineCalculatorTests
     public void TinyEnergyDifference_HasNoMeaningfulProjection()
     {
         var profile = Profile(ProfileOptions.Lose, 75m);
-        profile.CustomCalorieTarget = profile.TDEE - 1m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 1m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -174,7 +174,7 @@ public class GoalTimelineCalculatorTests
         var goalWeight = goal == ProfileOptions.Lose ? 75m : 85m;
         var profile = Profile(goal, goalWeight);
         profile.CustomCalorieTarget =
-            profile.TDEE + (decimal)targetAdjustment;
+            profile.CalculateTdee(Today) + (decimal)targetAdjustment;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -186,7 +186,7 @@ public class GoalTimelineCalculatorTests
     public void ExactlyMaximumSupportedRate_ReturnsProjection()
     {
         var profile = Profile(ProfileOptions.Lose, 75m);
-        profile.CustomCalorieTarget = profile.TDEE - 1100m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 1100m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -198,7 +198,7 @@ public class GoalTimelineCalculatorTests
     public void AboveMaximumSupportedRate_ReturnsOutsideSupportedRate()
     {
         var profile = Profile(ProfileOptions.Lose, 75m);
-        profile.CustomCalorieTarget = profile.TDEE - 1155m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 1155m;
 
         var result = _calculator.Calculate(profile, Today);
 
@@ -232,7 +232,7 @@ public class GoalTimelineCalculatorTests
     public void DateOverflow_ReturnsInvalidCalculation()
     {
         var profile = Profile(ProfileOptions.Lose, 79.5m);
-        profile.CustomCalorieTarget = profile.TDEE - 550m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 550m;
 
         var result = _calculator.Calculate(
             profile,
@@ -246,7 +246,7 @@ public class GoalTimelineCalculatorTests
     public void PartialWeek_RoundsUpToNextWholeWeekAndDate()
     {
         var profile = Profile(ProfileOptions.Lose, 78.99m);
-        profile.CustomCalorieTarget = profile.TDEE - 550m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(Today) - 550m;
 
         var result = _calculator.Calculate(profile, Today);
 

@@ -20,17 +20,20 @@ namespace CalorieTracker.Pages.Profile
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly GoalTimelineCalculator _goalTimelineCalculator;
         private readonly DailyMaintenanceSnapshotService _snapshotService;
+        private readonly IUserLocalTimeProvider _userLocalTimeProvider;
 
         public IndexModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             GoalTimelineCalculator goalTimelineCalculator,
-            DailyMaintenanceSnapshotService snapshotService)
+            DailyMaintenanceSnapshotService snapshotService,
+            IUserLocalTimeProvider userLocalTimeProvider)
         {
             _context = context;
             _userManager = userManager;
             _goalTimelineCalculator = goalTimelineCalculator;
             _snapshotService = snapshotService;
+            _userLocalTimeProvider = userLocalTimeProvider;
         }
 
         [BindProperty]
@@ -72,13 +75,15 @@ namespace CalorieTracker.Pages.Profile
 
         public bool IsFirstTimeSetup { get; set; }
         public UserProfile? EstimatesProfile { get; set; }
+        public DateOnly CurrentDate { get; private set; }
         public bool HasProfileEstimates =>
-            EstimatesProfile?.HasUsableCalorieEstimates == true;
+            EstimatesProfile?.HasUsableCalorieEstimatesOn(CurrentDate) == true;
         public GoalTimelineResult GoalTimeline { get; set; } =
             new(GoalTimelineStatus.IncompleteProfile, ProfileOptions.Metric);
 
         public async Task OnGetAsync()
         {
+            CurrentDate = _userLocalTimeProvider.Today;
             var userId = _userManager.GetUserId(User);
 
             var profile = await _context.UserProfiles
@@ -92,7 +97,7 @@ namespace CalorieTracker.Pages.Profile
 
             UserProfile = profile;
             EstimatesProfile = profile;
-            GoalTimeline = _goalTimelineCalculator.Calculate(profile);
+            GoalTimeline = _goalTimelineCalculator.Calculate(profile, CurrentDate);
 
             UseCustomCalorieTarget =
                 profile.CustomCalorieTarget.HasValue;
@@ -116,6 +121,7 @@ namespace CalorieTracker.Pages.Profile
 
         public async Task<IActionResult> OnPostAsync()
         {
+            CurrentDate = _userLocalTimeProvider.Today;
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
@@ -138,7 +144,7 @@ namespace CalorieTracker.Pages.Profile
             {
                 IsFirstTimeSetup = existingProfile == null;
                 EstimatesProfile = existingProfile;
-                GoalTimeline = _goalTimelineCalculator.Calculate(existingProfile);
+                GoalTimeline = _goalTimelineCalculator.Calculate(existingProfile, CurrentDate);
                 return Page();
             }
 
@@ -217,7 +223,7 @@ namespace CalorieTracker.Pages.Profile
             }
 
             if (UserProfile.DateOfBirth.HasValue &&
-                UserProfile.DateOfBirth.Value.Date > DateTime.Today)
+                DateOnly.FromDateTime(UserProfile.DateOfBirth.Value) > CurrentDate)
             {
                 ModelState.AddModelError(
                     "UserProfile.DateOfBirth",
@@ -225,7 +231,8 @@ namespace CalorieTracker.Pages.Profile
             }
 
             if (UserProfile.DateOfBirth.HasValue &&
-                (UserProfile.Age < 18 || UserProfile.Age > 120))
+                (UserProfile.CalculateAge(CurrentDate) < 18 ||
+                 UserProfile.CalculateAge(CurrentDate) > 120))
             {
                 ModelState.AddModelError(
                     "UserProfile.DateOfBirth",
@@ -418,7 +425,7 @@ namespace CalorieTracker.Pages.Profile
             // A custom target remains valid even when the unused calculated target is non-positive.
             if (ModelState.IsValid &&
                 !UseCustomCalorieTarget &&
-                UserProfile.DailyCalorieTarget <= 0)
+                UserProfile.CalculateDailyCalorieTarget(CurrentDate) <= 0)
             {
                 ModelState.AddModelError(
                     string.Empty,

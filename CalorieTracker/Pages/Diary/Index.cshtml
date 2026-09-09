@@ -34,7 +34,7 @@
         @Model.SelectedDate.ToString("dddd, d MMMM yyyy")
     </strong>
 
-    @if (Model.SelectedDate.Date == DateTime.Today)
+    @if (DateOnly.FromDateTime(Model.SelectedDate) == Model.CurrentDate)
     {
         <span class="btn btn-outline-secondary disabled"
               aria-current="date"

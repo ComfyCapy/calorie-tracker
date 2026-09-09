@@ -16,6 +16,7 @@ public sealed class CalorieBalanceYearService
     public async Task<CalorieBalanceYear> GetYearAsync(
         string userId,
         int year,
+        DateOnly today,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
@@ -59,8 +60,6 @@ public sealed class CalorieBalanceYearService
 
         var daysInYear = DateTime.IsLeapYear(year) ? 366 : 365;
         var days = new List<CalorieBalanceDay>(daysInYear);
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
         for (var offset = 0;
              offset < daysInYear;
              offset++)

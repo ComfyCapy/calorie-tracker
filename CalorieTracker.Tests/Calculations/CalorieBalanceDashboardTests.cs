@@ -15,6 +15,8 @@ namespace CalorieTracker.Tests.Calculations;
 
 public class CalorieBalanceDashboardTests
 {
+    private static readonly DateOnly CurrentDate = TestTime.Today;
+
     [Fact]
     public async Task DashboardModel_LoadsAuthenticatedUsersCurrentCalendarYear()
     {
@@ -25,17 +27,18 @@ public class CalorieBalanceDashboardTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new CalorieBalanceYearService(database.Context),
-            new MacroTargetCalculator());
+            new MacroTargetCalculator(),
+            new TestUserLocalTimeProvider());
         PageModelTestContext.Attach(model, "user-1");
 
         await model.OnGetAsync();
 
         Assert.NotNull(model.CalorieBalanceYear);
-        Assert.Equal(DateTime.Today.Year, model.CalorieBalanceYear.Year);
+        Assert.Equal(CurrentDate.Year, model.CalorieBalanceYear.Year);
         Assert.Equal(
-            DateTime.IsLeapYear(DateTime.Today.Year) ? 366 : 365,
+            DateTime.IsLeapYear(CurrentDate.Year) ? 366 : 365,
             model.CalorieBalanceYear.Days.Count);
-        Assert.Equal(DateTime.Today.Year, model.SelectedYear);
+        Assert.Equal(CurrentDate.Year, model.SelectedYear);
         Assert.False(model.CanNavigateNext);
     }
 
@@ -92,7 +95,7 @@ public class CalorieBalanceDashboardTests
         const string userId = "calendar-user";
         await SeedCalendarAsync(factory, userId);
         using var client = AuthenticatedClient(factory, userId);
-        var year = DateTime.Today.Year;
+        var year = CurrentDate.Year;
 
         var html = await client.GetStringAsync("/");
         var decodedHtml = WebUtility.HtmlDecode(html);
@@ -220,7 +223,7 @@ public class CalorieBalanceDashboardTests
     {
         using var factory = new IntegrationTestFactory();
         const string userId = "history-user";
-        var historicalYear = PreviousLeapYear(DateTime.Today.Year);
+        var historicalYear = PreviousLeapYear(CurrentDate.Year);
         var historicalDate = new DateOnly(historicalYear, 2, 29);
         await SeedHistoricalDayAsync(factory, userId, historicalDate);
         using var client = AuthenticatedClient(factory, userId);
@@ -254,7 +257,7 @@ public class CalorieBalanceDashboardTests
         await SeedCalendarAsync(factory, userId);
         using var client = AuthenticatedClient(factory, userId);
 
-        var currentYear = DateTime.Today.Year;
+        var currentYear = CurrentDate.Year;
         var html = await client.GetStringAsync($"/?year={currentYear - 1}");
 
         Assert.Contains(
@@ -299,7 +302,7 @@ public class CalorieBalanceDashboardTests
         }
 
         using var client = AuthenticatedClient(factory, userId);
-        var currentYear = DateTime.Today.Year;
+        var currentYear = CurrentDate.Year;
         var firstEmptyYear = currentYear - 1;
         var secondEmptyYear = currentYear - 2;
 
@@ -345,7 +348,8 @@ public class CalorieBalanceDashboardTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new CalorieBalanceYearService(database.Context),
-            new MacroTargetCalculator())
+            new MacroTargetCalculator(),
+            new TestUserLocalTimeProvider())
         {
             Year = ValidationRules.MinimumDiaryDate.Year
         };
@@ -398,7 +402,8 @@ public class CalorieBalanceDashboardTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new CalorieBalanceYearService(database.Context),
-            new MacroTargetCalculator())
+            new MacroTargetCalculator(),
+            new TestUserLocalTimeProvider())
         {
             Year = ValidationRules.MinimumDiaryDate.Year - 1
         };
@@ -434,7 +439,7 @@ public class CalorieBalanceDashboardTests
 
         using var client = AuthenticatedClient(factory, userId);
         var response = await client.GetAsync(
-            $"/?year={DateTime.Today.Year - 1}");
+            $"/?year={CurrentDate.Year - 1}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var verificationScope = factory.Services.CreateScope();
@@ -485,10 +490,10 @@ public class CalorieBalanceDashboardTests
         var html = await client.GetStringAsync("/");
 
         Assert.Contains(
-            $"<strong aria-current=\"page\">{DateTime.Today.Year}</strong>",
+            $"<strong aria-current=\"page\">{CurrentDate.Year}</strong>",
             html);
         Assert.DoesNotContain(
-            $"href=\"/?year={DateTime.Today.Year + 1}\"",
+            $"href=\"/?year={CurrentDate.Year + 1}\"",
             html);
     }
 
@@ -524,9 +529,10 @@ public class CalorieBalanceDashboardTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new CalorieBalanceYearService(database.Context),
-            new MacroTargetCalculator())
+            new MacroTargetCalculator(),
+            new TestUserLocalTimeProvider())
         {
-            Year = DateTime.Today.Year + 1
+            Year = CurrentDate.Year + 1
         };
         PageModelTestContext.Attach(model, "user-1");
 
@@ -541,7 +547,7 @@ public class CalorieBalanceDashboardTests
     {
         using var factory = new IntegrationTestFactory();
         const string userId = "no-history-user";
-        var historicalYear = DateTime.Today.Year - 2;
+        var historicalYear = CurrentDate.Year - 2;
         await SeedHistoricalDayAsync(
             factory,
             "other-history-user",
@@ -568,7 +574,7 @@ public class CalorieBalanceDashboardTests
             DateTime.IsLeapYear(historicalYear) ? 366 : 365,
             Regex.Matches(historicalHtml, "data-state=\"no-data\"").Count);
         Assert.DoesNotContain(
-            $"href=\"/?year={DateTime.Today.Year + 1}\"",
+            $"href=\"/?year={CurrentDate.Year + 1}\"",
             currentHtml);
     }
 
@@ -577,7 +583,7 @@ public class CalorieBalanceDashboardTests
     {
         using var factory = new IntegrationTestFactory();
         const string userId = "read-only-history-user";
-        var historicalYear = DateTime.Today.Year - 1;
+        var historicalYear = CurrentDate.Year - 1;
         await SeedHistoricalDayAsync(
             factory,
             userId,
@@ -610,7 +616,7 @@ public class CalorieBalanceDashboardTests
         IntegrationTestFactory factory,
         string userId)
     {
-        var year = DateTime.Today.Year;
+        var year = CurrentDate.Year;
         var dates = new CalendarDates(
             new DateOnly(year, 1, 15),
             new DateOnly(year, 2, 16),
@@ -684,7 +690,7 @@ public class CalorieBalanceDashboardTests
             UserId = userId,
             MeasurementSystem = ProfileOptions.Metric,
             ThemePreference = ProfileOptions.SystemTheme,
-            DateOfBirth = DateTime.Today.AddYears(-35),
+            DateOfBirth = CurrentDate.AddYears(-35).ToDateTime(TimeOnly.MinValue),
             HeightCm = 180m,
             WeightKg = 80m,
             CalculationSex = ProfileOptions.Male,
@@ -700,7 +706,7 @@ public class CalorieBalanceDashboardTests
         await context.SaveChangesAsync();
 
         var entry = TestData.DiaryEntry(userId, food, caloriesConsumed);
-        entry.Date = DateTime.Today;
+        entry.Date = CurrentDate.ToDateTime(TimeOnly.MinValue);
         context.DiaryEntries.Add(entry);
         await context.SaveChangesAsync();
     }

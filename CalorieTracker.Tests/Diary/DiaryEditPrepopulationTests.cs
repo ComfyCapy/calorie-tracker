@@ -47,7 +47,7 @@ public class DiaryEditPrepopulationTests
                 RegexOptions.Singleline),
             html);
         Assert.Matches(">g</span>", html);
-        Assert.Contains(DateTime.Today.ToString("yyyy-MM-dd"), html);
+        Assert.Contains(TestTime.Today.ToString("yyyy-MM-dd"), html);
         Assert.Matches(
             new Regex(
                 "<option(?=[^>]*value=\"Lunch\")(?=[^>]*selected)[^>]*>\\s*Lunch\\s*</option>",
@@ -227,7 +227,7 @@ public class DiaryEditPrepopulationTests
         context.Foods.Add(food);
         await context.SaveChangesAsync();
         var entry = TestData.DiaryEntry(userId, food, quantity);
-        entry.Date = DateTime.Today;
+        entry.Date = TestTime.Today.ToDateTime(TimeOnly.MinValue);
         entry.MealType = meal;
         context.DiaryEntries.Add(entry);
         await context.SaveChangesAsync();

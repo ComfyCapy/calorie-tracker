@@ -15,15 +15,18 @@ namespace CalorieTracker.Pages.Diary
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly MacroTargetCalculator _macroTargetCalculator;
+        private readonly IUserLocalTimeProvider _userLocalTimeProvider;
 
         public IndexModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            MacroTargetCalculator macroTargetCalculator)
+            MacroTargetCalculator macroTargetCalculator,
+            IUserLocalTimeProvider userLocalTimeProvider)
         {
             _context = context;
             _userManager = userManager;
             _macroTargetCalculator = macroTargetCalculator;
+            _userLocalTimeProvider = userLocalTimeProvider;
         }
 
         public List<DiaryEntry> Entries { get; set; } = [];
@@ -39,6 +42,7 @@ namespace CalorieTracker.Pages.Diary
         public MacroGoalProgress? MacroGoalProgress { get; set; }
 
         public DateTime SelectedDate { get; set; }
+        public DateOnly CurrentDate { get; private set; }
 
         public DateTime? PreviousDate =>
             SelectedDate > ValidationRules.MinimumDiaryDate
@@ -58,7 +62,8 @@ namespace CalorieTracker.Pages.Diary
             }
 
             var userId = _userManager.GetUserId(User);
-            SelectedDate = date?.Date ?? DateTime.Today;
+            CurrentDate = _userLocalTimeProvider.Today;
+            SelectedDate = date?.Date ?? CurrentDate.ToDateTime(TimeOnly.MinValue);
 
             if (SelectedDate < ValidationRules.MinimumDiaryDate ||
                 SelectedDate > ValidationRules.MaximumDiaryDate)
@@ -84,7 +89,7 @@ namespace CalorieTracker.Pages.Diary
 
             if (profile != null)
             {
-                DailyCalorieTarget = profile.EffectiveCalorieTarget;
+                DailyCalorieTarget = profile.CalculateEffectiveCalorieTarget(CurrentDate);
                 CaloriesRemaining = DailyCalorieTarget - TotalCalories;
 
                 if (DailyCalorieTarget > 0)
@@ -97,7 +102,7 @@ namespace CalorieTracker.Pages.Diary
                 }
 
                 MacroGoalProgress = _macroTargetCalculator
-                    .Calculate(profile)?
+                    .Calculate(profile, CurrentDate)?
                     .CreateProgress(
                         TotalProtein,
                         TotalCarbohydrates,

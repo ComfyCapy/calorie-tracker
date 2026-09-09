@@ -7,12 +7,14 @@ namespace CalorieTracker.Tests.Calculations;
 
 public class CalorieBalanceYearServiceTests
 {
+    private static readonly DateOnly Today = TestTime.Today;
+
     [Fact]
     public async Task GetYear_NormalYearReturnsOrdered365DayCalendar()
     {
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
-        var result = await Service(database).GetYearAsync("user-1", 2025);
+        var result = await Service(database).GetYearAsync("user-1", 2025, Today);
 
         Assert.Equal(2025, result.Year);
         Assert.Equal(365, result.Days.Count);
@@ -27,7 +29,7 @@ public class CalorieBalanceYearServiceTests
     {
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
-        var result = await Service(database).GetYearAsync("user-1", 2024);
+        var result = await Service(database).GetYearAsync("user-1", 2024, Today);
 
         Assert.Equal(366, result.Days.Count);
         Assert.Contains(result.Days, day =>
@@ -62,7 +64,7 @@ public class CalorieBalanceYearServiceTests
         // Mutable food data must not rewrite the diary's captured nutrition.
         food.Calories = 9999;
         await database.Context.SaveChangesAsync();
-        var result = await Service(database).GetYearAsync("user-1", 2025);
+        var result = await Service(database).GetYearAsync("user-1", 2025, Today);
         var day = result.Days.Single(item =>
             item.Date == new DateOnly(2025, 1, 15));
 
@@ -82,7 +84,7 @@ public class CalorieBalanceYearServiceTests
         var profile = new UserProfile
         {
             UserId = "user-1",
-            DateOfBirth = DateTime.Today.AddYears(-30),
+            DateOfBirth = Today.AddYears(-30).ToDateTime(TimeOnly.MinValue),
             HeightCm = 180,
             WeightKg = 80,
             CalculationSex = ProfileOptions.Male,
@@ -105,7 +107,7 @@ public class CalorieBalanceYearServiceTests
                 1000));
         await database.Context.SaveChangesAsync();
 
-        var day = (await Service(database).GetYearAsync("user-1", 2025))
+        var day = (await Service(database).GetYearAsync("user-1", 2025, Today))
             .Days.Single(item => item.Date == new DateOnly(2025, 2, 2));
 
         Assert.Equal(200, day.CaloriesConsumed);
@@ -141,7 +143,7 @@ public class CalorieBalanceYearServiceTests
                 1000));
         await database.Context.SaveChangesAsync();
 
-        var days = (await Service(database).GetYearAsync("user-1", 2025))
+        var days = (await Service(database).GetYearAsync("user-1", 2025, Today))
             .Days;
         var retainedSnapshotDay = days.Single(day =>
             day.Date == new DateOnly(2025, 3, 1));
@@ -188,7 +190,7 @@ public class CalorieBalanceYearServiceTests
         await database.Context.SaveChangesAsync();
         database.Context.ChangeTracker.Clear();
 
-        var result = await Service(database).GetYearAsync("user-1", 2025);
+        var result = await Service(database).GetYearAsync("user-1", 2025, Today);
         var day = result.Days.Single(item =>
             item.Date == new DateOnly(2025, 4, 1));
 
@@ -207,7 +209,7 @@ public class CalorieBalanceYearServiceTests
         var food = TestData.Food("user-1");
         database.Context.Foods.Add(food);
         await database.Context.SaveChangesAsync();
-        var futureDate = DateOnly.FromDateTime(DateTime.Today.AddDays(1));
+        var futureDate = Today.AddDays(1);
         var entry = TestData.DiaryEntry("user-1", food, 100);
         entry.Date = futureDate.ToDateTime(TimeOnly.MinValue);
         database.Context.DiaryEntries.Add(entry);
@@ -217,7 +219,8 @@ public class CalorieBalanceYearServiceTests
 
         var result = await Service(database).GetYearAsync(
             "user-1",
-            futureDate.Year);
+            futureDate.Year,
+            Today);
         var futureDay = result.Days.Single(day =>
             day.Date == futureDate);
 

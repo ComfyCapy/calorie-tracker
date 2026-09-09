@@ -113,7 +113,7 @@ public class ThemeTests
         {
             UserId = UserId,
             ThemePreference = theme,
-            DateOfBirth = DateTime.Today.AddYears(-30),
+            DateOfBirth = TestTime.Today.AddYears(-30).ToDateTime(TimeOnly.MinValue),
             HeightCm = 180,
             WeightKg = 80,
             CalculationSex = ProfileOptions.Male,

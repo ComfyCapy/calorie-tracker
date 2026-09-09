@@ -191,6 +191,9 @@ builder.Services.AddScoped<ExternalFoodResolver>();
 builder.Services.AddScoped<CapyProvisioningService>();
 builder.Services.AddScoped<DailyMaintenanceSnapshotService>();
 builder.Services.AddScoped<CalorieBalanceYearService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddScoped<IUserLocalTimeProvider, UserLocalTimeProvider>();
 builder.Services.AddSingleton<GoalTimelineCalculator>();
 builder.Services.AddSingleton<MacroTargetCalculator>();
 

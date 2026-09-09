@@ -4,6 +4,7 @@ using CalorieTracker.Pages.Profile;
 using CalorieTracker.Services;
 using CalorieTracker.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using DiaryCreateModel = CalorieTracker.Pages.Diary.CreateModel;
@@ -34,6 +35,33 @@ public class DailyMaintenanceSnapshotTests
             .ToListAsync();
         Assert.Single(snapshots);
         Assert.Equal(maintenance, snapshots[0].MaintenanceCalories);
+    }
+
+    [Fact]
+    public async Task Create_DefaultLocalDate_IsUsedForEntryAndSnapshot()
+    {
+        var localDate = new DateOnly(2026, 9, 9);
+        await using var database = await CreateUserWithProfileAsync("user-1");
+        var food = await AddFoodAsync(database, "user-1");
+        var model = new DiaryCreateModel(
+            database.Context,
+            PageModelTestContext.CreateUserManager(),
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider(localDate));
+        PageModelTestContext.Attach(model, "user-1");
+
+        var getResult = await model.OnGetAsync(null, "Dinner", food.Id);
+        model.DiaryEntry.Quantity = 100;
+        var postResult = await model.OnPostAsync();
+
+        Assert.IsType<PageResult>(getResult);
+        Assert.IsType<RedirectToPageResult>(postResult);
+        Assert.Equal(
+            localDate,
+            DateOnly.FromDateTime(model.DiaryEntry.Date));
+        Assert.Equal(
+            localDate,
+            (await database.Context.DailyMaintenanceSnapshots.SingleAsync()).Date);
     }
 
     [Fact]
@@ -353,7 +381,8 @@ public class DailyMaintenanceSnapshotTests
         var model = new DiaryCreateModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            new DailyMaintenanceSnapshotService(database.Context))
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider())
         {
             DiaryEntry = new DiaryEntry
             {
@@ -407,7 +436,8 @@ public class DailyMaintenanceSnapshotTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
-            new DailyMaintenanceSnapshotService(database.Context))
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider())
         {
             UserProfile = ValidProfile(userId, weightKg: weightKg)
         };

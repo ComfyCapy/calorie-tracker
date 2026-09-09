@@ -15,17 +15,20 @@ namespace CalorieTracker.Pages.Foods
         private readonly ExternalFoodResolver _externalFoodResolver;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUserLocalTimeProvider _userLocalTimeProvider;
 
         private Food? _resolvedFood;
 
         public ApiFoodModel(
             ExternalFoodResolver externalFoodResolver,
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IUserLocalTimeProvider userLocalTimeProvider)
         {
             _externalFoodResolver = externalFoodResolver;
             _context = context;
             _userManager = userManager;
+            _userLocalTimeProvider = userLocalTimeProvider;
         }
 
         public FoodSearchResult? Food { get; set; }
@@ -41,7 +44,7 @@ namespace CalorieTracker.Pages.Foods
         public string MealType { get; set; } = "Dinner";
 
         [BindProperty]
-        public DateTime Date { get; set; } = DateTime.Today;
+        public DateTime Date { get; set; }
 
         public async Task<IActionResult> OnGetAsync(
             string id,
@@ -85,7 +88,8 @@ namespace CalorieTracker.Pages.Foods
 
             ExternalId = _resolvedFood!.ExternalId!;
             SearchTerm = searchTerm ?? string.Empty;
-            Date = date?.Date ?? DateTime.Today;
+            Date = date?.Date ??
+                _userLocalTimeProvider.Today.ToDateTime(TimeOnly.MinValue);
             MealType = meal ?? "Dinner";
 
             return Page();

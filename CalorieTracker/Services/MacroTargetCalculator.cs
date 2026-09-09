@@ -55,14 +55,16 @@ public sealed class MacroTargetCalculator
     public const decimal CarbohydrateCaloriesPerGram = 4m;
     public const decimal FatCaloriesPerGram = 9m;
 
-    public MacroTargets? Calculate(UserProfile? profile)
+    public MacroTargets? Calculate(
+        UserProfile? profile,
+        DateOnly currentDate)
     {
-        if (profile?.HasUsableCalorieEstimates != true)
+        if (profile?.HasUsableCalorieEstimatesOn(currentDate) != true)
         {
             return null;
         }
 
-        var calorieTarget = profile.EffectiveCalorieTarget;
+        var calorieTarget = profile.CalculateEffectiveCalorieTarget(currentDate);
         var proteinGrams = RoundGrams(
             profile.WeightKg * ProteinGramsPerKilogram);
         var fatGrams = RoundGrams(

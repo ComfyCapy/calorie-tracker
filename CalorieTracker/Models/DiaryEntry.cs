@@ -17,7 +17,7 @@ namespace CalorieTracker.Models
         public ApplicationUser? User { get; set; }
 
         [Required]
-        public DateTime Date { get; set; } = DateTime.Today;
+        public DateTime Date { get; set; }
 
         [Required]
         public string MealType { get; set; } = string.Empty;

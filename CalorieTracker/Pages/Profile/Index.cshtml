@@ -48,7 +48,7 @@ else
         <input asp-for="UserProfile.DateOfBirth"
                type="date"
                class="form-control"
-               max="@DateTime.Today.ToString("yyyy-MM-dd")"
+               max="@Model.CurrentDate.ToString("yyyy-MM-dd")"
                data-msg-max="Date of birth cannot be in the future."
                aria-required="true" />
 
@@ -444,7 +444,7 @@ else
                 </small>
 
                 <h3 class="mb-1 h2">
-                    @Model.EstimatesProfile.EffectiveCalorieTarget.ToString("0")
+                    @Model.EstimatesProfile.CalculateEffectiveCalorieTarget(Model.CurrentDate).ToString("0")
                     <small class="fs-6 fw-normal">kcal/day</small>
                 </h3>
 
@@ -480,7 +480,7 @@ else
                     <strong>Maintenance Calories</strong>
 
                     <p class="mb-1">
-                        ~@Model.EstimatesProfile.TDEE.ToString("0") kcal/day
+                        ~@Model.EstimatesProfile.CalculateTdee(Model.CurrentDate).ToString("0") kcal/day
                     </p>
 
                     <small class="text-muted">
@@ -492,7 +492,7 @@ else
                     <strong>BMR</strong>
 
                     <p class="mb-1">
-                        ~@Model.EstimatesProfile.BMR.ToString("0") kcal/day
+                        ~@Model.EstimatesProfile.CalculateBmr(Model.CurrentDate).ToString("0") kcal/day
                     </p>
 
                     <small class="text-muted">
@@ -516,7 +516,7 @@ else
                     <strong>Age</strong>
 
                     <p class="mb-1">
-                        @Model.EstimatesProfile.Age years
+                        @Model.EstimatesProfile.CalculateAge(Model.CurrentDate) years
                     </p>
 
                     <small class="text-muted">

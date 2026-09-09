@@ -448,7 +448,8 @@ public class DiaryPageModelTests
         var model = new DiaryCreateModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            new DailyMaintenanceSnapshotService(database.Context))
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider())
         {
             DiaryEntry = new DiaryEntry
             {
@@ -470,7 +471,8 @@ public class DiaryPageModelTests
         var model = new DiaryCreateModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            new DailyMaintenanceSnapshotService(database.Context));
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider());
         PageModelTestContext.Attach(model, userId);
         return model;
     }

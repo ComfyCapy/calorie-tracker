@@ -12,6 +12,8 @@ namespace CalorieTracker.Tests.Calculations;
 
 public class GoalTimelinePageTests
 {
+    private static readonly DateOnly CurrentDate = TestTime.Today;
+
     [Fact]
     public async Task DashboardAndProfileUseSameSavedCalculationsAndTimeline()
     {
@@ -27,7 +29,8 @@ public class GoalTimelinePageTests
             PageModelTestContext.CreateUserManager(),
             calculator,
             new CalorieBalanceYearService(database.Context),
-            new MacroTargetCalculator());
+            new MacroTargetCalculator(),
+            new TestUserLocalTimeProvider(CurrentDate));
         PageModelTestContext.Attach(dashboard, "user-1");
         await dashboard.OnGetAsync();
 
@@ -35,15 +38,22 @@ public class GoalTimelinePageTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             calculator,
-            new DailyMaintenanceSnapshotService(database.Context));
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider(CurrentDate));
         PageModelTestContext.Attach(profilePage, "user-1");
         await profilePage.OnGetAsync();
 
         Assert.True(dashboard.HasProfileEstimates);
-        Assert.Equal(profile.TDEE, dashboard.UserProfile!.TDEE);
-        Assert.Equal(profile.BMR, dashboard.UserProfile.BMR);
+        Assert.Equal(
+            profile.CalculateTdee(CurrentDate),
+            dashboard.UserProfile!.CalculateTdee(CurrentDate));
+        Assert.Equal(
+            profile.CalculateBmr(CurrentDate),
+            dashboard.UserProfile.CalculateBmr(CurrentDate));
         Assert.Equal(profile.BMI, dashboard.UserProfile.BMI);
-        Assert.Equal(profile.Age, dashboard.UserProfile.Age);
+        Assert.Equal(
+            profile.CalculateAge(CurrentDate),
+            dashboard.UserProfile.CalculateAge(CurrentDate));
         Assert.Equal(GoalTimelineStatus.ProjectionAvailable, dashboard.GoalTimeline.Status);
         Assert.Equal(dashboard.GoalTimeline, profilePage.GoalTimeline);
     }
@@ -152,7 +162,7 @@ public class GoalTimelinePageTests
             Goal = ProfileOptions.Lose,
             WeeklyGoalKg = 0.5m
         };
-        profile.CustomCalorieTarget = profile.TDEE - 550m;
+        profile.CustomCalorieTarget = profile.CalculateTdee(CurrentDate) - 550m;
         return profile;
     }
 
@@ -180,7 +190,7 @@ public class GoalTimelinePageTests
             UserId = userId,
             MeasurementSystem = ProfileOptions.Metric,
             ThemePreference = ProfileOptions.SystemTheme,
-            DateOfBirth = DateTime.Today,
+            DateOfBirth = CurrentDate.ToDateTime(TimeOnly.MinValue),
             HeightCm = 0,
             WeightKg = 0,
             CalculationSex = string.Empty,

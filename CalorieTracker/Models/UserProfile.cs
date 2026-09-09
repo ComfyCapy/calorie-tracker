@@ -67,9 +67,6 @@ namespace CalorieTracker.Models
         public decimal? CustomCalorieTarget { get; set; }
 
         [NotMapped]
-        public int Age => CalculateAge(DateOnly.FromDateTime(DateTime.Today));
-
-        [NotMapped]
         public decimal BMI
         {
             get
@@ -84,12 +81,6 @@ namespace CalorieTracker.Models
                 return WeightKg / (heightMetres * heightMetres);
             }
         }
-
-        [NotMapped]
-        public decimal BMR => CalculateBmr(DateOnly.FromDateTime(DateTime.Today));
-
-        [NotMapped]
-        public decimal TDEE => CalculateTdee(DateOnly.FromDateTime(DateTime.Today));
 
         /// <summary>
         /// Calculates completed years of age on a specific calendar date.
@@ -184,59 +175,58 @@ namespace CalorieTracker.Models
             ProfileOptions.ExtraActive => 1.9m,
             _ => 0
         };
-        [NotMapped]
-        public decimal DailyCalorieTarget
+        public decimal CalculateDailyCalorieTarget(DateOnly date)
         {
-            get
+            var tdee = CalculateTdee(date);
+
+            if (tdee <= 0)
             {
-                if (TDEE <= 0)
-                {
-                    return 0;
-                }
-
-                if (Goal == ProfileOptions.Maintain)
-                {
-                    return TDEE;
-                }
-
-                if (WeeklyGoalKg == null)
-                {
-                    return TDEE;
-                }
-
-                var dailyAdjustment = (WeeklyGoalKg.Value * 7700) / 7;
-
-                return Goal switch
-                {
-                    ProfileOptions.Lose => TDEE - dailyAdjustment,
-                    ProfileOptions.Gain => TDEE + dailyAdjustment,
-                    _ => TDEE
-                };
+                return 0;
             }
-        }
-        [NotMapped]
-        public decimal EffectiveCalorieTarget
-        {
-            get
+
+            if (Goal == ProfileOptions.Maintain)
             {
-                return CustomCalorieTarget ?? DailyCalorieTarget;
+                return tdee;
             }
+
+            if (WeeklyGoalKg == null)
+            {
+                return tdee;
+            }
+
+            var dailyAdjustment = (WeeklyGoalKg.Value * 7700) / 7;
+
+            return Goal switch
+            {
+                ProfileOptions.Lose => tdee - dailyAdjustment,
+                ProfileOptions.Gain => tdee + dailyAdjustment,
+                _ => tdee
+            };
         }
 
-        [NotMapped]
-        public bool HasUsableCalorieEstimates =>
-            DateOfBirth.HasValue &&
-            Age is >= 18 and <= 120 &&
-            HeightCm is >= 50 and <= 300 &&
-            WeightKg is >= 20 and <= 500 &&
-            (CalculationSex == ProfileOptions.Male ||
-             CalculationSex == ProfileOptions.Female) &&
-            ProfileOptions.ActivityLevels.Contains(ActivityLevel) &&
-            BMI > 0 &&
-            BMR > 0 &&
-            TDEE > 0 &&
-            EffectiveCalorieTarget > 0 &&
-            (!CustomCalorieTarget.HasValue ||
-             CustomCalorieTarget.Value is >= 500 and <= 10000);
+        public decimal CalculateEffectiveCalorieTarget(DateOnly date) =>
+            CustomCalorieTarget ?? CalculateDailyCalorieTarget(date);
+
+        public bool HasUsableCalorieEstimatesOn(DateOnly date)
+        {
+            var age = CalculateAge(date);
+            var bmr = CalculateBmr(date);
+            var tdee = CalculateTdee(date);
+            var effectiveCalorieTarget = CalculateEffectiveCalorieTarget(date);
+
+            return DateOfBirth.HasValue &&
+                age is >= 18 and <= 120 &&
+                HeightCm is >= 50 and <= 300 &&
+                WeightKg is >= 20 and <= 500 &&
+                (CalculationSex == ProfileOptions.Male ||
+                 CalculationSex == ProfileOptions.Female) &&
+                ProfileOptions.ActivityLevels.Contains(ActivityLevel) &&
+                BMI > 0 &&
+                bmr > 0 &&
+                tdee > 0 &&
+                effectiveCalorieTarget > 0 &&
+                (!CustomCalorieTarget.HasValue ||
+                 CustomCalorieTarget.Value is >= 500 and <= 10000);
+        }
     }
 }

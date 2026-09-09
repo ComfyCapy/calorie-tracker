@@ -32,14 +32,14 @@ public sealed class GoalTimelineCalculator
 
     public GoalTimelineResult Calculate(
         UserProfile? profile,
-        DateOnly? currentDate = null)
+        DateOnly currentDate)
     {
         if (profile == null || IsIncomplete(profile))
         {
             return Result(GoalTimelineStatus.IncompleteProfile, profile);
         }
 
-        if (!HasValidCalculationInputs(profile))
+        if (!HasValidCalculationInputs(profile, currentDate))
         {
             return Result(GoalTimelineStatus.InvalidCalculation, profile);
         }
@@ -49,7 +49,8 @@ public sealed class GoalTimelineCalculator
         try
         {
             weeklyChangeKg =
-                (profile.EffectiveCalorieTarget - profile.TDEE) *
+                (profile.CalculateEffectiveCalorieTarget(currentDate) -
+                 profile.CalculateTdee(currentDate)) *
                 DaysPerWeek /
                 CaloriesPerKilogram;
         }
@@ -137,12 +138,11 @@ public sealed class GoalTimelineCalculator
         }
 
         var weeks = (int)weeksDecimal;
-        var today = currentDate ?? DateOnly.FromDateTime(DateTime.Today);
         DateOnly estimatedTargetDate;
 
         try
         {
-            estimatedTargetDate = today.AddDays(checked(weeks * 7));
+            estimatedTargetDate = currentDate.AddDays(checked(weeks * 7));
         }
         catch (ArgumentOutOfRangeException)
         {
@@ -173,8 +173,10 @@ public sealed class GoalTimelineCalculator
           profile.Goal == ProfileOptions.Gain) &&
          !profile.GoalWeightKg.HasValue);
 
-    private static bool HasValidCalculationInputs(UserProfile profile) =>
-        profile.HasUsableCalorieEstimates &&
+    private static bool HasValidCalculationInputs(
+        UserProfile profile,
+        DateOnly currentDate) =>
+        profile.HasUsableCalorieEstimatesOn(currentDate) &&
         (profile.MeasurementSystem == ProfileOptions.Metric ||
          profile.MeasurementSystem == ProfileOptions.Imperial) &&
         ProfileOptions.Goals.Contains(profile.Goal);

@@ -284,7 +284,7 @@ public class CustomPortionFoodTests
 
         var entry = await database.Context.DiaryEntries.SingleAsync();
         var day = (await new CalorieBalanceYearService(database.Context)
-                .GetYearAsync("user-1", 2026))
+                .GetYearAsync("user-1", 2026, new DateOnly(2026, 9, 9)))
             .Days.Single(item => item.Date == new DateOnly(2026, 9, 5));
 
         Assert.Equal(731, entry.CaloriesConsumed);
@@ -316,7 +316,8 @@ public class CustomPortionFoodTests
         var model = new DiaryCreateModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            new DailyMaintenanceSnapshotService(database.Context))
+            new DailyMaintenanceSnapshotService(database.Context),
+            new TestUserLocalTimeProvider())
         {
             DiaryEntry = new DiaryEntry
             {

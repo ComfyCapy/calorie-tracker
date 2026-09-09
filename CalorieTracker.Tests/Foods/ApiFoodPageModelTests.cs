@@ -13,6 +13,29 @@ namespace CalorieTracker.Tests.Foods;
 public class ApiFoodPageModelTests
 {
     [Fact]
+    public async Task Get_WithoutDiaryDate_UsesCurrentUserLocalDate()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var foodResult = TestData.UsdaResult();
+        var service = new FakeFoodSearchService
+        {
+            GetHandler = _ => Task.FromResult<FoodSearchResult?>(foodResult)
+        };
+        var model = new ApiFoodModel(
+            new ExternalFoodResolver(database.Context, service),
+            database.Context,
+            PageModelTestContext.CreateUserManager(),
+            new TestUserLocalTimeProvider(new DateOnly(2026, 9, 9)));
+        PageModelTestContext.Attach(model, "user-1");
+
+        var result = await model.OnGetAsync("123", null, null, null);
+
+        Assert.IsType<Microsoft.AspNetCore.Mvc.RazorPages.PageResult>(result);
+        Assert.Equal(new DateTime(2026, 9, 9), model.Date);
+    }
+
+    [Fact]
     public async Task MyFoods_CachedExternalCardLinksDirectlyToDiaryCreate()
     {
         using var factory = new IntegrationTestFactory();
@@ -72,7 +95,8 @@ public class ApiFoodPageModelTests
         var model = new ApiFoodModel(
             resolver,
             database.Context,
-            PageModelTestContext.CreateUserManager())
+            PageModelTestContext.CreateUserManager(),
+            new TestUserLocalTimeProvider())
         {
             ExternalId = "123",
             SearchTerm = "cinnamon",
