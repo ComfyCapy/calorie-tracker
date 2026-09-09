@@ -46,7 +46,50 @@ a {
 
 .footer-links {
   display: inline-flex;
-  gap: 1rem;
+  gap: 1.25rem;
+}
+
+.footer-links ::deep a {
+  display: inline-block;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  transition: color .15s ease-in-out;
+}
+
+.footer-links ::deep a::after {
+  position: absolute;
+  right: 0;
+  bottom: .15em;
+  left: 0;
+  height: 1px;
+  content: "";
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform .15s ease-in-out;
+}
+
+.footer-links ::deep a:hover,
+.footer-links ::deep a:focus-visible {
+  color: var(--bs-emphasis-color);
+}
+
+.footer-links ::deep a:hover::after,
+.footer-links ::deep a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.footer-links ::deep a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-links ::deep a,
+  .footer-links ::deep a::after {
+    transition: none;
+  }
 }
 
 @media (max-width: 575.98px) {
