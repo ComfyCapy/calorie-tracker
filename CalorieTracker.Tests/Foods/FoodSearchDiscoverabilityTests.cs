@@ -18,7 +18,8 @@ public class FoodSearchDiscoverabilityTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Search your foods", html);
         Assert.Contains("Search all foods", html);
-        Assert.Contains("Search the wider food catalogue", html);
+        Assert.Contains("Add Custom Food", html);
+        Assert.DoesNotContain("Search the wider food catalogue.", html);
         Assert.Contains("searchTerm=banana", html);
         Assert.Contains("diaryDate=2026-09-07", html);
         Assert.Contains("diaryMeal=Lunch", html);

@@ -40,7 +40,15 @@
     Search your favourites, custom foods, and recent foods saved to your collection.
 </p>
 
-<p class="mb-3">
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-page="./Create"
+       asp-route-returnToDiary="@Model.ReturnToDiary"
+       asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+       asp-route-diaryMeal="@Model.DiaryMeal"
+       class="btn btn-primary">
+        Add Custom Food
+    </a>
+
     <a asp-page="./Search"
        asp-route-returnToDiary="@Model.ReturnToDiary"
        asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
@@ -49,18 +57,7 @@
        class="btn btn-outline-primary">
         Search all foods
     </a>
-    <span class="text-body-secondary ms-2">Search the wider food catalogue.</span>
-</p>
-
-<p>
-    <a asp-page="./Create"
-       asp-route-returnToDiary="@Model.ReturnToDiary"
-       asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-       asp-route-diaryMeal="@Model.DiaryMeal"
-       class="btn btn-primary">
-        Add Custom Food
-    </a>
-</p>
+</div>
 
 @if (string.IsNullOrWhiteSpace(Model.SearchTerm) && Model.FavouriteFoods.Count == 0
     && Model.CustomFoods.Count == 0 && Model.RecentFoods.Count == 0)
