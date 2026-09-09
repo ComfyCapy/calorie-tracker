@@ -286,6 +286,12 @@ npm run build
 
 The .NET build doesn't automatically rebuild the React island.
 
+## Licensing and source availability
+
+Comfy Capy Calories is publicly viewable as a portfolio project, but it is not open-source software. The project's original source code and original Comfy Capy artwork are copyright © 2026 John Gambino. All rights reserved.
+
+Viewing and evaluation are permitted, but reuse, modification, redistribution, or commercial use of original project materials requires prior written permission. Third-party components remain subject to their respective licenses. See [LICENSE.md](LICENSE.md) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
 ## Project status
 
 - **Deployment:** Not public just yet; a live demo is coming soon.

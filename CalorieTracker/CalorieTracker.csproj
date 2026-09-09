@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>cc74a36a-b8c9-447e-937b-d76dbb1dca28</UserSecretsId>
+    <Copyright>Copyright © 2026 John Gambino</Copyright>
     <DefaultItemExcludesInProjectFolder>$(DefaultItemExcludesInProjectFolder);artifacts/**;ClientApp/**</DefaultItemExcludesInProjectFolder>
   </PropertyGroup>
 
