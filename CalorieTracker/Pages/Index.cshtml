@@ -11,7 +11,6 @@
 
 @section Scripts {
     <script src="~/js/calorie-year-map.js" asp-append-version="true"></script>
-    <script src="~/js/macro-goals-preference.js" asp-append-version="true"></script>
 }
 
 @if (User.Identity?.IsAuthenticated == true)
@@ -169,21 +168,6 @@
                 <h2 id="dashboard-macro-heading" class="visually-hidden">
                     Macronutrients
                 </h2>
-
-                @if (macroGoals != null)
-                {
-                    <div class="form-check form-switch mb-0">
-                        <input id="dashboardShowMacroGoals"
-                               class="form-check-input"
-                               type="checkbox"
-                               role="switch"
-                               data-macro-goals-toggle
-                               aria-controls="dashboardMacroCards" />
-                        <label class="form-check-label" for="dashboardShowMacroGoals">
-                            Show macro goals
-                        </label>
-                    </div>
-                }
             </div>
 
             <div id="dashboardMacroCards" class="dashboard-macro-grid">
@@ -200,16 +184,16 @@
                         Protein
                     </span>
 
-                    <strong class="dashboard-macro-value"
-                            data-macro-goals-compact>
-                        @Model.ProteinConsumed.ToString("0.0") g
-                    </strong>
+                    @if (macroGoals == null)
+                    {
+                        <strong class="dashboard-macro-value">
+                            @Model.ProteinConsumed.ToString("0.0") g
+                        </strong>
+                    }
 
                     @if (macroGoals != null)
                     {
-                        <div class="dashboard-macro-goal"
-                             data-macro-goals-content
-                             hidden>
+                        <div class="dashboard-macro-goal">
                             <strong class="dashboard-macro-value">
                                 @macroGoals.Protein.ConsumedGrams.ToString("0.0") /
                                 @macroGoals.Protein.TargetGrams.ToString("0.#") g
@@ -241,16 +225,16 @@
                         Carbohydrates
                     </span>
 
-                    <strong class="dashboard-macro-value"
-                            data-macro-goals-compact>
-                        @Model.CarbohydratesConsumed.ToString("0.0") g
-                    </strong>
+                    @if (macroGoals == null)
+                    {
+                        <strong class="dashboard-macro-value">
+                            @Model.CarbohydratesConsumed.ToString("0.0") g
+                        </strong>
+                    }
 
                     @if (macroGoals != null)
                     {
-                        <div class="dashboard-macro-goal"
-                             data-macro-goals-content
-                             hidden>
+                        <div class="dashboard-macro-goal">
                             <strong class="dashboard-macro-value">
                                 @macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") /
                                 @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") g
@@ -282,16 +266,16 @@
                         Fat
                     </span>
 
-                    <strong class="dashboard-macro-value"
-                            data-macro-goals-compact>
-                        @Model.FatConsumed.ToString("0.0") g
-                    </strong>
+                    @if (macroGoals == null)
+                    {
+                        <strong class="dashboard-macro-value">
+                            @Model.FatConsumed.ToString("0.0") g
+                        </strong>
+                    }
 
                     @if (macroGoals != null)
                     {
-                        <div class="dashboard-macro-goal"
-                             data-macro-goals-content
-                             hidden>
+                        <div class="dashboard-macro-goal">
                             <strong class="dashboard-macro-value">
                                 @macroGoals.Fat.ConsumedGrams.ToString("0.0") /
                                 @macroGoals.Fat.TargetGrams.ToString("0.#") g

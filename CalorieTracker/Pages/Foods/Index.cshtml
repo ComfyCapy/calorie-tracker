@@ -40,6 +40,10 @@
     Search your favourites, custom foods, and recent foods saved to your collection.
 </p>
 
+<span id="food-favourite-help" class="visually-hidden">
+    Favourite this food to find it faster in My Foods.
+</span>
+
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a asp-page="./Create"
        asp-route-returnToDiary="@Model.ReturnToDiary"
@@ -146,6 +150,7 @@
                                 <button type="submit"
                                         class="food-search-favourite-button is-favourite"
                                         aria-label="Remove @food.Name from Favourites"
+                                        aria-describedby="food-favourite-help"
                                         title="Remove @food.Name from Favourites">
                                     ★
                                 </button>
@@ -350,7 +355,8 @@
                                 <button type="submit"
                                         class="food-search-favourite-button @(food.IsFavourite ? "is-favourite" : "")"
                                         aria-label="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")"
-                                        title="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")">
+                                        aria-describedby="food-favourite-help"
+                                        title="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Favourite this food to find it faster in My Foods.")">
                                     @(food.IsFavourite ? "★" : "☆")
                                 </button>
                             </form>
@@ -542,7 +548,8 @@
                                 <button type="submit"
                                         class="food-search-favourite-button @(food.IsFavourite ? "is-favourite" : "")"
                                         aria-label="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")"
-                                        title="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Add " + food.Name + " to Favourites")">
+                                        aria-describedby="food-favourite-help"
+                                        title="@(food.IsFavourite ? "Remove " + food.Name + " from Favourites" : "Favourite this food to find it faster in My Foods.")">
                                     @(food.IsFavourite ? "★" : "☆")
                                 </button>
                             </form>

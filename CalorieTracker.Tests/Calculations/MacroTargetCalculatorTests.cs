@@ -167,7 +167,7 @@ public class MacroTargetCalculatorTests
     }
 
     [Fact]
-    public async Task DiaryAndDashboardRenderSharedAccessibleGoalMarkupHiddenByDefault()
+    public async Task DiaryKeepsMacroPreferenceWhileDashboardAlwaysRendersGoals()
     {
         const string userId = "macro-markup-user";
         using var factory = new IntegrationTestFactory();
@@ -183,10 +183,9 @@ public class MacroTargetCalculatorTests
         Assert.Contains("data-macro-goals-content", diary);
         Assert.Contains("hidden", diary);
 
-        Assert.Contains("id=\"dashboardShowMacroGoals\"", dashboard);
-        Assert.Contains("data-macro-goals-toggle", dashboard);
-        Assert.Contains("Show macro goals", dashboard);
-        Assert.Contains("aria-controls=\"dashboardMacroCards\"", dashboard);
+        Assert.DoesNotContain("id=\"dashboardShowMacroGoals\"", dashboard);
+        Assert.DoesNotContain("data-macro-goals-toggle", dashboard);
+        Assert.DoesNotContain("Show macro goals", dashboard);
         Assert.Contains("id=\"dashboardMacroCards\"", dashboard);
         foreach (var macro in new[] { "Protein", "Carbohydrates", "Fat" })
         {
@@ -194,9 +193,10 @@ public class MacroTargetCalculatorTests
             Assert.Contains($"aria-label=\"{macro} macro goal progress\"", dashboard);
         }
 
-        Assert.Contains("data-macro-goals-compact", dashboard);
         Assert.Contains("macro-goals-preference", diary);
-        Assert.Contains("macro-goals-preference", dashboard);
+        Assert.DoesNotContain("data-macro-goals-compact", dashboard);
+        Assert.DoesNotContain("data-macro-goals-content", dashboard);
+        Assert.DoesNotContain("macro-goals-preference", dashboard);
     }
 
     [Fact]

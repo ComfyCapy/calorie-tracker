@@ -129,12 +129,17 @@
            asp-for="AddToFavourites"
            id="addToFavouritesInput" />
 
+    <span id="food-favourite-help" class="visually-hidden">
+        Favourite this food to find it faster in My Foods.
+    </span>
+
     <div class="mb-3 mt-3 d-flex gap-2 align-items-center">
         <button type="button"
                 id="favouriteToggle"
                 class="btn btn-outline-warning"
                 aria-label="Add to Favourites"
-                title="Add to Favourites">
+                aria-describedby="food-favourite-help"
+                title="Favourite this food to find it faster in My Foods.">
             ☆
         </button>
 
@@ -182,7 +187,7 @@
                 "aria-label",
                 isFavourite
                     ? "Remove from Favourites"
-                    : "Add to Favourites");
+                    : "Favourite this food to find it faster in My Foods.");
 
             favouriteToggle.setAttribute(
                 "title",

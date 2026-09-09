@@ -232,6 +232,10 @@ function App({
                     : 'food-search-page'
             }
         >
+            <span id="food-favourite-help" className="visually-hidden">
+                Favourite this food to find it faster in My Foods.
+            </span>
+
             {!embedded && (
                 <>
                     <section className="food-search-header">
@@ -404,10 +408,11 @@ function App({
                                                     : `Add ${food.name} to Favourites`
                                             }
                                             aria-pressed={food.isFavourite}
+                                            aria-describedby="food-favourite-help"
                                             title={
                                                 food.isFavourite
                                                     ? 'Remove from Favourites'
-                                                    : 'Add to Favourites'
+                                                    : 'Favourite this food to find it faster in My Foods.'
                                             }
                                         >
                                             {food.isFavourite ? '★' : '☆'}
