@@ -16,6 +16,9 @@ const diaryMeal =
 const initialSearchTerm =
     rootElement?.dataset.initialSearchTerm || ''
 
+const initialProvider =
+    rootElement?.dataset.initialProvider || 'cofid'
+
 const embedded =
     rootElement?.dataset.embedded === 'true'
 
@@ -31,6 +34,7 @@ if (rootElement) {
                 diaryDate={diaryDate}
                 diaryMeal={diaryMeal}
                 initialSearchTerm={initialSearchTerm}
+                initialProvider={initialProvider}
                 embedded={embedded}
                 antiForgeryToken={antiForgeryToken}
             />

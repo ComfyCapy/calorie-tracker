@@ -18,18 +18,18 @@ namespace CalorieTracker.Controllers
     [AutoValidateAntiforgeryToken]
     public class FoodsApiController : ControllerBase
     {
-        private readonly IFoodSearchService _foodSearchService;
+        private readonly FoodCatalogue _foodCatalogue;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ExternalFoodResolver _externalFoodResolver;
 
         public FoodsApiController(
-            IFoodSearchService foodSearchService,
+            FoodCatalogue foodCatalogue,
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             ExternalFoodResolver externalFoodResolver)
         {
-            _foodSearchService = foodSearchService;
+            _foodCatalogue = foodCatalogue;
             _context = context;
             _userManager = userManager;
             _externalFoodResolver = externalFoodResolver;
@@ -40,13 +40,25 @@ namespace CalorieTracker.Controllers
         public async Task<ActionResult<FoodSearchPage>> Search(
             [FromQuery] string query,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+            [FromQuery] int pageSize = 20,
+            [FromQuery(Name = "provider")] string? providerId = null)
         {
             var userId = _userManager.GetUserId(User);
 
             if (userId == null)
             {
                 return Unauthorized();
+            }
+
+            if (!_foodCatalogue.TryGetProvider(
+                    providerId,
+                    out var catalogueProvider))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The food database selection is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
             }
 
             page = Math.Max(page, 1);
@@ -71,7 +83,7 @@ namespace CalorieTracker.Controllers
 
             try
             {
-                results = await _foodSearchService.SearchFoodsPageAsync(
+                results = await catalogueProvider.SearchAsync(
                     query,
                     page,
                     pageSize);
@@ -85,7 +97,7 @@ namespace CalorieTracker.Controllers
             {
                 return Problem(
                     statusCode: StatusCodes.Status503ServiceUnavailable,
-                    title: "The USDA food database is temporarily unavailable.");
+                    title: catalogueProvider.UnavailableTitle);
             }
 
             var externalIds = results.Foods
@@ -95,7 +107,7 @@ namespace CalorieTracker.Controllers
             var favouriteExternalIds = (await _context.Foods
                 .Where(food =>
                     food.UserId == userId &&
-                    food.Source == FoodSources.Usda &&
+                    food.Source == catalogueProvider.Source &&
                     food.ExternalId != null &&
                     externalIds.Contains(food.ExternalId) &&
                     food.IsFavourite &&
@@ -106,6 +118,8 @@ namespace CalorieTracker.Controllers
 
             foreach (var food in results.Foods)
             {
+                food.Provider = catalogueProvider.Id;
+                food.Source = catalogueProvider.Source;
                 food.IsFavourite =
                     favouriteExternalIds.Contains(food.ExternalId);
             }
@@ -116,7 +130,8 @@ namespace CalorieTracker.Controllers
         [HttpPost("select/{externalId}")]
         [EnableRateLimiting(RateLimitPolicies.FoodSearch)]
         public async Task<IActionResult> Select(
-            string externalId)
+            string externalId,
+            [FromQuery(Name = "provider")] string? providerId = null)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -125,14 +140,25 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
+            if (!_foodCatalogue.TryGetProvider(
+                    providerId,
+                    out var catalogueProvider))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The food database selection is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
             var resolution = await _externalFoodResolver
-                .ResolveAsync(userId, externalId);
+                .ResolveAsync(userId, catalogueProvider.Id, externalId);
 
             if (resolution.Failure == ExternalFoodFailure.InvalidId)
             {
                 return BadRequest(new ProblemDetails
                 {
-                    Title = "The USDA food ID is invalid.",
+                    Title = $"The {catalogueProvider.Source} food ID is invalid.",
                     Status = StatusCodes.Status400BadRequest
                 });
             }
@@ -141,7 +167,7 @@ namespace CalorieTracker.Controllers
             {
                 return NotFound(new ProblemDetails
                 {
-                    Title = "The USDA food could not be found.",
+                    Title = $"The {catalogueProvider.Source} food could not be found.",
                     Status = StatusCodes.Status404NotFound
                 });
             }
@@ -150,7 +176,7 @@ namespace CalorieTracker.Controllers
             {
                 return Problem(
                     statusCode: StatusCodes.Status503ServiceUnavailable,
-                    title: "The USDA food database is temporarily unavailable.");
+                    title: catalogueProvider.UnavailableTitle);
             }
 
             var food = resolution.Food!;
@@ -166,7 +192,8 @@ namespace CalorieTracker.Controllers
         [HttpPost("favourites/{externalId}")]
         [EnableRateLimiting(RateLimitPolicies.FoodSearch)]
         public async Task<IActionResult> Favourite(
-            string externalId)
+            string externalId,
+            [FromQuery(Name = "provider")] string? providerId = null)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -175,14 +202,25 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
+            if (!_foodCatalogue.TryGetProvider(
+                    providerId,
+                    out var catalogueProvider))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The food database selection is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
             var resolution = await _externalFoodResolver
-                .ResolveAsync(userId, externalId);
+                .ResolveAsync(userId, catalogueProvider.Id, externalId);
 
             if (resolution.Failure == ExternalFoodFailure.InvalidId)
             {
                 return BadRequest(new ProblemDetails
                 {
-                    Title = "The USDA food ID is invalid.",
+                    Title = $"The {catalogueProvider.Source} food ID is invalid.",
                     Status = StatusCodes.Status400BadRequest
                 });
             }
@@ -191,7 +229,7 @@ namespace CalorieTracker.Controllers
             {
                 return NotFound(new ProblemDetails
                 {
-                    Title = "The USDA food could not be found.",
+                    Title = $"The {catalogueProvider.Source} food could not be found.",
                     Status = StatusCodes.Status404NotFound
                 });
             }
@@ -200,7 +238,7 @@ namespace CalorieTracker.Controllers
             {
                 return Problem(
                     statusCode: StatusCodes.Status503ServiceUnavailable,
-                    title: "The USDA food database is temporarily unavailable.");
+                    title: catalogueProvider.UnavailableTitle);
             }
 
             var food = resolution.Food!;
@@ -217,7 +255,8 @@ namespace CalorieTracker.Controllers
 
         [HttpDelete("favourites/{externalId}")]
         public async Task<IActionResult> Unfavourite(
-            string externalId)
+            string externalId,
+            [FromQuery(Name = "provider")] string? providerId = null)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -226,13 +265,24 @@ namespace CalorieTracker.Controllers
                 return Unauthorized();
             }
 
-            if (!ExternalFoodIds.TryNormalizeUsdaId(
+            if (!_foodCatalogue.TryGetProvider(
+                    providerId,
+                    out var catalogueProvider))
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "The food database selection is invalid.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            if (!catalogueProvider.TryNormalizeExternalId(
                     externalId,
                     out var normalizedId))
             {
                 return BadRequest(new ProblemDetails
                 {
-                    Title = "The USDA food ID is invalid.",
+                    Title = $"The {catalogueProvider.Source} food ID is invalid.",
                     Status = StatusCodes.Status400BadRequest
                 });
             }
@@ -240,7 +290,7 @@ namespace CalorieTracker.Controllers
             var food = await _context.Foods
                 .FirstOrDefaultAsync(food =>
                     food.UserId == userId &&
-                    food.Source == FoodSources.Usda &&
+                    food.Source == catalogueProvider.Source &&
                     food.ExternalId == normalizedId &&
                     food.IsFavourite &&
                     !food.IsDeleted);

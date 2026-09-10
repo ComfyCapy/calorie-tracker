@@ -13,6 +13,7 @@
             id = food.Id,
             name = food.Name,
             unit = food.DisplayServingUnit,
+            isUsda = food.Source == CalorieTracker.Services.FoodSources.Usda,
             isFavourite = food.IsFavourite,
             isCustom = food.Source == null,
             portions = food.Portions
@@ -34,6 +35,7 @@
     <div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
     <input type="hidden" asp-for="ReturnToFoodSearch" />
     <input type="hidden" asp-for="FoodSearchTerm" />
+    <input type="hidden" asp-for="FoodSearchProvider" />
     <input type="hidden" asp-for="ReturnToFoodsIndex" />
 
     <fieldset class="form-section">
@@ -138,7 +140,8 @@
                asp-route-returnToDiary="true"
                asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
                asp-route-diaryMeal="@Model.DiaryEntry.MealType"
-               asp-route-searchTerm="@Model.FoodSearchTerm">
+               asp-route-searchTerm="@Model.FoodSearchTerm"
+               asp-route-provider="@Model.FoodSearchProvider">
                 Search all foods
             </a>
             or
@@ -183,6 +186,7 @@
                        id="portionMode" />
 
                 <label class="form-check-label"
+                       id="portionModeLabel"
                        for="portionMode">
                     Named portion
                 </label>
@@ -232,7 +236,7 @@
         </span>
 
         <div class="mt-2">
-            <label asp-for="PortionQuantity">
+            <label asp-for="PortionQuantity" for="portionQuantity" id="portionQuantityLabel">
                 Number of servings
             </label>
 
@@ -275,6 +279,7 @@
                asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
                asp-route-diaryMeal="@Model.DiaryEntry.MealType"
                asp-route-searchTerm="@Model.FoodSearchTerm"
+               asp-route-provider="@Model.FoodSearchProvider"
                class="btn btn-secondary">
                 Cancel
             </a>

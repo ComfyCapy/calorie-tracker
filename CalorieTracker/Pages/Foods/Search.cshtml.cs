@@ -18,9 +18,19 @@ namespace CalorieTracker.Pages.Foods
         public string? DiaryMeal { get; set; }
         [BindProperty(SupportsGet = true)]
         public string? SearchTerm { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? Provider { get; set; } = FoodCatalogueProviders.Cofid;
+
         public IActionResult OnGet()
         {
+            Provider = string.IsNullOrWhiteSpace(Provider)
+                ? FoodCatalogueProviders.Cofid
+                : Provider.Trim().ToLowerInvariant();
+
             if (!ModelState.IsValid ||
+                (Provider != FoodCatalogueProviders.Cofid &&
+                 Provider != FoodCatalogueProviders.Usda) ||
                 (DiaryDate.HasValue &&
                  (DiaryDate.Value.Date < ValidationRules.MinimumDiaryDate ||
                   DiaryDate.Value.Date > ValidationRules.MaximumDiaryDate)) ||

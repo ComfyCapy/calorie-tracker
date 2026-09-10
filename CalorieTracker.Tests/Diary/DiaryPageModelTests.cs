@@ -12,6 +12,56 @@ namespace CalorieTracker.Tests.Diary;
 public class DiaryPageModelTests
 {
     [Fact]
+    public async Task CofidVolumeFood_ResolvesAuthoritativelyAndAddsToDiary()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var cofid = new CofidFoodCatalogueProvider(
+        [
+            new CofidFoodRecord
+            {
+                Id = "cf21-wine",
+                SourceCode = "14-001",
+                SourceRow = 4,
+                Name = "Wine, red",
+                Description = "Test wine",
+                Group = "QE",
+                Calories = 80,
+                Protein = 0.1m,
+                Carbohydrates = 2.5m,
+                Fat = 0,
+                ServingSize = 100,
+                ServingUnit = "ml"
+            }
+        ]);
+        var resolver = new ExternalFoodResolver(
+            database.Context,
+            TestFoodCatalogue.Create(
+                new FakeFoodSearchService(),
+                cofid));
+        var resolution = await resolver.ResolveAsync(
+            "user-1",
+            FoodCatalogueProviders.Cofid,
+            "cf21-wine");
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(
+            database,
+            "user-1",
+            resolution.Food!,
+            250);
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<RedirectToPageResult>(result);
+        var entry = await database.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(200, entry.CaloriesConsumed);
+        Assert.Equal(0.25m, entry.ProteinConsumed);
+        Assert.Equal(6.25m, entry.CarbohydratesConsumed);
+        Assert.Equal("ml", resolution.Food!.ServingUnit);
+        Assert.Equal(FoodSources.Cofid, resolution.Food.Source);
+    }
+
+    [Fact]
     public async Task CreateExactOunces_StoresCanonicalQuantityAndCorrectNutrition()
     {
         await using var database = await TestDatabase.CreateAsync();
@@ -69,6 +119,48 @@ public class DiaryPageModelTests
         Assert.Equal(portion.Id, entry.FoodPortionId);
         Assert.Equal("slice", entry.PortionNameSnapshot);
         Assert.Equal(175m, entry.CaloriesConsumed);
+    }
+
+    [Fact]
+    public async Task CreateUsdaBeerPortion_UsesStoredGramEquivalentAndIgnoresPostedQuantity()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1", name: "Beer, regular");
+        food.Source = FoodSources.Usda;
+        food.ExternalId = "2710616";
+        food.Calories = 43;
+        food.Protein = 0.46m;
+        food.Carbohydrates = 3.55m;
+        food.Fat = 0;
+        food.ServingSize = 100;
+        food.CanonicalServingSize = 100;
+        food.ServingUnit = "g";
+        var portion = new FoodPortion
+        {
+            Food = food,
+            Name = "1 can or bottle (12 fl oz)",
+            Amount = 360
+        };
+        database.Context.AddRange(food, portion);
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(database, "user-1", food, 1);
+        model.MeasurementMode = "Portion";
+        model.SelectedPortionId = portion.Id;
+        model.PortionQuantity = 1;
+        model.DiaryEntry.Quantity = 1;
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<RedirectToPageResult>(result);
+        var entry = await database.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(360, entry.Quantity);
+        Assert.Equal(154.8m, entry.CaloriesConsumed);
+        Assert.Equal(1.656m, entry.ProteinConsumed);
+        Assert.Equal(12.78m, entry.CarbohydratesConsumed);
+        Assert.Equal("1 can or bottle (12 fl oz)", entry.PortionNameSnapshot);
+        Assert.Equal(100, entry.CanonicalServingSizeSnapshot);
+        Assert.Equal("g", entry.ServingUnitSnapshot);
     }
 
     [Fact]

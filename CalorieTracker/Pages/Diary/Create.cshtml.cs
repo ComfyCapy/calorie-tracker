@@ -48,6 +48,10 @@ namespace CalorieTracker.Pages.Diary
 
         [BindProperty(SupportsGet = true)]
         public string? FoodSearchTerm { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? FoodSearchProvider { get; set; }
+
         [BindProperty(SupportsGet = true)]
         public bool ReturnToFoodsIndex { get; set; }
 
@@ -57,6 +61,19 @@ namespace CalorieTracker.Pages.Diary
             string? meal,
             int? foodId)
         {
+            if (!string.IsNullOrWhiteSpace(FoodSearchProvider))
+            {
+                FoodSearchProvider = FoodSearchProvider
+                    .Trim()
+                    .ToLowerInvariant();
+
+                if (FoodSearchProvider != FoodCatalogueProviders.Cofid &&
+                    FoodSearchProvider != FoodCatalogueProviders.Usda)
+                {
+                    return BadRequest();
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest();

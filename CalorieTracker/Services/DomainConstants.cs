@@ -65,4 +65,22 @@ public static class CapyCategories
 public static class FoodSources
 {
     public const string Usda = "USDA";
+    public const string Cofid = "CoFID";
+}
+
+public static class FoodCatalogueProviders
+{
+    public const string Usda = "usda";
+    public const string Cofid = "cofid";
+
+    // Existing API callers predate provider selection and remain USDA-compatible.
+    public const string LegacyDefault = Usda;
+
+    public static string ForSource(string? source) => source switch
+    {
+        FoodSources.Usda => Usda,
+        FoodSources.Cofid => Cofid,
+        _ => throw new InvalidOperationException(
+            $"Food source '{source ?? "(missing)"}' is unsupported.")
+    };
 }

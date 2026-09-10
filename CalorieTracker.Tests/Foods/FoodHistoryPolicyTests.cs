@@ -105,7 +105,9 @@ public class FoodHistoryPolicyTests
         await database.AddUserAsync("user-1");
         var cached = await AddCachedVolumeFoodAsync(database, "user-1");
         var service = SuccessfulFoodService();
-        var resolver = new ExternalFoodResolver(database.Context, service);
+        var resolver = new ExternalFoodResolver(
+            database.Context,
+            TestFoodCatalogue.Create(service));
 
         var resolution = await resolver.ResolveAsync("user-1", "123");
 
@@ -132,7 +134,7 @@ public class FoodHistoryPolicyTests
         await database.Context.SaveChangesAsync();
         var resolver = new ExternalFoodResolver(
             database.Context,
-            SuccessfulFoodService());
+            TestFoodCatalogue.Create(SuccessfulFoodService()));
 
         var resolution = await resolver.ResolveAsync("user-1", "123");
 
@@ -152,7 +154,7 @@ public class FoodHistoryPolicyTests
         await database.Context.SaveChangesAsync();
         var resolver = new ExternalFoodResolver(
             database.Context,
-            SuccessfulFoodService());
+            TestFoodCatalogue.Create(SuccessfulFoodService()));
 
         var resolution = await resolver.ResolveAsync("user-1", "123");
 
@@ -173,7 +175,9 @@ public class FoodHistoryPolicyTests
         {
             GetHandler = _ => throw new HttpRequestException("offline")
         };
-        var resolver = new ExternalFoodResolver(database.Context, service);
+        var resolver = new ExternalFoodResolver(
+            database.Context,
+            TestFoodCatalogue.Create(service));
 
         var resolution = await resolver.ResolveAsync("user-1", "123");
 

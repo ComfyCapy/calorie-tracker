@@ -23,7 +23,9 @@ public class ApiFoodPageModelTests
             GetHandler = _ => Task.FromResult<FoodSearchResult?>(foodResult)
         };
         var model = new ApiFoodModel(
-            new ExternalFoodResolver(database.Context, service),
+            new ExternalFoodResolver(
+                database.Context,
+                TestFoodCatalogue.Create(service)),
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new TestUserLocalTimeProvider(new DateOnly(2026, 9, 9)));
@@ -91,7 +93,9 @@ public class ApiFoodPageModelTests
         {
             GetHandler = _ => Task.FromResult<FoodSearchResult?>(foodResult)
         };
-        var resolver = new ExternalFoodResolver(database.Context, service);
+        var resolver = new ExternalFoodResolver(
+            database.Context,
+            TestFoodCatalogue.Create(service));
         var model = new ApiFoodModel(
             resolver,
             database.Context,

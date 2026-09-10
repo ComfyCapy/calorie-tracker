@@ -1,16 +1,38 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
+import {
+    invalidateLatestRequest,
+    runLatestRequest,
+} from './latestRequest.js'
+
+const providers = {
+    cofid: {
+        label: 'UK',
+        accessibleLabel: 'UK food database — CoFID',
+        attribution: 'Database provided by CoFID — UK food composition data.',
+    },
+    usda: {
+        label: 'US',
+        accessibleLabel: 'US food database — USDA FoodData Central',
+        attribution: 'Database provided by USDA FoodData Central — US food composition data.',
+    },
+}
 
 function App({
     returnToDiary,
     diaryDate,
     diaryMeal,
     initialSearchTerm = '',
+    initialProvider = 'cofid',
     embedded = false,
     antiForgeryToken = '',
 }) {
     const initialQuery = initialSearchTerm.trim()
+    const startingProvider = providers[initialProvider]
+        ? initialProvider
+        : 'cofid'
     const [searchTerm, setSearchTerm] = useState(initialQuery)
+    const [provider, setProvider] = useState(startingProvider)
     const [foods, setFoods] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
@@ -23,54 +45,67 @@ function App({
     const [totalResults, setTotalResults] = useState(0)
     const [activeSearchTerm, setActiveSearchTerm] = useState(initialQuery)
     const [statusMessage, setStatusMessage] = useState('')
+    const searchRequestSequence = useRef(0)
 
     const loadSearchPage = useCallback(
-        async (query, pageNumber, nextPageSize) => {
-            setIsLoading(true)
-            setError('')
-            setHasSearched(true)
-            setStatusMessage('Searching the wider food catalogue...')
+        async (query, pageNumber, nextPageSize, nextProvider) => {
+            await runLatestRequest(
+                searchRequestSequence,
+                async () => {
+                    const params = new URLSearchParams({
+                        query,
+                        page: pageNumber.toString(),
+                        pageSize: nextPageSize.toString(),
+                        provider: nextProvider,
+                    })
 
-            try {
-                const params = new URLSearchParams({
-                    query,
-                    page: pageNumber.toString(),
-                    pageSize: nextPageSize.toString(),
-                })
+                    const response = await fetch(
+                        `/api/foods/search?${params.toString()}`
+                    )
 
-                const response = await fetch(
-                    `/api/foods/search?${params.toString()}`
-                )
+                    if (!response.ok) {
+                        throw new Error('Unable to search for foods.')
+                    }
 
-                if (!response.ok) {
-                    throw new Error('Unable to search for foods.')
-                }
+                    return response.json()
+                },
+                {
+                    onStart() {
+                        setIsLoading(true)
+                        setError('')
+                        setHasSearched(true)
+                        setStatusMessage(
+                            'Searching the wider food catalogue...')
+                    },
+                    onSuccess(result) {
+                        const resultPage = result.pageNumber || pageNumber
+                        const resultTotalPages = result.totalPages || 0
+                        const resultTotal = result.totalResults || 0
 
-                const result = await response.json()
-                const resultPage = result.pageNumber || pageNumber
-                const resultTotalPages = result.totalPages || 0
-                const resultTotal = result.totalResults || 0
-
-                setFoods(Array.isArray(result.foods) ? result.foods : [])
-                setCurrentPage(resultPage)
-                setTotalPages(resultTotalPages)
-                setTotalResults(resultTotal)
-                setStatusMessage(resultTotalPages > 0
-                    ? `${resultTotal.toLocaleString()} foods found. Page ${resultPage} of ${resultTotalPages}.`
-                    : `${resultTotal.toLocaleString()} foods found.`)
-            } catch {
-                setFoods([])
-                setTotalPages(0)
-                setTotalResults(0)
-                setStatusMessage(
-                    'We could not search the wider food catalogue. Please try again.'
-                )
-                setError(
-                    'We could not search the wider food catalogue. Please try again.'
-                )
-            } finally {
-                setIsLoading(false)
-            }
+                        setFoods(Array.isArray(result.foods) ? result.foods : [])
+                        setCurrentPage(resultPage)
+                        setTotalPages(resultTotalPages)
+                        setTotalResults(resultTotal)
+                        setStatusMessage(resultTotalPages > 0
+                            ? `${resultTotal.toLocaleString()} foods found. Page ${resultPage} of ${resultTotalPages}.`
+                            : `${resultTotal.toLocaleString()} foods found.`)
+                    },
+                    onError() {
+                        setFoods([])
+                        setTotalPages(0)
+                        setTotalResults(0)
+                        setStatusMessage(
+                            'We could not search the wider food catalogue. Please try again.'
+                        )
+                        setError(
+                            'We could not search the wider food catalogue. Please try again.'
+                        )
+                    },
+                    onFinish() {
+                        setIsLoading(false)
+                    },
+                },
+            )
         },
         []
     )
@@ -81,11 +116,11 @@ function App({
         }
 
         const searchTimer = window.setTimeout(() => {
-            void loadSearchPage(initialQuery, 1, 20)
+            void loadSearchPage(initialQuery, 1, 20, startingProvider)
         }, 0)
 
         return () => window.clearTimeout(searchTimer)
-    }, [initialQuery, loadSearchPage])
+    }, [initialQuery, loadSearchPage, startingProvider])
 
     async function handleSearch(event) {
         event.preventDefault()
@@ -93,6 +128,7 @@ function App({
         const trimmedSearchTerm = searchTerm.trim()
 
         if (!trimmedSearchTerm) {
+            invalidateLatestRequest(searchRequestSequence)
             setFoods([])
             setError('')
             setHasSearched(false)
@@ -105,7 +141,34 @@ function App({
         }
 
         setActiveSearchTerm(trimmedSearchTerm)
-        await loadSearchPage(trimmedSearchTerm, 1, pageSize)
+        await loadSearchPage(trimmedSearchTerm, 1, pageSize, provider)
+    }
+
+    async function handleProviderChange(nextProvider) {
+        if (nextProvider === provider) {
+            return
+        }
+
+        setProvider(nextProvider)
+        setFoods([])
+        setError('')
+        setHasSearched(false)
+        setCurrentPage(1)
+        setTotalPages(0)
+        setTotalResults(0)
+
+        if (activeSearchTerm) {
+            await loadSearchPage(
+                activeSearchTerm,
+                1,
+                pageSize,
+                nextProvider,
+            )
+            return
+        }
+
+        invalidateLatestRequest(searchRequestSequence)
+        setStatusMessage('Food database changed.')
     }
 
     async function handlePageSizeChange(event) {
@@ -113,7 +176,12 @@ function App({
         setPageSize(nextPageSize)
 
         if (activeSearchTerm) {
-            await loadSearchPage(activeSearchTerm, 1, nextPageSize)
+            await loadSearchPage(
+                activeSearchTerm,
+                1,
+                nextPageSize,
+                provider,
+            )
         }
     }
 
@@ -126,16 +194,23 @@ function App({
             return
         }
 
-        await loadSearchPage(activeSearchTerm, nextPage, pageSize)
+        await loadSearchPage(
+            activeSearchTerm,
+            nextPage,
+            pageSize,
+            provider,
+        )
     }
 
     async function handleToggleFavourite(food) {
-        setFavouriteFoodId(food.externalId)
+        const foodProvider = food.provider || provider
+        const foodKey = `${foodProvider}:${food.externalId}`
+        setFavouriteFoodId(foodKey)
         setError('')
 
         try {
             const response = await fetch(
-                `/api/foods/favourites/${encodeURIComponent(food.externalId)}`,
+                `/api/foods/favourites/${encodeURIComponent(food.externalId)}?provider=${encodeURIComponent(foodProvider)}`,
                 {
                     method: food.isFavourite ? 'DELETE' : 'POST',
                     headers: {
@@ -156,7 +231,8 @@ function App({
 
             setFoods((currentFoods) =>
                 currentFoods.map((currentFood) =>
-                    currentFood.externalId === food.externalId
+                    currentFood.externalId === food.externalId &&
+                    (currentFood.provider || provider) === foodProvider
                         ? {
                             ...currentFood,
                             isFavourite: !food.isFavourite,
@@ -174,12 +250,14 @@ function App({
     }
 
     async function handleSelectFood(food) {
-        setSelectedFoodId(food.externalId)
+        const foodProvider = food.provider || provider
+        const foodKey = `${foodProvider}:${food.externalId}`
+        setSelectedFoodId(foodKey)
         setError('')
 
         try {
             const response = await fetch(
-                `/api/foods/select/${encodeURIComponent(food.externalId)}`,
+                `/api/foods/select/${encodeURIComponent(food.externalId)}?provider=${encodeURIComponent(foodProvider)}`,
                 {
                     method: 'POST',
                     headers: {
@@ -206,6 +284,7 @@ function App({
             }
 
             params.set('returnToFoodSearch', 'true')
+            params.set('foodSearchProvider', foodProvider)
 
             if (activeSearchTerm) {
                 params.set('foodSearchTerm', activeSearchTerm)
@@ -240,10 +319,6 @@ function App({
                 <>
                     <section className="food-search-header">
                         <h1>Search all foods</h1>
-
-                        <p className="food-search-attribution">
-                            Nutrition data from USDA.
-                        </p>
                     </section>
 
                     <form
@@ -267,6 +342,32 @@ function App({
                             aria-label="Search the wider food catalogue"
                         />
 
+                        <fieldset className="food-search-provider-selector">
+                            <legend className="visually-hidden">
+                                Food database
+                            </legend>
+
+                            {Object.entries(providers).map(
+                                ([providerId, details]) => (
+                                    <button
+                                        key={providerId}
+                                        type="button"
+                                        className={
+                                            provider === providerId
+                                                ? 'is-selected'
+                                                : ''
+                                        }
+                                        aria-label={details.accessibleLabel}
+                                        aria-pressed={provider === providerId}
+                                        onClick={() =>
+                                            void handleProviderChange(providerId)}
+                                    >
+                                        {details.label}
+                                    </button>
+                                ),
+                            )}
+                        </fieldset>
+
                         <button
                             className="food-search-button"
                             type="submit"
@@ -275,6 +376,10 @@ function App({
                             {isLoading ? 'Searching...' : 'Search'}
                         </button>
                     </form>
+
+                    <p className="food-search-attribution">
+                        {providers[provider].attribution}
+                    </p>
                 </>
             )}
 
@@ -352,7 +457,7 @@ function App({
                         {foods.map((food) => (
                             <article
                                 className="food-search-result"
-                                key={food.externalId}
+                                key={`${food.provider || provider}:${food.externalId}`}
                             >
                                 <div className="food-search-result-main">
                                     <div>
@@ -400,7 +505,8 @@ function App({
                                             onClick={() =>
                                                 handleToggleFavourite(food)}
                                             disabled={
-                                                favouriteFoodId === food.externalId
+                                                favouriteFoodId ===
+                                                `${food.provider || provider}:${food.externalId}`
                                             }
                                             aria-label={
                                                 food.isFavourite
@@ -424,11 +530,13 @@ function App({
                                             onClick={() =>
                                                 handleSelectFood(food)}
                                             disabled={
-                                                selectedFoodId === food.externalId
+                                                selectedFoodId ===
+                                                `${food.provider || provider}:${food.externalId}`
                                             }
                                             aria-label={`Add ${food.name} to Diary`}
                                         >
-                                            {selectedFoodId === food.externalId
+                                            {selectedFoodId ===
+                                            `${food.provider || provider}:${food.externalId}`
                                                 ? 'Adding...'
                                                 : 'Add to Diary'}
                                         </button>

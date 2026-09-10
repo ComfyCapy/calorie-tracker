@@ -20,3 +20,5 @@ artifacts/
 *.pem
 *.key
 *.pfx
+tools/cofid/source/*.xlsx
+__pycache__/

@@ -4,6 +4,8 @@
     {
         public string ExternalId { get; set; } = string.Empty;
 
+        public string Provider { get; set; } = string.Empty;
+
         public string Source { get; set; } = string.Empty;
 
         public bool IsFavourite { get; set; }

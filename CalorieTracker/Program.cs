@@ -187,6 +187,11 @@ ProductionConfiguration.ConfigureIdentityCookie(
     builder.Environment);
 
 builder.Services.AddHttpClient<IFoodSearchService, UsdaFoodService>();
+builder.Services.AddTransient<IFoodCatalogueProvider, UsdaFoodCatalogueProvider>();
+builder.Services.AddSingleton(_ => new CofidFoodCatalogueProvider());
+builder.Services.AddSingleton<IFoodCatalogueProvider>(provider =>
+    provider.GetRequiredService<CofidFoodCatalogueProvider>());
+builder.Services.AddScoped<FoodCatalogue>();
 builder.Services.AddScoped<ExternalFoodResolver>();
 builder.Services.AddScoped<CapyProvisioningService>();
 builder.Services.AddScoped<DailyMaintenanceSnapshotService>();
@@ -219,6 +224,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     _ = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    _ = scope.ServiceProvider.GetRequiredService<CofidFoodCatalogueProvider>();
 }
 
 // Establish the original scheme and client address before any middleware

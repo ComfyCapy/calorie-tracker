@@ -128,6 +128,7 @@ public class DiaryEditPrepopulationTests
             context.DiaryEntries.Add(entry);
             await context.SaveChangesAsync();
             portion.Name = "Renamed scoop";
+            portion.Amount = 99m;
             await context.SaveChangesAsync();
             entryId = entry.Id;
         }
@@ -144,12 +145,16 @@ public class DiaryEditPrepopulationTests
             html);
         Assert.Matches(
             new Regex(
-                "<input(?=[^>]*id=\"PortionQuantity\")(?=[^>]*value=\"2(?:\\.0+)?\")[^>]*>",
+                "<input(?=[^>]*id=\"portionQuantity\")(?=[^>]*value=\"2(?:\\.0+)?\")[^>]*>",
                 RegexOptions.Singleline),
             html);
         Assert.Contains("1 scoop", html);
         Assert.Contains("data-initial-portion-name=\"1 scoop\"", html);
         Assert.Contains("2 × 1 scoop", html);
+        var foodJson = Regex.Match(html, @"const foods = (.*);").Groups[1].Value;
+        using var foods = System.Text.Json.JsonDocument.Parse(foodJson);
+        Assert.Equal(30m, foods.RootElement[0].GetProperty("portions")[0].GetProperty("amount").GetDecimal());
+        Assert.Contains("for=\"portionQuantity\"", html);
     }
 
     [Fact]

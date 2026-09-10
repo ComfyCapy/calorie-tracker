@@ -42,6 +42,7 @@ namespace CalorieTracker.Pages.Diary
         public List<Food> FoodOptions { get; set; } = [];
 
         public int? OriginalPortionId { get; set; }
+        public decimal? OriginalPortionAmount { get; private set; }
         public string SelectedFoodName { get; set; } = string.Empty;
         public string SelectedServingUnit { get; set; } = string.Empty;
         public string? SelectedPortionName { get; set; }
@@ -74,6 +75,9 @@ namespace CalorieTracker.Pages.Diary
 
             DiaryEntry = diaryEntry;
             OriginalPortionId = diaryEntry.FoodPortionId;
+            OriginalPortionAmount = diaryEntry.PortionQuantity > 0
+                ? diaryEntry.Quantity / diaryEntry.PortionQuantity.Value
+                : null;
             SetSelectedFoodDisplay(
                 diaryEntry,
                 diaryEntry.Food,
@@ -137,6 +141,9 @@ namespace CalorieTracker.Pages.Diary
             }
 
             OriginalPortionId = existingEntry.FoodPortionId;
+            OriginalPortionAmount = existingEntry.PortionQuantity > 0
+                ? existingEntry.Quantity / existingEntry.PortionQuantity.Value
+                : null;
 
             ValidationRules.ValidateDiaryDate(
                 DiaryEntry.Date,

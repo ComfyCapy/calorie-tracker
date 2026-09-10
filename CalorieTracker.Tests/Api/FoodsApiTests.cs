@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using CalorieTracker.Controllers;
 using CalorieTracker.Models;
 using CalorieTracker.Services;
@@ -46,6 +47,12 @@ public class FoodsApiTests
         var page = Assert.IsType<FoodSearchPage>(result.Value);
         Assert.True(page.Foods.Single(food => food.ExternalId == "123").IsFavourite);
         Assert.False(page.Foods.Single(food => food.ExternalId == "456").IsFavourite);
+        Assert.All(page.Foods, food =>
+        {
+            Assert.Equal(FoodCatalogueProviders.Usda, food.Provider);
+            Assert.Equal(FoodSources.Usda, food.Source);
+        });
+        Assert.Equal(1, service.SearchCallCount);
     }
 
     [Fact]
@@ -82,6 +89,56 @@ public class FoodsApiTests
 
         var result = Assert.IsType<ObjectResult>(action.Result);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task Search_CofidUsesSelectedProviderAndCurrentUsersFavouriteState()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var favourite = CachedFood(
+            "user-1",
+            "cf21-apple",
+            true,
+            FoodSources.Cofid);
+        database.Context.Foods.Add(favourite);
+        await database.Context.SaveChangesAsync();
+        var usda = new FakeFoodSearchService();
+        var cofid = CofidProvider(
+            CofidFood("cf21-apple", "Apple, eating"));
+        var controller = CreateController(
+            database,
+            usda,
+            "user-1",
+            cofid);
+
+        var action = await controller.Search(
+            "apple",
+            providerId: FoodCatalogueProviders.Cofid);
+
+        var result = Assert.IsType<OkObjectResult>(action.Result);
+        var page = Assert.IsType<FoodSearchPage>(result.Value);
+        var food = Assert.Single(page.Foods);
+        Assert.True(food.IsFavourite);
+        Assert.Equal(FoodSources.Cofid, food.Source);
+        Assert.Equal(FoodCatalogueProviders.Cofid, food.Provider);
+        Assert.Equal(0, usda.SearchCallCount);
+    }
+
+    [Fact]
+    public async Task Search_InvalidProviderReturnsBadRequestWithoutSearching()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var service = new FakeFoodSearchService();
+        var controller = CreateController(database, service, "user-1");
+
+        var action = await controller.Search(
+            "apple",
+            providerId: "unsupported");
+
+        Assert.IsType<BadRequestObjectResult>(action.Result);
+        Assert.Equal(0, service.SearchCallCount);
     }
 
     [Theory]
@@ -141,6 +198,87 @@ public class FoodsApiTests
     }
 
     [Fact]
+    public async Task Select_CofidPersistsAuthoritativeProviderNutritionAndVolumeBasis()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var service = new FakeFoodSearchService();
+        var cofid = CofidProvider(
+            CofidFood(
+                "cf21-wine",
+                "Wine, red",
+                servingUnit: "ml",
+                calories: 78));
+        var controller = CreateController(
+            database,
+            service,
+            "user-1",
+            cofid);
+
+        var result = await controller.Select(
+            "cf21-wine",
+            FoodCatalogueProviders.Cofid);
+
+        Assert.IsType<OkObjectResult>(result);
+        var food = await database.Context.Foods.SingleAsync();
+        Assert.Equal("user-1", food.UserId);
+        Assert.Equal(FoodSources.Cofid, food.Source);
+        Assert.Equal("cf21-wine", food.ExternalId);
+        Assert.Equal("Wine, red", food.Name);
+        Assert.Equal(78, food.Calories);
+        Assert.Equal(100, food.ServingSize);
+        Assert.Equal(100, food.CanonicalServingSize);
+        Assert.Equal("ml", food.ServingUnit);
+        Assert.Equal(0, service.GetCallCount);
+    }
+
+    [Fact]
+    public async Task Favourite_CofidPersistsOnlySelectedUsersProviderRecord()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var service = new FakeFoodSearchService();
+        var cofid = CofidProvider(
+            CofidFood("cf21-bread", "Bread, white"));
+        var controller = CreateController(
+            database,
+            service,
+            "user-1",
+            cofid);
+
+        var result = await controller.Favourite(
+            "cf21-bread",
+            FoodCatalogueProviders.Cofid);
+
+        Assert.IsType<OkObjectResult>(result);
+        var food = await database.Context.Foods.SingleAsync();
+        Assert.Equal(FoodSources.Cofid, food.Source);
+        Assert.True(food.IsFavourite);
+        Assert.Equal(0, service.GetCallCount);
+    }
+
+    [Fact]
+    public async Task Select_InvalidCofidIdFailsWithoutPersistingAnything()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var service = new FakeFoodSearchService();
+        var controller = CreateController(
+            database,
+            service,
+            "user-1",
+            CofidProvider(CofidFood("cf21-known", "Known food")));
+
+        var result = await controller.Select(
+            "cf21-forged",
+            FoodCatalogueProviders.Cofid);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Empty(database.Context.Foods);
+        Assert.Equal(0, service.GetCallCount);
+    }
+
+    [Fact]
     public async Task Unfavourite_ChangesOnlyCurrentUsersCachedFood()
     {
         await using var database = await TestDatabase.CreateAsync();
@@ -163,6 +301,65 @@ public class FoodsApiTests
     }
 
     [Fact]
+    public async Task SameExternalId_RemainsIndependentAcrossProvidersAndUsers()
+    {
+        const string sharedId = "shared-id";
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1", "first");
+        await database.AddUserAsync("user-2", "second");
+        var catalogue = new FoodCatalogue(
+        [
+            new FakeFoodCatalogueProvider(
+                FoodCatalogueProviders.Usda,
+                FoodSources.Usda,
+                sharedId,
+                "USDA shared food",
+                101),
+            new FakeFoodCatalogueProvider(
+                FoodCatalogueProviders.Cofid,
+                FoodSources.Cofid,
+                sharedId,
+                "CoFID shared food",
+                202)
+        ]);
+        var firstController = CreateController(database, catalogue, "user-1");
+        var secondController = CreateController(database, catalogue, "user-2");
+
+        Assert.IsType<OkObjectResult>(await firstController.Favourite(
+            sharedId,
+            FoodCatalogueProviders.Usda));
+        Assert.IsType<OkObjectResult>(await firstController.Favourite(
+            sharedId,
+            FoodCatalogueProviders.Cofid));
+        Assert.IsType<OkObjectResult>(await secondController.Favourite(
+            sharedId,
+            FoodCatalogueProviders.Usda));
+        Assert.IsType<OkObjectResult>(await firstController.Unfavourite(
+            sharedId,
+            FoodCatalogueProviders.Usda));
+
+        var foods = await database.Context.Foods
+            .AsNoTracking()
+            .OrderBy(food => food.UserId)
+            .ThenBy(food => food.Source)
+            .ToListAsync();
+        Assert.Equal(3, foods.Count);
+        var firstUsda = foods.Single(food =>
+            food.UserId == "user-1" && food.Source == FoodSources.Usda);
+        var firstCofid = foods.Single(food =>
+            food.UserId == "user-1" && food.Source == FoodSources.Cofid);
+        var secondUsda = foods.Single(food =>
+            food.UserId == "user-2" && food.Source == FoodSources.Usda);
+        Assert.False(firstUsda.IsFavourite);
+        Assert.Equal("USDA shared food", firstUsda.Name);
+        Assert.Equal(101, firstUsda.Calories);
+        Assert.True(firstCofid.IsFavourite);
+        Assert.Equal("CoFID shared food", firstCofid.Name);
+        Assert.Equal(202, firstCofid.Calories);
+        Assert.True(secondUsda.IsFavourite);
+    }
+
+    [Fact]
     public async Task Resolver_DoesNotUseAnotherUsersCachedFallback()
     {
         await using var database = await TestDatabase.CreateAsync();
@@ -174,7 +371,9 @@ public class FoodsApiTests
         {
             GetHandler = _ => throw new HttpRequestException("offline")
         };
-        var resolver = new ExternalFoodResolver(database.Context, service);
+        var resolver = new ExternalFoodResolver(
+            database.Context,
+            TestFoodCatalogue.Create(service));
 
         var resolution = await resolver.ResolveAsync("user-2", "123");
 
@@ -214,6 +413,34 @@ public class FoodsApiTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(1, factory.FoodSearchService.SearchCallCount);
+    }
+
+    [Fact]
+    public async Task ProtectedApi_CofidSearchUsesEmbeddedCatalogueNotUsda()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
+        client.DefaultRequestHeaders.Add("X-Test-User", "user-1");
+
+        var response = await client.GetAsync(
+            "/api/foods/search?query=crumpet&provider=cofid");
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var page = await response.Content.ReadFromJsonAsync<FoodSearchPage>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(page);
+        Assert.True(
+            page.Foods.Any(food => food.Name.Contains(
+                "Crumpet",
+                StringComparison.OrdinalIgnoreCase)),
+            $"USDA calls: {factory.FoodSearchService.SearchCallCount}; body: {responseBody}");
+        Assert.All(page.Foods, food =>
+            Assert.Equal(FoodSources.Cofid, food.Source));
+        Assert.Equal(0, factory.FoodSearchService.SearchCallCount);
     }
 
     [Fact]
@@ -307,11 +534,23 @@ public class FoodsApiTests
     private static FoodsApiController CreateController(
         TestDatabase database,
         FakeFoodSearchService service,
+        string userId,
+        params IFoodCatalogueProvider[] additionalProviders)
+    {
+        var catalogue = TestFoodCatalogue.Create(
+            service,
+            additionalProviders);
+        return CreateController(database, catalogue, userId);
+    }
+
+    private static FoodsApiController CreateController(
+        TestDatabase database,
+        FoodCatalogue catalogue,
         string userId)
     {
-        var resolver = new ExternalFoodResolver(database.Context, service);
+        var resolver = new ExternalFoodResolver(database.Context, catalogue);
         var controller = new FoodsApiController(
-            service,
+            catalogue,
             database.Context,
             PageModelTestContext.CreateUserManager(),
             resolver);
@@ -322,12 +561,37 @@ public class FoodsApiTests
     private static Food CachedFood(
         string userId,
         string externalId,
-        bool favourite)
+        bool favourite,
+        string source = FoodSources.Usda)
     {
         var food = TestData.Food(userId);
-        food.Source = FoodSources.Usda;
+        food.Source = source;
         food.ExternalId = externalId;
         food.IsFavourite = favourite;
         return food;
     }
+
+    private static CofidFoodCatalogueProvider CofidProvider(
+        params CofidFoodRecord[] foods) => new(foods);
+
+    private static CofidFoodRecord CofidFood(
+        string id,
+        string name,
+        string servingUnit = "g",
+        decimal calories = 100) =>
+        new()
+        {
+            Id = id,
+            SourceCode = "13-001",
+            SourceRow = 4,
+            Name = name,
+            Description = "Test catalogue food",
+            Group = servingUnit == "ml" ? "QE" : "A",
+            Calories = calories,
+            Protein = 5,
+            Carbohydrates = 10,
+            Fat = 4,
+            ServingSize = 100,
+            ServingUnit = servingUnit
+        };
 }

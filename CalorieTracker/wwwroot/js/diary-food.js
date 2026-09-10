@@ -41,6 +41,12 @@
         const portionSummary =
             document.getElementById("portionSummary");
 
+        const portionQuantityLabel =
+            document.getElementById("portionQuantityLabel");
+
+        const portionModeLabel =
+            document.getElementById("portionModeLabel");
+
         const foodSearchStatus =
             document.getElementById("foodSearchStatus");
 
@@ -302,8 +308,9 @@
                             ? portionSelect.dataset.initialPortionName
                             : portion.name;
 
-                    option.textContent =
-                        `${portionName} (${portion.amount} ${selectedFood.unit})`;
+                    option.textContent = selectedFood.isUsda
+                        ? portionName
+                        : `${portionName} (${portion.amount} ${selectedFood.unit})`;
 
                     if (
                         portion.id.toString() ===
@@ -323,6 +330,10 @@
         function updatePortionAvailability() {
             const selectedFood =
                 getSelectedFood();
+
+            portionModeLabel.textContent = selectedFood?.isUsda
+                ? "Portion or measure"
+                : "Named portion";
 
             if (!selectedFood) {
                 measurementModeSection.style.display =
@@ -360,6 +371,26 @@
             const quantity =
                 Number.parseFloat(portionQuantity.value);
 
+            const portionName = selectedPortion &&
+                selectedPortion.id.toString() === selectedPortionId &&
+                portionSelect.dataset.initialPortionName
+                    ? portionSelect.dataset.initialPortionName
+                    : selectedPortion?.name;
+
+            // Presentation only: these are counts of an explicitly selected,
+            // stored portion. Never derive density, eligibility, or other units
+            // from a label (cached portions can also be user-authored/edited).
+            const unit = selectedFood?.isUsda && selectedFood.unit === "g"
+                ? new Map([
+                    ["1 fl oz", "fl oz"], ["1 cup", "cup"],
+                    ["1 tbsp", "tbsp"], ["1 tsp", "tsp"]
+                ]).get(portionName?.trim().replace(/\s+/g, " ").toLowerCase())
+                : null;
+
+            portionQuantityLabel.textContent = unit
+                ? `Amount (${unit})`
+                : "Number of servings";
+
             if (
                 !portionMode.checked ||
                 !selectedPortion ||
@@ -378,15 +409,16 @@
             const totalAmount =
                 quantity * selectedPortion.amount;
 
-            const portionName =
-                selectedPortion.id.toString() === selectedPortionId &&
-                portionSelect.dataset.initialPortionName
-                    ? portionSelect.dataset.initialPortionName
-                    : selectedPortion.name;
+            const total =
+                `${numberFormat.format(totalAmount)} ${selectedFood.unit}`;
 
-            portionSummary.textContent =
-                `${numberFormat.format(quantity)} × ${portionName} ` +
-                `(${numberFormat.format(totalAmount)} ${selectedFood.unit} total)`;
+            portionSummary.textContent = selectedFood.isUsda
+                ? (unit
+                    ? `${numberFormat.format(quantity)} ${unit} `
+                    : `${numberFormat.format(quantity)} × ${portionName} `) +
+                  `(${total} used for nutrition)`
+                : `${numberFormat.format(quantity)} × ${portionName} ` +
+                  `(${total} total)`;
         }
 
 

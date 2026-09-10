@@ -66,7 +66,7 @@ public class ExternalFoodPortionTests
     }
 
     [Fact]
-    public async Task Resolve_CachedFoodWithExistingPortionDoesNotOverwriteOrAdd()
+    public async Task Resolve_CachedFoodPreservesManualPortionAndAddsMissingProviderPortion()
     {
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
@@ -76,7 +76,7 @@ public class ExternalFoodPortionTests
             Food = cached,
             Name = "existing serving",
             Amount = 40,
-            IsDeleted = true
+            IsDeleted = false
         };
         database.Context.Add(existing);
         await database.Context.SaveChangesAsync();
@@ -87,11 +87,65 @@ public class ExternalFoodPortionTests
         await resolver.ResolveAsync("user-1", "123");
         await database.Context.SaveChangesAsync();
 
-        var portion = await database.Context.FoodPortions.SingleAsync();
-        Assert.Same(existing, portion);
-        Assert.Equal("existing serving", portion.Name);
-        Assert.Equal(40, portion.Amount);
-        Assert.True(portion.IsDeleted);
+        var portions = await database.Context.FoodPortions
+            .OrderBy(portion => portion.Id)
+            .ToListAsync();
+        Assert.Collection(
+            portions,
+            portion =>
+            {
+                Assert.Same(existing, portion);
+                Assert.Equal("existing serving", portion.Name);
+                Assert.Equal(40, portion.Amount);
+            },
+            portion =>
+            {
+                Assert.Equal("1 roll", portion.Name);
+                Assert.Equal(75, portion.Amount);
+                Assert.False(portion.IsDeleted);
+            });
+    }
+
+    [Fact]
+    public async Task Resolve_SoftDeletedMatchingPortionIsNotResurrectedOrDuplicated()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var cached = AddCachedFood(database, "user-1");
+        var deleted = new FoodPortion
+        {
+            Food = cached,
+            Name = "1 fl oz",
+            Amount = 30,
+            IsDeleted = true
+        };
+        database.Context.Add(deleted);
+        await database.Context.SaveChangesAsync();
+        var resolver = CreateResolver(
+            database,
+            new FoodPortionCandidate("  1   FL OZ ", 30),
+            new FoodPortionCandidate("1 can or bottle (12 fl oz)", 360));
+
+        await resolver.ResolveAsync("user-1", "123");
+        await database.Context.SaveChangesAsync();
+
+        var portions = await database.Context.FoodPortions
+            .OrderBy(portion => portion.Id)
+            .ToListAsync();
+        Assert.Collection(
+            portions,
+            portion =>
+            {
+                Assert.Same(deleted, portion);
+                Assert.True(portion.IsDeleted);
+                Assert.Equal(30, portion.Amount);
+            },
+            portion =>
+            {
+                Assert.Equal("1 can or bottle (12 fl oz)", portion.Name);
+                Assert.Equal(360, portion.Amount);
+                Assert.False(portion.IsDeleted);
+            });
     }
 
     [Fact]
@@ -125,7 +179,9 @@ public class ExternalFoodPortionTests
         {
             GetHandler = _ => Task.FromResult<FoodSearchResult?>(result)
         };
-        return new ExternalFoodResolver(database.Context, service);
+        return new ExternalFoodResolver(
+            database.Context,
+            TestFoodCatalogue.Create(service));
     }
 
     private static Food AddCachedFood(

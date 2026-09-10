@@ -13,6 +13,7 @@
             id = food.Id,
             name = food.Name,
             unit = food.DisplayServingUnit,
+            isUsda = food.Source == CalorieTracker.Services.FoodSources.Usda,
             isFavourite = food.IsFavourite,
             isCustom = food.Source == null,
             portions = food.Portions
@@ -22,7 +23,11 @@
                 id = portion.Id,
                 name = portion.Name,
                 amount = CalorieTracker.Services.MeasurementUnits
-                    .FromCanonical(portion.Amount, food.ServingUnit)
+                    .FromCanonical(
+                        portion.Id == Model.OriginalPortionId && Model.OriginalPortionAmount.HasValue
+                            ? Model.OriginalPortionAmount.Value
+                            : portion.Amount,
+                        food.ServingUnit)
             })
         })
     );
@@ -173,6 +178,7 @@
                        id="portionMode" />
 
                 <label class="form-check-label"
+                       id="portionModeLabel"
                        for="portionMode">
                     Portion
                 </label>
@@ -232,11 +238,12 @@
         </span>
 
         <div class="mt-2">
-            <label asp-for="PortionQuantity">
+            <label asp-for="PortionQuantity" for="portionQuantity" id="portionQuantityLabel">
                 Quantity
             </label>
 
             <input asp-for="PortionQuantity"
+                   id="portionQuantity"
                    class="form-control"
                    step="0.01"
                    min="0.01" />
