@@ -16,12 +16,19 @@
             isUsda = food.Source == CalorieTracker.Services.FoodSources.Usda,
             isFavourite = food.IsFavourite,
             isCustom = food.Source == null,
+            isDirectPortion = food.ServingBasis == CalorieTracker.Models.FoodServingBasis.Portion,
+            canonicalServingSize = food.CanonicalServingSize,
+            calories = food.Calories,
+            protein = food.Protein,
+            carbohydrates = food.Carbohydrates,
+            fat = food.Fat,
             portions = food.Portions
                 .Where(portion => !portion.IsDeleted)
                 .Select(portion => new
             {
                 id = portion.Id,
                 name = portion.Name,
+                canonicalAmount = portion.Amount,
                 amount = CalorieTracker.Services.MeasurementUnits
                     .FromCanonical(portion.Amount, food.ServingUnit)
             })
@@ -182,6 +189,19 @@
                 <input asp-for="MeasurementMode"
                        class="form-check-input"
                        type="radio"
+                       value="Approximate"
+                       id="approximateMode" />
+
+                <label class="form-check-label"
+                       for="approximateMode">
+                    Rough portion
+                </label>
+            </div>
+
+            <div class="form-check form-check-inline">
+                <input asp-for="MeasurementMode"
+                       class="form-check-input"
+                       type="radio"
                        value="Portion"
                        id="portionMode" />
 
@@ -257,6 +277,50 @@
         </div>
     </div>
 
+    <div id="approximationSection"
+         class="mb-3 mt-3"
+         style="display: none;">
+        <p class="mb-2">
+            Choose a rough size. The estimate is based on this food's stored serving—not a universal gram amount.
+        </p>
+
+        <div id="approximationBaseSection" class="mb-3">
+            <label asp-for="ApproximationPortionId"
+                   class="form-label">
+                Serving to estimate from
+            </label>
+            <select asp-for="ApproximationPortionId"
+                    id="approximationPortionSelect"
+                    class="form-select">
+                <option value="">Select a serving...</option>
+            </select>
+            <span asp-validation-for="ApproximationPortionId"
+                  class="text-danger"></span>
+        </div>
+
+        <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label">Estimated size</legend>
+            @foreach (var size in CalorieTracker.Services.ApproximatePortions.Labels)
+            {
+                <div class="form-check form-check-inline">
+                    <input asp-for="ApproximationSize"
+                           class="form-check-input"
+                           type="radio"
+                           value="@size"
+                           id="approximation@(size)" />
+                    <label class="form-check-label"
+                           for="approximation@size">@size</label>
+                </div>
+            }
+        </fieldset>
+
+        <div id="approximationSummary"
+             class="alert alert-info mt-3 mb-0"
+             hidden
+             role="status"
+             aria-live="polite"></div>
+    </div>
+
     </fieldset>
     <div class="mb-3 mt-3">
         <button type="submit"
@@ -300,6 +364,7 @@
     <script>
         const foods = @Html.Raw(foodsJson);
         const selectedPortionId = "@Model.SelectedPortionId";
+        const selectedApproximationPortionId = "@Model.ApproximationPortionId";
     </script>
     <script src="~/js/diary-food.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />

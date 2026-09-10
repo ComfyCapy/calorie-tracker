@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using CalorieTracker.Controllers;
 using CalorieTracker.Models;
 using CalorieTracker.Services;
@@ -139,6 +140,43 @@ public class FoodsApiTests
 
         Assert.IsType<BadRequestObjectResult>(action.Result);
         Assert.Equal(0, service.SearchCallCount);
+    }
+
+    [Fact]
+    public async Task SuggestionsRankReusableFoodsAndDoNotLeakOtherUsersFoods()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1", "first");
+        await database.AddUserAsync("user-2", "second");
+        var favourite = TestData.Food("user-1", name: "Apple favourite");
+        favourite.IsFavourite = true;
+        var frequent = TestData.Food("user-1", name: "Apple frequent");
+        frequent.Source = FoodSources.Usda;
+        frequent.ExternalId = "frequent";
+        var custom = TestData.Food("user-1", name: "Apple custom");
+        var other = TestData.Food("user-2", name: "Apple private");
+        other.IsFavourite = true;
+        database.Context.Foods.AddRange(favourite, frequent, custom, other);
+        await database.Context.SaveChangesAsync();
+        database.Context.DiaryEntries.Add(
+            TestData.DiaryEntry("user-1", frequent, 100));
+        await database.Context.SaveChangesAsync();
+        var controller = CreateController(
+            database,
+            new FakeFoodSearchService(),
+            "user-1");
+
+        var action = await controller.Suggestions(" apple ");
+
+        var result = Assert.IsType<OkObjectResult>(action);
+        using var json = JsonSerializer.SerializeToDocument(result.Value);
+        var suggestions = json.RootElement.EnumerateArray().ToList();
+        Assert.Equal(3, suggestions.Count);
+        Assert.Equal("Favourite", suggestions[0].GetProperty("category").GetString());
+        Assert.Equal(JsonValueKind.Null, suggestions[1].GetProperty("category").ValueKind);
+        Assert.Equal("Custom", suggestions[2].GetProperty("category").GetString());
+        Assert.DoesNotContain(suggestions, item =>
+            item.GetProperty("name").GetString() == "Apple private");
     }
 
     [Theory]

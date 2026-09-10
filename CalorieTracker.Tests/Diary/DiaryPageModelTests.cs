@@ -531,6 +531,101 @@ public class DiaryPageModelTests
         Assert.Empty(database.Context.DiaryEntries);
     }
 
+    [Fact]
+    public async Task CreateApproximatePortionUsesStoredServingAndMarksSnapshot()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1", name: "Rice");
+        var portion = new FoodPortion
+        {
+            Food = food,
+            Name = "1 bowl",
+            Amount = 180
+        };
+        database.Context.AddRange(food, portion);
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(database, "user-1", food, 999);
+        model.MeasurementMode = "Approximate";
+        model.ApproximationSize = "Large";
+        model.ApproximationPortionId = portion.Id;
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<RedirectToPageResult>(result);
+        var entry = await database.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(270m, entry.Quantity);
+        Assert.Equal(1.5m, entry.PortionQuantity);
+        Assert.Equal(portion.Id, entry.FoodPortionId);
+        Assert.True(entry.IsApproximate);
+        Assert.Equal("Large", entry.ApproximationLabel);
+        Assert.Equal(540m, entry.CaloriesConsumed);
+    }
+
+    [Fact]
+    public async Task CreateApproximateWithoutDefensibleServingFallsBackWithValidation()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1", name: "Unportioned food");
+        database.Context.Foods.Add(food);
+        await database.Context.SaveChangesAsync();
+        var model = CreateCreateModel(database, "user-1", food, 999);
+        model.MeasurementMode = "Approximate";
+        model.ApproximationSize = "Medium";
+
+        var result = await model.OnPostAsync();
+
+        Assert.IsType<PageResult>(result);
+        Assert.Empty(database.Context.DiaryEntries);
+        Assert.Contains(
+            model.ModelState[nameof(model.MeasurementMode)]!.Errors,
+            error => error.ErrorMessage.Contains("trustworthy serving"));
+    }
+
+    [Fact]
+    public async Task EditApproximatePortionPreservesHistoricalServingAndNutrition()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var food = TestData.Food("user-1", name: "Rice");
+        var portion = new FoodPortion
+        {
+            Food = food,
+            Name = "1 bowl",
+            Amount = 180
+        };
+        database.Context.AddRange(food, portion);
+        await database.Context.SaveChangesAsync();
+        var entry = TestData.DiaryEntry(
+            "user-1",
+            food,
+            quantity: 135,
+            portion,
+            portionQuantity: 0.75m);
+        entry.IsApproximate = true;
+        entry.ApproximationLabel = "Small";
+        database.Context.DiaryEntries.Add(entry);
+        await database.Context.SaveChangesAsync();
+        food.Calories = 999;
+        portion.Amount = 300;
+        await database.Context.SaveChangesAsync();
+        var model = CreateEditModel(database, "user-1", entry, 999);
+        model.MeasurementMode = "Approximate";
+        model.ApproximationSize = "Large";
+        model.ApproximationPortionId = portion.Id;
+
+        var result = await model.OnPostAsync(entry.Id);
+
+        Assert.IsType<RedirectToPageResult>(result);
+        var updated = await database.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(270m, updated.Quantity);
+        Assert.Equal(1.5m, updated.PortionQuantity);
+        Assert.Equal(200m, updated.CaloriesSnapshot);
+        Assert.Equal(540m, updated.CaloriesConsumed);
+        Assert.Equal("Large", updated.ApproximationLabel);
+    }
+
     private static DiaryCreateModel CreateCreateModel(
         TestDatabase database,
         string userId,

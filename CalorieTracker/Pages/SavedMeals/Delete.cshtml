@@ -1,0 +1,11 @@
+@page "{id:int}"
+@model CalorieTracker.Pages.SavedMeals.DeleteModel
+@{
+    ViewData["Title"] = "Delete Saved Meal";
+}
+<h1>Delete @Model.SavedMeal.Name?</h1>
+<p>This removes only the reusable template. Diary entries already created from it stay unchanged.</p>
+<form method="post">
+    <button type="submit" class="btn btn-danger">Delete saved meal</button>
+    <a asp-page="./Details" asp-route-id="@Model.SavedMeal.Id" class="btn btn-secondary">Cancel</a>
+</form>

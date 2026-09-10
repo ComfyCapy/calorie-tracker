@@ -195,6 +195,8 @@ builder.Services.AddScoped<FoodCatalogue>();
 builder.Services.AddScoped<ExternalFoodResolver>();
 builder.Services.AddScoped<CapyProvisioningService>();
 builder.Services.AddScoped<DailyMaintenanceSnapshotService>();
+builder.Services.AddScoped<DiaryCopyService>();
+builder.Services.AddScoped<ReusableMealService>();
 builder.Services.AddScoped<CalorieBalanceYearService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);

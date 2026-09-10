@@ -232,6 +232,49 @@
     </div>
 </div>
 
+<div class="d-flex flex-wrap gap-2 mb-4 diary-reuse-actions">
+    <a asp-page="/SavedMeals/Index" class="btn btn-outline-primary">
+        Saved meals
+    </a>
+    @if (Model.SelectedDate > CalorieTracker.Services.ValidationRules.MinimumDiaryDate)
+    {
+        <details class="diary-copy-details">
+            <summary class="btn btn-outline-secondary">Copy previous day</summary>
+            <form method="post"
+                  asp-page-handler="CopyPreviousDay"
+                  class="card card-body mt-2 diary-copy-form"
+                  data-copy-form>
+                <input type="hidden"
+                       name="targetDate"
+                       value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                <p class="mb-2">
+                    Copy everything from
+                    <strong>@Model.SelectedDate.AddDays(-1).ToString("d MMM yyyy")</strong>
+                    into
+                    <strong>@Model.SelectedDate.ToString("d MMM yyyy")</strong>.
+                    Existing entries are never removed.
+                </p>
+                @if (Model.Entries.Count > 0)
+                {
+                    <div class="form-check mb-2">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="confirmAdditive"
+                               value="true"
+                               id="confirmPreviousDay" />
+                        <label class="form-check-label" for="confirmPreviousDay">
+                            Add these entries alongside what is already logged
+                        </label>
+                    </div>
+                }
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Copy previous day
+                </button>
+            </form>
+        </details>
+    }
+</div>
+
 @foreach (var meal in new[] { "Breakfast", "Lunch", "Dinner", "Snack" })
 {
     var mealEntries = Model.Entries
@@ -259,6 +302,7 @@
                 }
             </div>
 
+            <div class="d-flex flex-wrap gap-2 diary-meal-header-actions">
             <a asp-page="./Create"
                asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
                asp-route-meal="@meal"
@@ -266,6 +310,16 @@
                aria-label="Add food to @meal">
                 + Add Food
             </a>
+            @if (mealEntries.Count > 0)
+            {
+                <a asp-page="/SavedMeals/Create"
+                   asp-route-sourceDate="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                   asp-route-sourceMeal="@meal"
+                   class="btn btn-sm btn-outline-secondary">
+                    Save meal
+                </a>
+            }
+            </div>
         </div>
 
         @if (mealEntries.Count == 0)
@@ -286,7 +340,30 @@
                             <div>
                                 <h3>@entry.FoodNameSnapshot</h3>
 
-                                @if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion)
+                                @if (entry.IsApproximate)
+                                {
+                                    <p>
+                                        <span class="badge text-bg-info">Estimate</span>
+                                        @entry.ApproximationLabel
+                                        @if (entry.PortionQuantity.HasValue &&
+                                             !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
+                                        {
+                                            <text>· @entry.PortionQuantity.Value.ToString("0.##") × @entry.PortionNameSnapshot</text>
+                                        }
+                                        else
+                                        {
+                                            <text>· @entry.Quantity.ToString("0.##") @entry.PortionLabelSnapshot</text>
+                                        }
+                                    </p>
+                                    @if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Measured)
+                                    {
+                                        <small class="text-muted">
+                                            @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
+                                            @entry.ServingUnitSnapshot used for nutrition
+                                        </small>
+                                    }
+                                }
+                                else if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion)
                                 {
                                     <p>
                                         @entry.Quantity.ToString("0.##")
@@ -367,4 +444,5 @@
 
 @section Scripts {
     <script src="~/js/macro-goals-preference.js" asp-append-version="true"></script>
+    <script src="~/js/diary-copy.js" asp-append-version="true"></script>
 }

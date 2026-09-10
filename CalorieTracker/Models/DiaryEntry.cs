@@ -37,6 +37,13 @@ namespace CalorieTracker.Models
         [BindNever]
         public decimal? PortionQuantity { get; set; }
 
+        [BindNever]
+        public bool IsApproximate { get; set; }
+
+        [BindNever]
+        [StringLength(20)]
+        public string? ApproximationLabel { get; set; }
+
         public decimal Quantity { get; set; }
 
         // Quantity is canonical grams/millilitres for measured foods and a

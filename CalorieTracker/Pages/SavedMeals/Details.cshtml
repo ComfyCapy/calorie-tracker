@@ -1,0 +1,36 @@
+@page "{id:int}"
+@model CalorieTracker.Pages.SavedMeals.DetailsModel
+@{
+    ViewData["Title"] = Model.SavedMeal.Name;
+}
+
+<h1>@Model.SavedMeal.Name</h1>
+<p class="text-body-secondary">These item snapshots stay stable if an underlying food is later edited or removed.</p>
+<div class="list-group mb-4">
+    @foreach (var item in Model.SavedMeal.Items.OrderBy(item => item.Id))
+    {
+        <div class="list-group-item d-flex justify-content-between gap-3">
+            <div>
+                <strong>@item.FoodNameSnapshot</strong>
+                @if (item.IsApproximate)
+                { <span class="badge text-bg-info ms-1">@item.ApproximationLabel estimate</span> }
+                <div class="text-body-secondary">
+                    @if (item.PortionQuantity.HasValue && !string.IsNullOrWhiteSpace(item.PortionNameSnapshot))
+                    { <text>@item.PortionQuantity.Value.ToString("0.##") × @item.PortionNameSnapshot</text> }
+                    else
+                    {
+                        var displayUnit = item.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion
+                            ? item.PortionLabelSnapshot ?? "portion"
+                            : item.ServingUnitSnapshot;
+                        <text>@item.Quantity.ToString("0.##") @displayUnit</text>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div class="d-flex gap-2">
+    <a asp-page="./Edit" asp-route-id="@Model.SavedMeal.Id" class="btn btn-primary">Edit</a>
+    <a asp-page="./Delete" asp-route-id="@Model.SavedMeal.Id" class="btn btn-outline-danger">Delete</a>
+    <a asp-page="./Index" class="btn btn-secondary">Back</a>
+</div>

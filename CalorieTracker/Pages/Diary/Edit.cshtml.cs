@@ -39,8 +39,15 @@ namespace CalorieTracker.Pages.Diary
         [BindProperty]
         public decimal? PortionQuantity { get; set; }
 
+        [BindProperty]
+        public int? ApproximationPortionId { get; set; }
+
+        [BindProperty]
+        public string ApproximationSize { get; set; } = "Medium";
+
         public List<Food> FoodOptions { get; set; } = [];
 
+        public DiaryEntry OriginalEntry { get; private set; } = null!;
         public int? OriginalPortionId { get; set; }
         public decimal? OriginalPortionAmount { get; private set; }
         public string SelectedFoodName { get; set; } = string.Empty;
@@ -74,6 +81,7 @@ namespace CalorieTracker.Pages.Diary
             }
 
             DiaryEntry = diaryEntry;
+            OriginalEntry = diaryEntry;
             OriginalPortionId = diaryEntry.FoodPortionId;
             OriginalPortionAmount = diaryEntry.PortionQuantity > 0
                 ? diaryEntry.Quantity / diaryEntry.PortionQuantity.Value
@@ -97,7 +105,17 @@ namespace CalorieTracker.Pages.Diary
                         diaryEntry.Food.ServingUnit);
             }
 
-            if (diaryEntry.FoodPortionId.HasValue &&
+            if (diaryEntry.IsApproximate)
+            {
+                MeasurementMode = "Approximate";
+                ApproximationSize = ApproximatePortions.TryGetMultiplier(
+                    diaryEntry.ApproximationLabel,
+                    out _)
+                    ? diaryEntry.ApproximationLabel!
+                    : "Medium";
+                ApproximationPortionId = diaryEntry.FoodPortionId;
+            }
+            else if (diaryEntry.FoodPortionId.HasValue &&
                 diaryEntry.PortionQuantity.HasValue)
             {
                 MeasurementMode = "Portion";
@@ -140,6 +158,7 @@ namespace CalorieTracker.Pages.Diary
                 return NotFound();
             }
 
+            OriginalEntry = existingEntry;
             OriginalPortionId = existingEntry.FoodPortionId;
             OriginalPortionAmount = existingEntry.PortionQuantity > 0
                 ? existingEntry.Quantity / existingEntry.PortionQuantity.Value
@@ -184,7 +203,94 @@ namespace CalorieTracker.Pages.Diary
 
             FoodPortion? selectedPortion = null;
 
-            if (MeasurementMode == "Portion")
+            if (MeasurementMode == "Approximate")
+            {
+                if (!ApproximatePortions.TryGetMultiplier(
+                        ApproximationSize,
+                        out var multiplier))
+                {
+                    ModelState.AddModelError(
+                        nameof(ApproximationSize),
+                        "Please select a valid estimate.");
+                }
+
+                decimal baseAmount = 0;
+
+                if (selectedFood != null &&
+                    ApproximatePortions.TryGetMultiplier(
+                        ApproximationSize,
+                        out multiplier))
+                {
+                    var availablePortions = selectedFood.Portions
+                        .Where(portion =>
+                            !portion.IsDeleted ||
+                            (selectedFood.Id == existingEntry.FoodId &&
+                             portion.Id == existingEntry.FoodPortionId))
+                        .ToList();
+
+                    if (availablePortions.Count > 0)
+                    {
+                        selectedPortion = availablePortions.FirstOrDefault(portion =>
+                            portion.Id == ApproximationPortionId);
+
+                        if (selectedPortion == null)
+                        {
+                            ModelState.AddModelError(
+                                nameof(ApproximationPortionId),
+                                "Please select the serving your estimate is based on.");
+                        }
+                        else if (selectedFood.Id == existingEntry.FoodId &&
+                                 selectedPortion.Id == existingEntry.FoodPortionId &&
+                                 existingEntry.IsApproximate &&
+                                 ApproximatePortions.TryGetMultiplier(
+                                     existingEntry.ApproximationLabel,
+                                     out var originalMultiplier))
+                        {
+                            baseAmount = existingEntry.Quantity / originalMultiplier;
+                        }
+                        else
+                        {
+                            baseAmount = selectedPortion.Amount;
+                        }
+                    }
+                    else if (selectedFood.ServingBasis == FoodServingBasis.Portion &&
+                             selectedFood.CanonicalServingSize > 0)
+                    {
+                        baseAmount = selectedFood.Id == existingEntry.FoodId &&
+                                     existingEntry.IsApproximate &&
+                                     ApproximatePortions.TryGetMultiplier(
+                                         existingEntry.ApproximationLabel,
+                                         out var originalMultiplier)
+                            ? existingEntry.Quantity / originalMultiplier
+                            : selectedFood.CanonicalServingSize;
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(
+                            nameof(MeasurementMode),
+                            "This food does not have a trustworthy serving to estimate from. Use an exact amount instead.");
+                    }
+
+                    if (baseAmount > 0)
+                    {
+                        try
+                        {
+                            DiaryEntry.Quantity = checked(baseAmount * multiplier);
+                        }
+                        catch (OverflowException)
+                        {
+                            ModelState.AddModelError(
+                                nameof(ApproximationSize),
+                                "The estimated quantity is too large.");
+                        }
+                    }
+                }
+
+                ModelState.Remove("DiaryEntry.Quantity");
+                ModelState.Remove(nameof(SelectedPortionId));
+                ModelState.Remove(nameof(PortionQuantity));
+            }
+            else if (MeasurementMode == "Portion")
             {
                 if (SelectedPortionId == null)
                 {
@@ -309,8 +415,12 @@ namespace CalorieTracker.Pages.Diary
             var foodChanged =
                 existingEntry.FoodId != DiaryEntry.FoodId;
 
+            var selectedSnapshotPortionId = MeasurementMode == "Approximate"
+                ? ApproximationPortionId
+                : SelectedPortionId;
+
             var portionChanged =
-                existingEntry.FoodPortionId != SelectedPortionId;
+                existingEntry.FoodPortionId != selectedSnapshotPortionId;
 
             existingEntry.Date =
                 DiaryEntry.Date;
@@ -329,7 +439,26 @@ namespace CalorieTracker.Pages.Diary
                 existingEntry.CaptureSnapshot(selectedFood!, selectedPortion);
             }
 
-            if (MeasurementMode == "Portion")
+            if (MeasurementMode == "Approximate")
+            {
+                ApproximatePortions.TryGetMultiplier(
+                    ApproximationSize,
+                    out var multiplier);
+                existingEntry.FoodPortionId = ApproximationPortionId;
+                existingEntry.PortionQuantity = selectedPortion != null
+                    ? multiplier
+                    : null;
+                existingEntry.IsApproximate = true;
+                existingEntry.ApproximationLabel = ApproximationSize;
+
+                if (foodChanged ||
+                    portionChanged ||
+                    string.IsNullOrWhiteSpace(existingEntry.PortionNameSnapshot))
+                {
+                    existingEntry.PortionNameSnapshot = selectedPortion?.Name;
+                }
+            }
+            else if (MeasurementMode == "Portion")
             {
                 // Retain the original portion label unless the selection changed or legacy data lacks it.
                 existingEntry.FoodPortionId =
@@ -337,6 +466,8 @@ namespace CalorieTracker.Pages.Diary
 
                 existingEntry.PortionQuantity =
                     PortionQuantity;
+                existingEntry.IsApproximate = false;
+                existingEntry.ApproximationLabel = null;
 
                 if (foodChanged ||
                     portionChanged ||
@@ -352,6 +483,8 @@ namespace CalorieTracker.Pages.Diary
                 existingEntry.FoodPortionId = null;
                 existingEntry.PortionQuantity = null;
                 existingEntry.PortionNameSnapshot = null;
+                existingEntry.IsApproximate = false;
+                existingEntry.ApproximationLabel = null;
             }
 
             await _snapshotService.EnsureSnapshotAsync(

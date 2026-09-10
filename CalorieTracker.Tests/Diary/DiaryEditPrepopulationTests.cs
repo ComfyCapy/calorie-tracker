@@ -158,6 +158,69 @@ public class DiaryEditPrepopulationTests
     }
 
     [Fact]
+    public async Task EditGet_ApproximateEntryRestoresModeServingAndSize()
+    {
+        const string userId = "approximate-edit-user";
+        using var factory = new IntegrationTestFactory();
+        int entryId;
+        int portionId;
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            AddUser(context, userId);
+            var food = MeasuredFood(userId);
+            var portion = new FoodPortion
+            {
+                Food = food,
+                Name = "1 bowl",
+                Amount = 180m
+            };
+            context.AddRange(food, portion);
+            await context.SaveChangesAsync();
+            var entry = TestData.DiaryEntry(
+                userId,
+                food,
+                270m,
+                portion,
+                1.5m);
+            entry.IsApproximate = true;
+            entry.ApproximationLabel = "Large";
+            context.DiaryEntries.Add(entry);
+            await context.SaveChangesAsync();
+            entryId = entry.Id;
+            portionId = portion.Id;
+        }
+
+        using var client = AuthenticatedClient(factory, userId);
+        var html = WebUtility.HtmlDecode(
+            await client.GetStringAsync($"/Diary/Edit?id={entryId}"));
+
+        Assert.Matches(
+            new Regex(
+                "<input(?=[^>]*id=\"approximateMode\")(?=[^>]*checked)[^>]*>",
+                RegexOptions.Singleline),
+            html);
+        var selectedSizeInput = Regex.Match(
+            html,
+            "<input[^>]*id=\"approximationLarge\"[^>]*>",
+            RegexOptions.Singleline).Value;
+        Assert.Contains("checked", selectedSizeInput);
+        Assert.Contains(
+            $"const selectedApproximationPortionId = \"{portionId}\";",
+            html);
+        Assert.DoesNotContain(
+            "id=\"approximationSection\" class=\"mb-3 mt-3\" style=\"display: none;\"",
+            html);
+        Assert.Matches(
+            new Regex(
+                "<div(?=[^>]*id=\"approximationSummary\")(?=[^>]*hidden)[^>]*>",
+                RegexOptions.Singleline),
+            html);
+    }
+
+    [Fact]
     public async Task EditGet_AnotherUsersEntryReturnsNotFound()
     {
         await using var database = await TestDatabase.CreateAsync();

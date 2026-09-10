@@ -4,6 +4,8 @@ import {
     invalidateLatestRequest,
     runLatestRequest,
 } from './latestRequest.js'
+import { scheduleAutocomplete } from './autocomplete.js'
+import { getProviderSwitchSearch } from './providerSwitch.js'
 
 const providers = {
     cofid: {
@@ -34,6 +36,7 @@ function App({
     const [searchTerm, setSearchTerm] = useState(initialQuery)
     const [provider, setProvider] = useState(startingProvider)
     const [foods, setFoods] = useState([])
+    const [localSuggestions, setLocalSuggestions] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
     const [hasSearched, setHasSearched] = useState(false)
@@ -78,6 +81,7 @@ function App({
                             'Searching the wider food catalogue...')
                     },
                     onSuccess(result) {
+                        setLocalSuggestions([])
                         const resultPage = result.pageNumber || pageNumber
                         const resultTotalPages = result.totalPages || 0
                         const resultTotal = result.totalResults || 0
@@ -110,17 +114,128 @@ function App({
         []
     )
 
+    const loadAutocomplete = useCallback(
+        async (query, nextProvider) => {
+            await runLatestRequest(
+                searchRequestSequence,
+                async () => {
+                    const localResponse = await fetch(
+                        `/api/foods/suggestions?query=${encodeURIComponent(query)}`
+                    )
+
+                    if (!localResponse.ok) {
+                        throw new Error('Unable to load local suggestions.')
+                    }
+
+                    const local = await localResponse.json()
+
+                    if (Array.isArray(local) && local.length > 0) {
+                        return { local, external: null }
+                    }
+
+                    const params = new URLSearchParams({
+                        query,
+                        page: '1',
+                        pageSize: '20',
+                        provider: nextProvider,
+                    })
+                    const externalResponse = await fetch(
+                        `/api/foods/search?${params.toString()}`
+                    )
+
+                    if (!externalResponse.ok) {
+                        throw new Error('Unable to search for foods.')
+                    }
+
+                    return {
+                        local: [],
+                        external: await externalResponse.json(),
+                    }
+                },
+                {
+                    onStart() {
+                        setIsLoading(true)
+                        setError('')
+                        setStatusMessage('Looking for useful food suggestions...')
+                    },
+                    onSuccess(result) {
+                        setLocalSuggestions(result.local)
+
+                        if (result.local.length > 0) {
+                            setFoods([])
+                            setHasSearched(false)
+                            setTotalPages(0)
+                            setTotalResults(0)
+                            setStatusMessage(
+                                `${result.local.length} suggestion${result.local.length === 1 ? '' : 's'} from your foods.`
+                            )
+                            return
+                        }
+
+                        const external = result.external || {}
+                        const resultFoods = Array.isArray(external.foods)
+                            ? external.foods
+                            : []
+                        setFoods(resultFoods)
+                        setHasSearched(true)
+                        setActiveSearchTerm(query)
+                        setCurrentPage(external.pageNumber || 1)
+                        setTotalPages(external.totalPages || 0)
+                        setTotalResults(external.totalResults || 0)
+                        setStatusMessage(
+                            resultFoods.length > 0
+                                ? `${external.totalResults || resultFoods.length} foods found in the selected database.`
+                                : 'No matching foods found.'
+                        )
+                    },
+                    onError() {
+                        setLocalSuggestions([])
+                        setFoods([])
+                        setError('We could not load food suggestions. Please try again.')
+                        setStatusMessage('We could not load food suggestions.')
+                    },
+                    onFinish() {
+                        setIsLoading(false)
+                    },
+                },
+            )
+        },
+        [],
+    )
+
     useEffect(() => {
-        if (!initialQuery) {
+        const trimmed = searchTerm.trim()
+
+        if (trimmed.length < 2) {
             return
         }
 
-        const searchTimer = window.setTimeout(() => {
-            void loadSearchPage(initialQuery, 1, 20, startingProvider)
-        }, 0)
+        if (activeSearchTerm === trimmed && hasSearched) {
+            return
+        }
 
-        return () => window.clearTimeout(searchTimer)
-    }, [initialQuery, loadSearchPage, startingProvider])
+        return scheduleAutocomplete(
+            trimmed,
+            (query) => void loadAutocomplete(query, provider),
+        )
+    }, [activeSearchTerm, hasSearched, loadAutocomplete, provider, searchTerm])
+
+    function handleSearchTermChange(event) {
+        const value = event.target.value
+        setSearchTerm(value)
+        invalidateLatestRequest(searchRequestSequence)
+        setLocalSuggestions([])
+        setFoods([])
+        setHasSearched(false)
+        setIsLoading(false)
+        setError('')
+
+        if (value.trim().length < 2) {
+            setStatusMessage(value.trim() ? 'Keep typing for suggestions.' : 'Search cleared.')
+        } else {
+            setStatusMessage('Waiting for suggestions...')
+        }
+    }
 
     async function handleSearch(event) {
         event.preventDefault()
@@ -130,6 +245,7 @@ function App({
         if (!trimmedSearchTerm) {
             invalidateLatestRequest(searchRequestSequence)
             setFoods([])
+            setLocalSuggestions([])
             setError('')
             setHasSearched(false)
             setActiveSearchTerm('')
@@ -141,34 +257,39 @@ function App({
         }
 
         setActiveSearchTerm(trimmedSearchTerm)
+        setLocalSuggestions([])
         await loadSearchPage(trimmedSearchTerm, 1, pageSize, provider)
     }
 
-    async function handleProviderChange(nextProvider) {
+    function handleProviderChange(nextProvider) {
         if (nextProvider === provider) {
             return
         }
 
         setProvider(nextProvider)
         setFoods([])
+        setLocalSuggestions([])
         setError('')
         setHasSearched(false)
         setCurrentPage(1)
         setTotalPages(0)
         setTotalResults(0)
+        invalidateLatestRequest(searchRequestSequence)
+        setIsLoading(false)
+        setStatusMessage('Food database changed. Updating suggestions...')
 
-        if (activeSearchTerm) {
-            await loadSearchPage(
-                activeSearchTerm,
-                1,
+        const providerSwitchSearch = getProviderSwitchSearch(searchTerm)
+
+        if (providerSwitchSearch) {
+            setActiveSearchTerm(providerSwitchSearch.query)
+            setHasSearched(true)
+            void loadSearchPage(
+                providerSwitchSearch.query,
+                providerSwitchSearch.pageNumber,
                 pageSize,
                 nextProvider,
             )
-            return
         }
-
-        invalidateLatestRequest(searchRequestSequence)
-        setStatusMessage('Food database changed.')
     }
 
     async function handlePageSizeChange(event) {
@@ -303,6 +424,28 @@ function App({
         }
     }
 
+    function handleSelectLocalFood(food) {
+        const params = new URLSearchParams({
+            foodId: food.foodId.toString(),
+            returnToFoodSearch: 'true',
+        })
+
+        if (returnToDiary && diaryDate) {
+            params.set('date', diaryDate)
+        }
+        if (returnToDiary && diaryMeal) {
+            params.set('meal', diaryMeal)
+        }
+        if (searchTerm.trim()) {
+            params.set('foodSearchTerm', searchTerm.trim())
+        }
+        if (embedded) {
+            params.set('returnToFoodsIndex', 'true')
+        }
+
+        window.location.assign(`/Diary/Create?${params.toString()}`)
+    }
+
     return (
         <div
             className={
@@ -336,10 +479,13 @@ function App({
                             className="food-search-input"
                             type="search"
                             value={searchTerm}
-                            onChange={(event) =>
-                                setSearchTerm(event.target.value)}
+                            onChange={handleSearchTermChange}
                             placeholder="Try chicken, spaghetti, banana..."
                             aria-label="Search the wider food catalogue"
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-controls="food-autocomplete-results"
+                            aria-expanded={localSuggestions.length > 0 || foods.length > 0}
                         />
 
                         <fieldset className="food-search-provider-selector">
@@ -360,7 +506,7 @@ function App({
                                         aria-label={details.accessibleLabel}
                                         aria-pressed={provider === providerId}
                                         onClick={() =>
-                                            void handleProviderChange(providerId)}
+                                            handleProviderChange(providerId)}
                                     >
                                         {details.label}
                                     </button>
@@ -391,6 +537,41 @@ function App({
             >
                 {statusMessage}
             </div>
+
+            {localSuggestions.length > 0 && (
+                <section
+                    id="food-autocomplete-results"
+                    className="food-local-suggestions"
+                    aria-label="Suggestions from your foods"
+                >
+                    <h2>Your foods</h2>
+                    <div className="list-group">
+                        {localSuggestions.map((food) => (
+                            <button
+                                key={food.foodId}
+                                type="button"
+                                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3"
+                                onClick={() => handleSelectLocalFood(food)}
+                            >
+                                <span className="text-start">
+                                    <strong>{food.name}</strong>
+                                    <small className="d-block text-body-secondary">
+                                        {food.serving}
+                                    </small>
+                                </span>
+                                {food.category && (
+                                    <span className="food-local-suggestion-kind">
+                                        {food.category}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="food-search-attribution mb-0 mt-2">
+                        Press Search to search the selected {providers[provider].label} database instead.
+                    </p>
+                </section>
+            )}
 
             {isLoading && foods.length === 0 && (
                 <div
@@ -424,6 +605,7 @@ function App({
 
             {foods.length > 0 && (
                 <section
+                    id="food-autocomplete-results"
                     className="food-search-results"
                     aria-busy={isLoading}
                 >

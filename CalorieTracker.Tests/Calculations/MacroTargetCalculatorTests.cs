@@ -147,7 +147,10 @@ public class MacroTargetCalculatorTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             _calculator,
-            new TestUserLocalTimeProvider(CurrentDate));
+            new TestUserLocalTimeProvider(CurrentDate),
+            new DiaryCopyService(
+                database.Context,
+                new DailyMaintenanceSnapshotService(database.Context)));
         PageModelTestContext.Attach(diary, "user-1");
 
         await dashboard.OnGetAsync();

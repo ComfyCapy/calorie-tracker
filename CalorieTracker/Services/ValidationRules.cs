@@ -24,7 +24,8 @@ namespace CalorieTracker.Services
             new(StringComparer.Ordinal)
             {
                 "Exact",
-                "Portion"
+                "Portion",
+                "Approximate"
             };
 
         public static bool ValidateFood(
@@ -159,14 +160,17 @@ namespace CalorieTracker.Services
             ModelStateDictionary modelState,
             string key)
         {
-            if (date.Date < MinimumDiaryDate ||
-                date.Date > MaximumDiaryDate)
+            if (!IsValidDiaryDate(date))
             {
                 modelState.AddModelError(
                     key,
                     "Date must be between 1 January 1900 and 31 December 2100.");
             }
         }
+
+        public static bool IsValidDiaryDate(DateTime date) =>
+            date.Date >= MinimumDiaryDate &&
+            date.Date <= MaximumDiaryDate;
 
         public static bool HasBindingError(
             ModelStateDictionary modelState,

@@ -98,6 +98,12 @@ public class DeletePersonalDataModel : PageModel
         // Diary rows restrict physical deletion of their foods and portions.
         // Remove only this user's owned graph, from leaves to root, before
         // allowing the existing Identity/user cascades to do their work.
+        await _context.SavedMealItems
+            .Where(item => item.SavedMeal!.UserId == userId)
+            .ExecuteDeleteAsync();
+        await _context.SavedMeals
+            .Where(meal => meal.UserId == userId)
+            .ExecuteDeleteAsync();
         await _context.DiaryEntries
             .Where(entry => entry.UserId == userId)
             .ExecuteDeleteAsync();

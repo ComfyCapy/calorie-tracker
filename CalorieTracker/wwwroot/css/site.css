@@ -289,6 +289,41 @@ html[data-development-banner-dismissed="true"] .development-banner {
     }
 }
 
+.diary-copy-details {
+  position: relative;
+}
+
+.diary-copy-details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.diary-copy-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.diary-copy-form {
+  width: min(22rem, calc(100vw - 2rem));
+  position: absolute;
+  right: 0;
+  z-index: 20;
+}
+
+.diary-meal-header-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 575.98px) {
+  .diary-copy-form {
+    left: 0;
+    right: auto;
+  }
+
+  .diary-meal-header-actions {
+    justify-content: flex-start;
+  }
+}
+
 .navbar-nav .dropdown-toggle,
 .navbar-nav .dropdown-toggle:hover,
 .navbar-nav .dropdown-toggle:focus {

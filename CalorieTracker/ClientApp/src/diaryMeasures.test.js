@@ -121,3 +121,9 @@ test('preview rounds for display only and does not rewrite submitted values', ()
   assert.equal(el('portionSummary').textContent, '0.33 fl oz (9.8087 g used for nutrition)')
   assert.equal(el('portionQuantity').value, '0.33')
 })
+
+test('empty approximate preview stays hidden', () => {
+  const el = page({ portions: [] })
+  assert.equal(el('approximationSummary').textContent, '')
+  assert.equal(el('approximationSummary').hidden, true)
+})

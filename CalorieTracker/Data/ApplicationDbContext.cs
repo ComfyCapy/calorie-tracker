@@ -19,6 +19,8 @@ namespace CalorieTracker.Data
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<DailyMaintenanceSnapshot> DailyMaintenanceSnapshots { get; set; }
         public DbSet<FoodPortion> FoodPortions { get; set; }
+        public DbSet<SavedMeal> SavedMeals { get; set; }
+        public DbSet<SavedMealItem> SavedMealItems { get; set; }
 
         public DbSet<CapyItem> CapyItems { get; set; }
         public DbSet<UserCapyItem> UserCapyItems { get; set; }
@@ -70,6 +72,52 @@ namespace CalorieTracker.Data
                 .WithMany()
                 .HasForeignKey(entry => entry.FoodPortionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<DiaryEntry>()
+                .HasIndex(entry => new
+                {
+                    entry.UserId,
+                    entry.Date,
+                    entry.Id
+                });
+
+            builder.Entity<DiaryEntry>()
+                .HasIndex(entry => new
+                {
+                    entry.UserId,
+                    entry.FoodId
+                });
+
+            builder.Entity<SavedMeal>()
+                .HasOne(meal => meal.User)
+                .WithMany()
+                .HasForeignKey(meal => meal.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<SavedMeal>()
+                .HasIndex(meal => new { meal.UserId, meal.Name });
+
+            builder.Entity<SavedMealItem>()
+                .HasOne(item => item.SavedMeal)
+                .WithMany(meal => meal.Items)
+                .HasForeignKey(item => item.SavedMealId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<SavedMealItem>()
+                .HasOne(item => item.Food)
+                .WithMany()
+                .HasForeignKey(item => item.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SavedMealItem>()
+                .HasOne(item => item.FoodPortion)
+                .WithMany()
+                .HasForeignKey(item => item.FoodPortionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<SavedMealItem>()
+                .Property(item => item.ApproximationLabel)
+                .HasMaxLength(20);
 
             builder.Entity<Food>()
                 .HasIndex(food => new

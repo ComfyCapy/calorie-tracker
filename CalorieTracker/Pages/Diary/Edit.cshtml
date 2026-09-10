@@ -8,27 +8,51 @@
 
 @{
     var foodsJson = JsonSerializer.Serialize(
-        Model.FoodOptions.Select(food => new
+        Model.FoodOptions.Select(food =>
         {
-            id = food.Id,
-            name = food.Name,
-            unit = food.DisplayServingUnit,
-            isUsda = food.Source == CalorieTracker.Services.FoodSources.Usda,
-            isFavourite = food.IsFavourite,
-            isCustom = food.Source == null,
-            portions = food.Portions
-                .Where(portion => !portion.IsDeleted || portion.Id == Model.OriginalPortionId)
-                .Select(portion => new
+            var useHistoricalNutrition = food.Id == Model.OriginalEntry.FoodId;
+            var historicalUnit = Model.OriginalEntry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion
+                ? Model.OriginalEntry.PortionLabelSnapshot ?? "portion"
+                : Model.OriginalEntry.ServingUnitSnapshot;
+
+            return new
             {
-                id = portion.Id,
-                name = portion.Name,
-                amount = CalorieTracker.Services.MeasurementUnits
-                    .FromCanonical(
-                        portion.Id == Model.OriginalPortionId && Model.OriginalPortionAmount.HasValue
+                id = food.Id,
+                name = food.Name,
+                unit = useHistoricalNutrition ? historicalUnit : food.DisplayServingUnit,
+                isUsda = food.Source == CalorieTracker.Services.FoodSources.Usda,
+                isFavourite = food.IsFavourite,
+                isCustom = food.Source == null,
+                isDirectPortion = useHistoricalNutrition
+                    ? Model.OriginalEntry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion
+                    : food.ServingBasis == CalorieTracker.Models.FoodServingBasis.Portion,
+                canonicalServingSize = useHistoricalNutrition
+                    ? Model.OriginalEntry.CanonicalServingSizeSnapshot
+                    : food.CanonicalServingSize,
+                calories = useHistoricalNutrition ? Model.OriginalEntry.CaloriesSnapshot : food.Calories,
+                protein = useHistoricalNutrition ? Model.OriginalEntry.ProteinSnapshot : food.Protein,
+                carbohydrates = useHistoricalNutrition ? Model.OriginalEntry.CarbohydratesSnapshot : food.Carbohydrates,
+                fat = useHistoricalNutrition ? Model.OriginalEntry.FatSnapshot : food.Fat,
+                portions = food.Portions
+                    .Where(portion => !portion.IsDeleted || portion.Id == Model.OriginalPortionId)
+                    .Select(portion => new
+                {
+                    id = portion.Id,
+                    name = portion.Name,
+                    canonicalAmount = portion.Id == Model.OriginalPortionId && Model.OriginalPortionAmount.HasValue
+                        ? Model.OriginalPortionAmount.Value
+                        : portion.Amount,
+                    amount = CalorieTracker.Services.MeasurementUnits
+                        .FromCanonical(
+                            portion.Id == Model.OriginalPortionId && Model.OriginalPortionAmount.HasValue
                             ? Model.OriginalPortionAmount.Value
                             : portion.Amount,
-                        food.ServingUnit)
-            })
+                            useHistoricalNutrition &&
+                            Model.OriginalEntry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Measured
+                                ? historicalUnit
+                                : food.ServingUnit)
+                })
+            };
         })
     );
 
@@ -174,6 +198,19 @@
                 <input asp-for="MeasurementMode"
                        class="form-check-input"
                        type="radio"
+                       value="Approximate"
+                       id="approximateMode" />
+
+                <label class="form-check-label"
+                       for="approximateMode">
+                    Rough portion
+                </label>
+            </div>
+
+            <div class="form-check form-check-inline">
+                <input asp-for="MeasurementMode"
+                       class="form-check-input"
+                       type="radio"
                        value="Portion"
                        id="portionMode" />
 
@@ -264,6 +301,48 @@
         </div>
     </div>
 
+    <div id="approximationSection"
+         class="mb-3 mt-3"
+         style="@(Model.MeasurementMode == "Approximate" ? null : "display: none;")">
+        <p class="mb-2">
+            This remains clearly marked as an estimate based on a stored serving.
+        </p>
+
+        <div id="approximationBaseSection" class="mb-3">
+            <label asp-for="ApproximationPortionId"
+                   class="form-label">Serving to estimate from</label>
+            <select asp-for="ApproximationPortionId"
+                    id="approximationPortionSelect"
+                    class="form-select">
+                <option value="">Select a serving...</option>
+            </select>
+            <span asp-validation-for="ApproximationPortionId"
+                  class="text-danger"></span>
+        </div>
+
+        <fieldset class="border-0 p-0 m-0">
+            <legend class="form-label">Estimated size</legend>
+            @foreach (var size in CalorieTracker.Services.ApproximatePortions.Labels)
+            {
+                <div class="form-check form-check-inline">
+                    <input asp-for="ApproximationSize"
+                           class="form-check-input"
+                           type="radio"
+                           value="@size"
+                           id="approximation@(size)" />
+                    <label class="form-check-label"
+                           for="approximation@size">@size</label>
+                </div>
+            }
+        </fieldset>
+
+        <div id="approximationSummary"
+             class="alert alert-info mt-3 mb-0"
+             hidden
+             role="status"
+             aria-live="polite"></div>
+    </div>
+
     </fieldset>
     <div class="mb-3 mt-3">
         <button type="submit"
@@ -283,6 +362,7 @@
     <script>
         const foods = @Html.Raw(foodsJson);
         const selectedPortionId = "@Model.SelectedPortionId";
+        const selectedApproximationPortionId = "@Model.ApproximationPortionId";
     </script>
     <script src="~/js/diary-food.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />

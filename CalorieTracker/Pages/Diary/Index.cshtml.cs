@@ -16,17 +16,20 @@ namespace CalorieTracker.Pages.Diary
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly MacroTargetCalculator _macroTargetCalculator;
         private readonly IUserLocalTimeProvider _userLocalTimeProvider;
+        private readonly DiaryCopyService _diaryCopyService;
 
         public IndexModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             MacroTargetCalculator macroTargetCalculator,
-            IUserLocalTimeProvider userLocalTimeProvider)
+            IUserLocalTimeProvider userLocalTimeProvider,
+            DiaryCopyService diaryCopyService)
         {
             _context = context;
             _userManager = userManager;
             _macroTargetCalculator = macroTargetCalculator;
             _userLocalTimeProvider = userLocalTimeProvider;
+            _diaryCopyService = diaryCopyService;
         }
 
         public List<DiaryEntry> Entries { get; set; } = [];
@@ -110,6 +113,51 @@ namespace CalorieTracker.Pages.Diary
             }
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostCopyPreviousDayAsync(
+            DateTime targetDate,
+            bool confirmAdditive)
+        {
+            if (!ValidationRules.IsValidDiaryDate(targetDate) ||
+                targetDate.Date <= ValidationRules.MinimumDiaryDate)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            var userId = _userManager.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var result = await _diaryCopyService.CopyAsync(
+                userId,
+                targetDate.AddDays(-1),
+                targetDate,
+                confirmAdditive);
+
+            TempData["UiStatusMessage"] = result.Outcome switch
+            {
+                DiaryCopyOutcome.Success =>
+                    $"Copied {result.EntriesCopied} {(result.EntriesCopied == 1 ? "entry" : "entries")} from the previous day.",
+                DiaryCopyOutcome.NoSourceEntries =>
+                    "There are no entries on the previous day to copy.",
+                DiaryCopyOutcome.TargetNotEmpty =>
+                    "The destination already contains entries. Tick the confirmation box to add the copied entries without replacing anything.",
+                _ => "That copy request is not valid."
+            };
+
+            return RedirectToPage(new
+            {
+                date = targetDate.ToString("yyyy-MM-dd")
+            });
         }
     }
 }

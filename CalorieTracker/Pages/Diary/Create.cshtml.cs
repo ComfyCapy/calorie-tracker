@@ -42,6 +42,12 @@ namespace CalorieTracker.Pages.Diary
         [BindProperty]
         public decimal? PortionQuantity { get; set; }
 
+        [BindProperty]
+        public int? ApproximationPortionId { get; set; }
+
+        [BindProperty]
+        public string ApproximationSize { get; set; } = "Medium";
+
         public List<Food> FoodOptions { get; set; } = [];
         [BindProperty(SupportsGet = true)]
         public bool ReturnToFoodSearch { get; set; }
@@ -134,6 +140,8 @@ namespace CalorieTracker.Pages.Diary
                 {
                     SelectedPortionId = availablePortions[0].Id;
                 }
+
+                ApproximationPortionId = availablePortions[0].Id;
             }
 
             return Page();
@@ -185,6 +193,7 @@ namespace CalorieTracker.Pages.Diary
 
             // Foods without portions can only use exact amounts.
             if (selectedFood != null &&
+                MeasurementMode == "Portion" &&
                 selectedFood.Portions.All(portion => portion.IsDeleted))
             {
                 MeasurementMode = "Exact";
@@ -192,7 +201,82 @@ namespace CalorieTracker.Pages.Diary
 
             FoodPortion? selectedPortion = null;
 
-            if (MeasurementMode == "Portion")
+            if (MeasurementMode == "Approximate")
+            {
+                if (!ApproximatePortions.TryGetMultiplier(
+                        ApproximationSize,
+                        out var multiplier))
+                {
+                    ModelState.AddModelError(
+                        nameof(ApproximationSize),
+                        "Please select a valid estimate.");
+                }
+
+                decimal baseAmount = 0;
+
+                if (selectedFood != null &&
+                    ApproximatePortions.TryGetMultiplier(
+                        ApproximationSize,
+                        out multiplier))
+                {
+                    var activePortions = selectedFood.Portions
+                        .Where(portion => !portion.IsDeleted)
+                        .ToList();
+
+                    if (activePortions.Count > 0)
+                    {
+                        selectedPortion = activePortions.FirstOrDefault(portion =>
+                            portion.Id == ApproximationPortionId);
+
+                        if (selectedPortion == null)
+                        {
+                            ModelState.AddModelError(
+                                nameof(ApproximationPortionId),
+                                "Please select the serving your estimate is based on.");
+                        }
+                        else
+                        {
+                            baseAmount = selectedPortion.Amount;
+                            DiaryEntry.FoodPortionId = selectedPortion.Id;
+                            DiaryEntry.PortionQuantity = multiplier;
+                        }
+                    }
+                    else if (selectedFood.ServingBasis == FoodServingBasis.Portion &&
+                             selectedFood.CanonicalServingSize > 0)
+                    {
+                        baseAmount = selectedFood.CanonicalServingSize;
+                        DiaryEntry.FoodPortionId = null;
+                        DiaryEntry.PortionQuantity = null;
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(
+                            nameof(MeasurementMode),
+                            "This food does not have a trustworthy serving to estimate from. Use an exact amount instead.");
+                    }
+
+                    if (baseAmount > 0)
+                    {
+                        try
+                        {
+                            DiaryEntry.Quantity = checked(baseAmount * multiplier);
+                        }
+                        catch (OverflowException)
+                        {
+                            ModelState.AddModelError(
+                                nameof(ApproximationSize),
+                                "The estimated quantity is too large.");
+                        }
+                    }
+                }
+
+                DiaryEntry.IsApproximate = true;
+                DiaryEntry.ApproximationLabel = ApproximationSize;
+                ModelState.Remove("DiaryEntry.Quantity");
+                ModelState.Remove(nameof(SelectedPortionId));
+                ModelState.Remove(nameof(PortionQuantity));
+            }
+            else if (MeasurementMode == "Portion")
             {
                 if (SelectedPortionId == null)
                 {
@@ -227,6 +311,8 @@ namespace CalorieTracker.Pages.Diary
                     else
                     {
                         selectedPortion = portion;
+                        DiaryEntry.IsApproximate = false;
+                        DiaryEntry.ApproximationLabel = null;
                         DiaryEntry.FoodPortionId =
                             portion.Id;
 
@@ -258,6 +344,8 @@ namespace CalorieTracker.Pages.Diary
 
                 DiaryEntry.FoodPortionId = null;
                 DiaryEntry.PortionQuantity = null;
+                DiaryEntry.IsApproximate = false;
+                DiaryEntry.ApproximationLabel = null;
 
                 // Exact mode owns quantity; discard stale portion fields from the same form post.
                 ModelState.Remove(

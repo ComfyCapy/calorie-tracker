@@ -26,11 +26,26 @@
         const portionMode =
             document.getElementById("portionMode");
 
+        const approximateMode =
+            document.getElementById("approximateMode");
+
         const exactQuantitySection =
             document.getElementById("exactQuantitySection");
 
         const portionSection =
             document.getElementById("portionSection");
+
+        const approximationSection =
+            document.getElementById("approximationSection");
+
+        const approximationBaseSection =
+            document.getElementById("approximationBaseSection");
+
+        const approximationPortionSelect =
+            document.getElementById("approximationPortionSelect");
+
+        const approximationSummary =
+            document.getElementById("approximationSummary");
 
         const portionSelect =
             document.getElementById("portionSelect");
@@ -51,6 +66,11 @@
             document.getElementById("foodSearchStatus");
 
         let activeSuggestionIndex = -1;
+
+        const initialApproximationPortionId =
+            typeof selectedApproximationPortionId === "undefined"
+                ? ""
+                : selectedApproximationPortionId;
 
 
         function getSelectedFood() {
@@ -76,7 +96,7 @@
                 return "Custom";
             }
 
-            return "Recent";
+            return "";
         }
 
         function setSuggestionsVisibility(isVisible) {
@@ -206,17 +226,22 @@
                 name.textContent =
                     food.name;
 
-                const category =
-                    document.createElement("small");
-
-                category.className =
-                    "text-muted";
-
-                category.textContent =
+                const categoryName =
                     getFoodCategory(food);
 
                 button.appendChild(name);
-                button.appendChild(category);
+                if (categoryName) {
+                    const category =
+                        document.createElement("small");
+
+                    category.className =
+                        "text-muted";
+
+                    category.textContent =
+                        categoryName;
+
+                    button.appendChild(category);
+                }
 
                 button.addEventListener(
                     "click",
@@ -288,6 +313,9 @@
             portionSelect.innerHTML =
                 '<option value="">Select a portion...</option>';
 
+            approximationPortionSelect.innerHTML =
+                '<option value="">Select a serving...</option>';
+
             if (!selectedFood) {
                 return;
             }
@@ -322,8 +350,27 @@
                     portionSelect.appendChild(
                         option
                     );
+
+                    const approximationOption =
+                        document.createElement("option");
+
+                    approximationOption.value = portion.id;
+                    approximationOption.textContent = option.textContent;
+                    approximationOption.selected =
+                        portion.id.toString() ===
+                        initialApproximationPortionId;
+
+                    approximationPortionSelect.appendChild(
+                        approximationOption
+                    );
                 }
             );
+
+            if (!approximationPortionSelect.value &&
+                selectedFood.portions.length > 0) {
+                approximationPortionSelect.value =
+                    selectedFood.portions[0].id.toString();
+            }
         }
 
 
@@ -345,7 +392,13 @@
             const hasPortions =
                 selectedFood.portions.length > 0;
 
-            if (hasPortions) {
+            const hasApproximationBase =
+                hasPortions || selectedFood.isDirectPortion;
+
+            portionMode.disabled = !hasPortions;
+            approximateMode.disabled = !hasApproximationBase;
+
+            if (hasPortions || hasApproximationBase) {
                 measurementModeSection.style.display =
                     "block";
             }
@@ -355,7 +408,59 @@
 
                 exactMode.checked = true;
                 portionMode.checked = false;
+                approximateMode.checked = false;
             }
+        }
+
+        function updateApproximationSummary() {
+            const selectedFood = getSelectedFood();
+            const size = ["Small", "Medium", "Large"]
+                .find(label =>
+                    document.getElementById(`approximation${label}`).checked
+                );
+            const multiplier = new Map([
+                ["Small", 0.75],
+                ["Medium", 1],
+                ["Large", 1.5]
+            ]).get(size);
+            const basePortion = selectedFood?.portions.find(portion =>
+                portion.id.toString() === approximationPortionSelect.value
+            );
+
+            approximationBaseSection.style.display =
+                selectedFood?.portions.length > 0 ? "block" : "none";
+
+            if (!approximateMode.checked ||
+                !selectedFood ||
+                !multiplier ||
+                (!basePortion && !selectedFood.isDirectPortion)) {
+                approximationSummary.textContent = "";
+                approximationSummary.hidden = true;
+                return;
+            }
+
+            const baseAmount = basePortion
+                ? basePortion.canonicalAmount
+                : selectedFood.canonicalServingSize;
+            const totalAmount = baseAmount * multiplier;
+            const nutritionFactor =
+                totalAmount / selectedFood.canonicalServingSize;
+            const format = new Intl.NumberFormat(
+                undefined,
+                { maximumFractionDigits: 1 }
+            );
+            const basis = basePortion
+                ? `${basePortion.name} (${format.format(basePortion.amount)} ${selectedFood.unit})`
+                : `${format.format(selectedFood.canonicalServingSize)} ${selectedFood.unit}`;
+
+            approximationSummary.textContent =
+                `${size} estimate based on ${basis}: about ` +
+                `${format.format(selectedFood.calories * nutritionFactor)} kcal, ` +
+                `${format.format(selectedFood.protein * nutritionFactor)}g protein, ` +
+                `${format.format(selectedFood.carbohydrates * nutritionFactor)}g carbs and ` +
+                `${format.format(selectedFood.fat * nutritionFactor)}g fat. ` +
+                "This will be saved as an estimate.";
+            approximationSummary.hidden = false;
         }
 
 
@@ -433,6 +538,9 @@
                 portionSection.style.display =
                     "none";
 
+                approximationSection.style.display =
+                    "none";
+
                 return;
             }
 
@@ -448,12 +556,31 @@
 
                 portionSection.style.display =
                     "block";
+
+                approximationSection.style.display =
+                    "none";
+            }
+            else if (
+                approximateMode.checked &&
+                (hasPortions || selectedFood.isDirectPortion)
+            ) {
+                exactQuantitySection.style.display =
+                    "none";
+
+                portionSection.style.display =
+                    "none";
+
+                approximationSection.style.display =
+                    "block";
             }
             else {
                 exactQuantitySection.style.display =
                     "block";
 
                 portionSection.style.display =
+                    "none";
+
+                approximationSection.style.display =
                     "none";
             }
         }
@@ -467,6 +594,7 @@
             updatePortionAvailability();
             updateMeasurementMode();
             updatePortionSummary();
+            updateApproximationSummary();
         }
 
 
@@ -529,6 +657,7 @@
             () => {
                 updateMeasurementMode();
                 updatePortionSummary();
+                updateApproximationSummary();
             }
         );
 
@@ -537,6 +666,15 @@
             () => {
                 updateMeasurementMode();
                 updatePortionSummary();
+                updateApproximationSummary();
+            }
+        );
+
+        approximateMode.addEventListener(
+            "change",
+            () => {
+                updateMeasurementMode();
+                updateApproximationSummary();
             }
         );
 
@@ -548,6 +686,18 @@
         portionQuantity.addEventListener(
             "input",
             updatePortionSummary
+        );
+
+        approximationPortionSelect.addEventListener(
+            "change",
+            updateApproximationSummary
+        );
+
+        ["Small", "Medium", "Large"].forEach(label =>
+            document.getElementById(`approximation${label}`).addEventListener(
+                "change",
+                updateApproximationSummary
+            )
         );
 
 

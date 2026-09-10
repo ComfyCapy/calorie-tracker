@@ -58,6 +58,8 @@ public sealed class AccountDeletionTests
             .AnyAsync(snapshot => snapshot.UserId == DeletedUserId));
         Assert.False(await context.Foods
             .AnyAsync(food => food.UserId == DeletedUserId));
+        Assert.False(await context.SavedMeals
+            .AnyAsync(meal => meal.UserId == DeletedUserId));
         Assert.False(await context.UserCapyItems
             .AnyAsync(item => item.UserId == DeletedUserId));
         Assert.False(await context.UserCapyAppearances
@@ -73,6 +75,8 @@ public sealed class AccountDeletionTests
             .AnyAsync(snapshot => snapshot.UserId == SurvivingUserId));
         Assert.True(await context.Foods
             .AnyAsync(food => food.UserId == SurvivingUserId));
+        Assert.True(await context.SavedMeals
+            .AnyAsync(meal => meal.UserId == SurvivingUserId));
         Assert.True(await context.FoodPortions
             .AnyAsync(portion =>
                 portion.Food!.UserId == SurvivingUserId));
@@ -183,11 +187,20 @@ public sealed class AccountDeletionTests
             quantity: 150,
             portion,
             portionQuantity: 1);
-
+        var savedMealItem = DiarySnapshotFactory.ToSavedMealItem(diaryEntry);
+        savedMealItem.Food = food;
+        savedMealItem.FoodPortion = portion;
+        var savedMeal = new SavedMeal
+        {
+            UserId = userId,
+            Name = $"{userName} saved meal",
+            Items = [savedMealItem]
+        };
         context.AddRange(
             food,
             portion,
             diaryEntry,
+            savedMeal,
             new UserProfile
             {
                 UserId = userId,
