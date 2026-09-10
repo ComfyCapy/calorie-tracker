@@ -53,7 +53,15 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin-bottom: 0;
+}
+
+body > .container {
+  flex: 1 0 auto;
+  width: 100%;
 }
 
 .content-page {
@@ -195,6 +203,67 @@ html[data-development-banner-dismissed="true"] .development-banner {
 }
 
 @media (max-width: 575.98px) {
+    .account-nav-item {
+        width: 100%;
+        flex-wrap: wrap;
+        align-items: center !important;
+        margin-right: 0 !important;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--bs-border-color);
+    }
+
+    .account-nav-item .dropdown-toggle {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .account-nav-item .dropdown-menu {
+        position: static !important;
+        inset: auto !important;
+        width: 100%;
+        margin: 0.25rem 0 0 !important;
+        padding: 0.25rem 0 0.5rem 2.75rem;
+        transform: none !important;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .account-nav-item .dropdown-menu .dropdown-item {
+        padding: 0.55rem 0.75rem;
+        font-size: 1rem;
+    }
+
+    .account-nav-item .dropdown-menu .dropdown-divider {
+        display: none;
+    }
+
+    .account-nav-item .dropdown-menu > li + li {
+        margin-top: 0.15rem;
+    }
+
+    .diary-date-navigation > .diary-date-label {
+        flex: 1 0 100%;
+        order: -1;
+        text-align: center;
+    }
+
+    .diary-date-navigation > .diary-date-picker {
+        flex: 1 0 100%;
+        margin-left: 0 !important;
+    }
+
+    .diary-date-picker input {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .diary-action-button {
+        min-height: 2.75rem;
+    }
+
     .development-banner-inner {
         grid-template-columns: auto minmax(0, 1fr) auto;
         align-items: start;
@@ -209,6 +278,14 @@ html[data-development-banner-dismissed="true"] .development-banner {
     .development-banner-dismiss {
         grid-column: 3;
         grid-row: 1;
+    }
+}
+
+@media (max-width: 340px) {
+    .diary-meal-heading {
+        align-items: flex-start !important;
+        flex-direction: column;
+        gap: 0.5rem !important;
     }
 }
 

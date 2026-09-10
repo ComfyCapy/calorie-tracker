@@ -37,8 +37,8 @@ a {
 }
 
 .footer {
-  position: absolute;
-  bottom: 0;
+  position: static;
+  flex-shrink: 0;
   width: 100%;
   white-space: nowrap;
   line-height: 60px;
@@ -93,10 +93,6 @@ a {
 }
 
 @media (max-width: 575.98px) {
-  body {
-    margin-bottom: 100px;
-  }
-
   .navbar-brand {
     font-size: 1rem;
   }
@@ -105,5 +101,21 @@ a {
     white-space: normal;
     line-height: 1.5;
     padding: 1rem 0;
+  }
+
+  .footer > .container {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .5rem !important;
+  }
+
+  .footer-links {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: .3rem .9rem;
+  }
+
+  .footer-links ::deep a {
+    white-space: nowrap;
   }
 }

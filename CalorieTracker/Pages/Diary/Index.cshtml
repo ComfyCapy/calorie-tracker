@@ -10,7 +10,7 @@
 
 <h1>Daily Diary</h1>
 
-<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap diary-date-navigation">
     @if (Model.PreviousDate.HasValue)
     {
         <a asp-page="./Index"
@@ -30,7 +30,7 @@
         </button>
     }
 
-    <strong>
+    <strong class="diary-date-label">
         @Model.SelectedDate.ToString("dddd, d MMMM yyyy")
     </strong>
 
@@ -70,7 +70,7 @@
         </button>
     }
 
-    <form method="get" class="d-flex align-items-center gap-2 ms-2">
+    <form method="get" class="d-flex align-items-center gap-2 ms-2 diary-date-picker">
         <label for="diaryDate" class="visually-hidden">Diary date</label>
         <input id="diaryDate"
                type="date"
@@ -244,7 +244,7 @@
     var mealFat = mealEntries.Sum(entry => entry.FatConsumed);
 
     <section class="mb-5">
-        <div class="d-flex justify-content-between align-items-end mb-2">
+        <div class="d-flex justify-content-between align-items-end mb-2 diary-meal-heading">
             <div>
                 <h2 class="mb-0 h3">@meal</h2>
 
@@ -262,7 +262,7 @@
             <a asp-page="./Create"
                asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
                asp-route-meal="@meal"
-               class="btn btn-sm btn-outline-primary"
+               class="btn btn-sm btn-outline-primary diary-action-button"
                aria-label="Add food to @meal">
                 + Add Food
             </a>
@@ -342,17 +342,17 @@
                                 </span>
                             </div>
 
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2 diary-entry-actions">
                                 <a asp-page="./Edit"
                                    asp-route-id="@entry.Id"
-                                   class="btn btn-sm btn-outline-primary"
+                                   class="btn btn-sm btn-outline-primary diary-action-button"
                                    aria-label="Edit @entry.FoodNameSnapshot diary entry">
                                     Edit
                                 </a>
 
                                 <a asp-page="./Delete"
                                    asp-route-id="@entry.Id"
-                                   class="btn btn-sm btn-outline-danger"
+                                   class="btn btn-sm btn-outline-danger diary-action-button"
                                    aria-label="Delete @entry.FoodNameSnapshot diary entry">
                                     Delete
                                 </a>
