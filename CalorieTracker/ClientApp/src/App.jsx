@@ -9,12 +9,12 @@ const providers = {
     cofid: {
         label: 'UK',
         accessibleLabel: 'UK food database — CoFID',
-        attribution: 'Database provided by CoFID — UK food composition data.',
+        attribution: 'UK foods — nutrition data from the UK food composition database (CoFID).',
     },
     usda: {
         label: 'US',
         accessibleLabel: 'US food database — USDA FoodData Central',
-        attribution: 'Database provided by USDA FoodData Central — US food composition data.',
+        attribution: 'US foods — nutrition data from the U.S. Department of Agriculture food database (USDA FoodData Central).',
     },
 }
 
@@ -464,7 +464,7 @@ function App({
                                         <h3>{food.name}</h3>
 
                                         <p>
-                                            Per {food.servingSize}{food.servingUnit}
+                                            Nutrition per {food.servingSize}{food.servingUnit}
                                         </p>
                                     </div>
 

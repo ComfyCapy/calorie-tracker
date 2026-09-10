@@ -172,7 +172,9 @@ public class CustomPortionFoodTests
         var result = await model.OnPostAsync(existing.Id);
 
         Assert.IsType<PageResult>(result);
-        Assert.Contains("Food.ServingBasis", model.ModelState.Keys);
+        Assert.DoesNotContain("Food.ServingBasis", model.ModelState.Keys);
+        Assert.True(model.ServingBasisIsLocked);
+        Assert.Equal(FoodServingBasis.Measured, model.Food.ServingBasis);
         Assert.Equal(FoodServingBasis.Measured, existing.ServingBasis);
     }
 

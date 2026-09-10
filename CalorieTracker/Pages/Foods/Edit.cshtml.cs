@@ -26,6 +26,8 @@ namespace CalorieTracker.Pages.Foods
         [BindProperty]
         public Food Food { get; set; } = new();
 
+        public bool ServingBasisIsLocked { get; private set; }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
             if (!ModelState.IsValid)
@@ -53,6 +55,7 @@ namespace CalorieTracker.Pages.Foods
             }
 
             Food = food;
+            ServingBasisIsLocked = await HasServingHistoryAsync(food.Id);
 
             return Page();
         }
@@ -89,47 +92,28 @@ namespace CalorieTracker.Pages.Foods
                 nameof(Food),
                 out var newDimension);
 
+            var hasServingHistory = await HasServingHistoryAsync(existingFood.Id);
+            ServingBasisIsLocked = hasServingHistory;
+
             var servingBasisChanged =
                 Food.ServingBasis != existingFood.ServingBasis;
+            var servingBasisChangeBlocked =
+                hasServingHistory && servingBasisChanged;
 
-            if (servingBasisChanged)
-            {
-                var hasPortions = await _context.FoodPortions
-                    .AnyAsync(portion =>
-                        portion.FoodId == existingFood.Id);
-
-                var hasDiaryHistory = await _context.DiaryEntries
-                    .AnyAsync(entry =>
-                        entry.FoodId == existingFood.Id);
-
-                if (hasPortions || hasDiaryHistory)
-                {
-                    ModelState.AddModelError(
-                        "Food.ServingBasis",
-                        "A food with measured portions or diary history cannot change serving basis.");
-                }
-            }
-            else if (Food.ServingBasis == FoodServingBasis.Measured &&
-                     MeasurementUnits.TryNormalize(
-                         Food.ServingUnit,
-                         out _,
-                         out newDimension) &&
-                     MeasurementUnits.TryNormalize(
-                         existingFood.ServingUnit,
-                         out _,
-                         out var existingDimension) &&
-                     existingDimension != newDimension)
+            if (!servingBasisChanged &&
+                Food.ServingBasis == FoodServingBasis.Measured &&
+                MeasurementUnits.TryNormalize(
+                    Food.ServingUnit,
+                    out _,
+                    out newDimension) &&
+                MeasurementUnits.TryNormalize(
+                    existingFood.ServingUnit,
+                    out _,
+                    out var existingDimension) &&
+                existingDimension != newDimension)
             {
                 // A dimension change would reinterpret stored portions and diary quantities.
-                var hasPortions = await _context.FoodPortions
-                    .AnyAsync(portion =>
-                        portion.FoodId == existingFood.Id);
-
-                var hasDiaryHistory = await _context.DiaryEntries
-                    .AnyAsync(entry =>
-                        entry.FoodId == existingFood.Id);
-
-                if (hasPortions || hasDiaryHistory)
+                if (hasServingHistory)
                 {
                     ModelState.AddModelError(
                         "Food.ServingUnit",
@@ -137,7 +121,13 @@ namespace CalorieTracker.Pages.Foods
                 }
             }
 
-            if (!ModelState.IsValid)
+            if (servingBasisChangeBlocked)
+            {
+                Food.ServingBasis = existingFood.ServingBasis;
+                ModelState.Remove("Food.ServingBasis");
+            }
+
+            if (!ModelState.IsValid || servingBasisChangeBlocked)
             {
                 Food.Id = existingFood.Id;
                 return Page();
@@ -160,5 +150,11 @@ namespace CalorieTracker.Pages.Foods
 
             return RedirectToPage("./Index");
         }
+
+        private async Task<bool> HasServingHistoryAsync(int foodId) =>
+            await _context.FoodPortions.AnyAsync(portion =>
+                portion.FoodId == foodId) ||
+            await _context.DiaryEntries.AnyAsync(entry =>
+                entry.FoodId == foodId);
     }
 }

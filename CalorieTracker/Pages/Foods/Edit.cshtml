@@ -46,6 +46,12 @@
         <p class="form-text">
             Choose whether the nutrition above is for a measured amount or a named portion.
         </p>
+        @if (Model.ServingBasisIsLocked)
+        {
+            <p class="form-text" role="note">
+                Serving basis is locked because this food has measured portions or diary history. Keeping it unchanged protects the meaning of existing entries.
+            </p>
+        }
 
     <div class="mb-3">
         <div class="form-check form-check-inline">
@@ -54,6 +60,7 @@
                    type="radio"
                    value="Measured"
                    id="measuredServingBasis"
+                   disabled="@(Model.ServingBasisIsLocked ? "disabled" : null)"
                    aria-controls="measuredServingFields portionServingFields" />
             <label class="form-check-label" for="measuredServingBasis">
                 Weight / volume
@@ -66,11 +73,17 @@
                    type="radio"
                    value="Portion"
                    id="portionServingBasis"
+                   disabled="@(Model.ServingBasisIsLocked ? "disabled" : null)"
                    aria-controls="measuredServingFields portionServingFields" />
             <label class="form-check-label" for="portionServingBasis">
                 Portion
             </label>
         </div>
+
+        @if (Model.ServingBasisIsLocked)
+        {
+            <input type="hidden" asp-for="Food.ServingBasis" />
+        }
 
         <span asp-validation-for="Food.ServingBasis" class="text-danger"></span>
     </div>

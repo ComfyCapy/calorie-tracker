@@ -79,10 +79,10 @@ public class FoodSearchDiscoverabilityTests
         Assert.DoesNotContain("label: 'All'", source);
         Assert.Contains("aria-pressed={provider === providerId}", source);
         Assert.Contains(
-            "Database provided by CoFID — UK food composition data.",
+            "UK foods — nutrition data from the UK food composition database (CoFID).",
             source);
         Assert.Contains(
-            "Database provided by USDA FoodData Central — US food composition data.",
+            "US foods — nutrition data from the U.S. Department of Agriculture food database (USDA FoodData Central).",
             source);
         Assert.Contains("UK food database — CoFID", source);
         Assert.Contains("US food database — USDA FoodData Central", source);
