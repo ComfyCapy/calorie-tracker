@@ -22,6 +22,10 @@ public class FoodSearchDiscoverabilityTests
         Assert.Contains("Search your foods", html);
         Assert.Contains("Search all foods", html);
         Assert.Contains("Add Custom Food", html);
+        Assert.Contains("class=\"foods-page\"", html);
+        Assert.Contains("foods-hero", html);
+        Assert.Contains("/images/brand/dashboard-hero-capy.png", html);
+        Assert.Contains("href=\"/SavedMeals\"", html);
         Assert.DoesNotContain("Search the wider food catalogue.", html);
         Assert.Contains("searchTerm=banana", html);
         Assert.Contains("diaryDate=2026-09-07", html);
@@ -124,6 +128,12 @@ public class FoodSearchDiscoverabilityTests
 
         Assert.Contains(
             "id=\"food-favourite-help\"",
+            html);
+        Assert.Contains(
+            "id=\"favourite-foods-heading\"",
+            html);
+        Assert.Contains(
+            "id=\"custom-foods-heading\"",
             html);
         Assert.Contains(
             "Favourite this food to find it faster in My Foods.",

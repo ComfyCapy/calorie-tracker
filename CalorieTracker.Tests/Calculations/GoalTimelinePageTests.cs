@@ -89,6 +89,47 @@ public class GoalTimelinePageTests
     }
 
     [Fact]
+    public async Task ProfileRendersStructuredGoalWorkspaceWithExistingControls()
+    {
+        const string userId = "profile-layout-user";
+        using var factory = new IntegrationTestFactory();
+        await SeedProfileAsync(factory, userId, ProfileOptions.Metric);
+        using var client = AuthenticatedClient(factory, userId);
+
+        var profile = await client.GetStringAsync("/Profile/Index");
+
+        Assert.Contains("class=\"profile-page\"", profile);
+        Assert.Contains("profile-hero", profile);
+        Assert.Contains("profile-body-card", profile);
+        Assert.Contains("profile-activity-card", profile);
+        Assert.Contains("profile-goal-card", profile);
+        Assert.Contains("profile-target-card", profile);
+        Assert.Contains("profile-target-highlight", profile);
+        Assert.Contains("profile-motivation-card", profile);
+        Assert.Contains("profile-tips-card", profile);
+        Assert.Contains("Small steps still move you forward.", profile);
+        Assert.Contains("dashboard-hero-capy", profile);
+        Assert.Contains("Save changes", profile);
+        Assert.Contains("id=\"metricSystem\"", profile);
+        Assert.Contains("id=\"imperialSystem\"", profile);
+        Assert.Contains("id=\"goalSelect\"", profile);
+        Assert.Contains("id=\"weeklyGoalSelect\"", profile);
+        Assert.Contains("id=\"calculatedTarget\"", profile);
+        Assert.Contains("id=\"customTarget\"", profile);
+        Assert.Contains("name=\"__RequestVerificationToken\"", profile);
+
+        Assert.True(
+            profile.IndexOf("profile-target-card", StringComparison.Ordinal)
+            < profile.IndexOf("profile-column--supporting", StringComparison.Ordinal));
+        Assert.True(
+            profile.IndexOf("profile-goal-card", StringComparison.Ordinal)
+            < profile.IndexOf("profile-motivation-card", StringComparison.Ordinal));
+        Assert.True(
+            profile.IndexOf("profile-motivation-card", StringComparison.Ordinal)
+            < profile.IndexOf("profile-tips-card", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task DashboardPlacesAlwaysVisibleProfileEstimatesAfterYearMap()
     {
         const string userId = "dashboard-layout-user";
@@ -141,7 +182,8 @@ public class GoalTimelinePageTests
         Assert.Contains("Update your profile", dashboard);
         Assert.DoesNotContain("Your profile estimates", dashboard);
         Assert.DoesNotContain("~0 kcal/day", dashboard);
-        Assert.DoesNotContain("Your Estimates", profile);
+        Assert.DoesNotContain("profile-target-highlight", profile);
+        Assert.Contains("profile-target-empty", profile);
         Assert.DoesNotContain("~0 kcal/day", profile);
     }
 

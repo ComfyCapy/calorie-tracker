@@ -170,7 +170,7 @@ public class MacroTargetCalculatorTests
     }
 
     [Fact]
-    public async Task DiaryKeepsMacroPreferenceWhileDashboardAlwaysRendersGoals()
+    public async Task DiaryAlwaysRendersMacroGoalsWhileDashboardUsesItsOwnPresentation()
     {
         const string userId = "macro-markup-user";
         using var factory = new IntegrationTestFactory();
@@ -180,11 +180,10 @@ public class MacroTargetCalculatorTests
         var diary = await client.GetStringAsync("/Diary");
         var dashboard = await client.GetStringAsync("/");
 
-        Assert.Contains("data-macro-goals-toggle", diary);
-        Assert.Contains("Show macro goals", diary);
         Assert.Contains("id=\"diaryMacroGoals\"", diary);
-        Assert.Contains("data-macro-goals-content", diary);
-        Assert.Contains("hidden", diary);
+        Assert.DoesNotContain("data-macro-goals-toggle", diary);
+        Assert.DoesNotContain("Show macro goals", diary);
+        Assert.DoesNotContain("data-macro-goals-content", diary);
 
         Assert.DoesNotContain("id=\"dashboardShowMacroGoals\"", dashboard);
         Assert.DoesNotContain("data-macro-goals-toggle", dashboard);
@@ -196,7 +195,7 @@ public class MacroTargetCalculatorTests
             Assert.Contains($"aria-label=\"{macro} macro goal progress\"", dashboard);
         }
 
-        Assert.Contains("macro-goals-preference", diary);
+        Assert.DoesNotContain("macro-goals-preference", diary);
         Assert.DoesNotContain("data-macro-goals-compact", dashboard);
         Assert.DoesNotContain("data-macro-goals-content", dashboard);
         Assert.DoesNotContain("macro-goals-preference", dashboard);

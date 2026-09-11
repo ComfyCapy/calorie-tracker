@@ -148,6 +148,23 @@ public class CapyNameTests
         var customisation = await client.GetStringAsync("/Customisation");
         var dashboard = await client.GetStringAsync("/");
 
+        Assert.Contains("capy-customisation-hero", customisation);
+        Assert.Contains("capy-category-tabs", customisation);
+        Assert.Contains("capy-collection-card", customisation);
+        Assert.Contains("capy-item-grid", customisation);
+        Assert.Contains("capy-preview-panel", customisation);
+        Assert.Contains("capy-loadout-card", customisation);
+        Assert.Contains("capy-collection-summary", customisation);
+        Assert.Contains("data-category-filter=\"outfits\"", customisation);
+        Assert.Contains("data-category-filter=\"face-accessories\"", customisation);
+        Assert.Contains("data-category-filter=\"neck-accessories\"", customisation);
+        Assert.Contains("data-category-filter=\"titles\"", customisation);
+        Assert.Contains("data-capy-loadout=\"FaceAccessory\"", customisation);
+        Assert.Contains("data-capy-loadout=\"NeckAccessory\"", customisation);
+        Assert.Contains("name=\"__RequestVerificationToken\"", customisation);
+        Assert.DoesNotContain("data-category-filter=\"accessories\"", customisation);
+        Assert.DoesNotContain("capy-next-unlock-card", customisation);
+        Assert.DoesNotContain("capy-progress-bar", customisation);
         Assert.Contains("<details class=\"capy-name-editor\">", customisation);
         Assert.DoesNotContain(
             "<details class=\"capy-name-editor\" open",
