@@ -151,15 +151,6 @@
             @if (isAuthenticated)
             {
                 <nav class="navbar app-mobile-header" aria-label="Mobile application navigation">
-                    <span class="app-mobile-brand">
-                        <img class="navbar-brand-mark"
-                             src="~/images/capy/expressions/Capy-Base.png"
-                             width="32"
-                             height="32"
-                             alt="" />
-                        <span>Comfy Capy Calories</span>
-                    </span>
-
                     <button class="navbar-toggler app-mobile-menu-button"
                             type="button"
                             data-bs-toggle="offcanvas"
@@ -168,6 +159,15 @@
                             aria-label="Open navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
+
+                    <span class="app-mobile-brand">
+                        <img class="navbar-brand-mark"
+                             src="~/images/capy/expressions/Capy-Base.png"
+                             width="32"
+                             height="32"
+                             alt="" />
+                        <span>Comfy Capy Calories</span>
+                    </span>
                 </nav>
             }
 
@@ -261,6 +261,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/mobile-navigation.js" asp-append-version="true"></script>
     <script src="~/js/development-banner.js" asp-append-version="true"></script>
 
     <form id="themeAntiForgeryForm" method="post" style="display: none;">

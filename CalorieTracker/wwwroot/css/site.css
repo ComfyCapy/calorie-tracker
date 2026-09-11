@@ -3920,6 +3920,7 @@ summary:focus-visible {
     min-width: 0;
     flex: 1 1 auto;
     align-items: center;
+    justify-content: flex-end;
     gap: var(--ct-space-2);
     color: var(--ct-text);
     font-size: 0.95rem;
@@ -4055,6 +4056,10 @@ summary:focus-visible {
 }
 
 @media (max-width: 991.98px) {
+    .app-sidebar {
+        touch-action: pan-y;
+    }
+
     .app-mobile-header {
         position: sticky;
         top: 0;
