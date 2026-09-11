@@ -148,30 +148,31 @@
         }
 
         <div class="shell-main @(isAuthenticated ? "app-shell-main" : "public-shell-main")">
-            <header>
-                @if (isAuthenticated)
-                {
-                    <nav class="navbar app-mobile-header" aria-label="Mobile application navigation">
-                        <button class="navbar-toggler app-mobile-menu-button"
-                                type="button"
-                                data-bs-toggle="offcanvas"
-                                data-bs-target="#appSidebar"
-                                aria-controls="appSidebar"
-                                aria-label="Open navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
+            @if (isAuthenticated)
+            {
+                <nav class="navbar app-mobile-header" aria-label="Mobile application navigation">
+                    <span class="app-mobile-brand">
+                        <img class="navbar-brand-mark"
+                             src="~/images/capy/expressions/Capy-Base.png"
+                             width="32"
+                             height="32"
+                             alt="" />
+                        <span>Comfy Capy Calories</span>
+                    </span>
 
-                        <span class="app-mobile-brand">
-                            <img class="navbar-brand-mark"
-                                 src="~/images/capy/expressions/Capy-Base.png"
-                                 width="32"
-                                 height="32"
-                                 alt="" />
-                            <span>Comfy Capy Calories</span>
-                        </span>
-                    </nav>
-                }
-                else
+                    <button class="navbar-toggler app-mobile-menu-button"
+                            type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#appSidebar"
+                            aria-controls="appSidebar"
+                            aria-label="Open navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </nav>
+            }
+
+            <header>
+                @if (!isAuthenticated)
                 {
                     <nav class="navbar navbar-expand-sm navbar-toggleable-sm public-navbar border-bottom box-shadow">
                         <div class="container">

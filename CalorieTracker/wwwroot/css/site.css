@@ -3907,6 +3907,7 @@ summary:focus-visible {
 }
 
 .app-mobile-menu-button {
+    flex: 0 0 auto;
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
@@ -3917,11 +3918,19 @@ summary:focus-visible {
 .app-mobile-brand {
     display: inline-flex;
     min-width: 0;
+    flex: 1 1 auto;
     align-items: center;
     gap: var(--ct-space-2);
     color: var(--ct-text);
     font-size: 0.95rem;
     font-weight: 700;
+}
+
+.app-mobile-brand > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .development-banner {
@@ -4052,6 +4061,7 @@ summary:focus-visible {
         z-index: 30;
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: var(--ct-space-3);
     }
 
@@ -4122,13 +4132,6 @@ summary:focus-visible {
 }
 
 @media (max-width: 350px) {
-    .app-mobile-brand span {
-        max-width: 10.5rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
     .ct-scenic-header--with-art {
         grid-template-columns: minmax(0, 1fr) 4.75rem;
     }
