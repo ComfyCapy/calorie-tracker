@@ -126,12 +126,16 @@ public class AccountSecurityTests
 
         Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
         Assert.Contains(Email, WebUtility.HtmlDecode(html));
+        Assert.Contains("value=\"Existing\"", html);
+        Assert.Contains("value=\"User\"", html);
         Assert.DoesNotContain("Phone number", html, StringComparison.OrdinalIgnoreCase);
-        Assert.Null(typeof(IndexModel).GetProperty("Input"));
+        Assert.NotNull(typeof(IndexModel).GetProperty("Input"));
 
         using var content = new FormUrlEncodedContent(
             new Dictionary<string, string>
             {
+                ["Input.FirstName"] = "Existing",
+                ["Input.LastName"] = "User",
                 ["Input.PhoneNumber"] = "+44 7700 900999",
                 ["__RequestVerificationToken"] = ExtractAntiforgeryToken(html)
             });
@@ -146,6 +150,106 @@ public class AccountSecurityTests
             .GetRequiredService<ApplicationDbContext>();
         var user = await context.Users.SingleAsync(item => item.Id == UserId);
         Assert.Equal("+44 7700 900123", user.PhoneNumber);
+    }
+
+    [Fact]
+    public async Task ManageProfile_LoadsAndPersistsFirstAndLastName()
+    {
+        using var factory = new IntegrationTestFactory();
+        await SeedIdentityUserAsync(factory);
+        using var client = CreateClient(factory, UserId);
+
+        var getResponse = await client.GetAsync("/Identity/Account/Manage");
+        var html = await getResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Contains("value=\"Existing\"", html);
+        Assert.Contains("value=\"User\"", html);
+        Assert.Contains("autocomplete=\"given-name\"", html);
+        Assert.Contains("autocomplete=\"family-name\"", html);
+        Assert.Contains("Last name (optional)", html);
+
+        using var content = new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["Input.FirstName"] = "Updated",
+                ["Input.LastName"] = "Name",
+                ["__RequestVerificationToken"] = ExtractAntiforgeryToken(html)
+            });
+        var postResponse = await client.PostAsync(
+            "/Identity/Account/Manage",
+            content);
+
+        Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+        var user = await context.Users.SingleAsync(item => item.Id == UserId);
+        Assert.Equal("Updated", user.FirstName);
+        Assert.Equal("Name", user.LastName);
+
+        var dashboard = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+        Assert.Contains("Good afternoon, Updated", dashboard);
+    }
+
+    [Fact]
+    public async Task ManageProfile_AllowsEmptyLastName()
+    {
+        using var factory = new IntegrationTestFactory();
+        await SeedIdentityUserAsync(factory);
+        using var client = CreateClient(factory, UserId);
+        var html = await client.GetStringAsync("/Identity/Account/Manage");
+
+        using var content = new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["Input.FirstName"] = "Updated",
+                ["Input.LastName"] = string.Empty,
+                ["__RequestVerificationToken"] = ExtractAntiforgeryToken(html)
+            });
+        var response = await client.PostAsync(
+            "/Identity/Account/Manage",
+            content);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+        var user = await context.Users.SingleAsync(item => item.Id == UserId);
+        Assert.Equal("Updated", user.FirstName);
+        Assert.Equal(string.Empty, user.LastName);
+    }
+
+    [Fact]
+    public async Task ManageProfile_RejectsOverlongFirstName()
+    {
+        using var factory = new IntegrationTestFactory();
+        await SeedIdentityUserAsync(factory);
+        using var client = CreateClient(factory, UserId);
+        var html = await client.GetStringAsync("/Identity/Account/Manage");
+
+        using var content = new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["Input.FirstName"] = new string('x', 51),
+                ["Input.LastName"] = "User",
+                ["__RequestVerificationToken"] = ExtractAntiforgeryToken(html)
+            });
+        var response = await client.PostAsync(
+            "/Identity/Account/Manage",
+            content);
+
+        var responseHtml = await response.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("maximum length", responseHtml);
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+        var user = await context.Users.SingleAsync(item => item.Id == UserId);
+        Assert.Equal("Existing", user.FirstName);
     }
 
     [Fact]
@@ -201,7 +305,9 @@ public class AccountSecurityTests
             UserName = Email,
             Email = Email,
             EmailConfirmed = true,
-            PhoneNumber = phoneNumber
+            PhoneNumber = phoneNumber,
+            FirstName = "Existing",
+            LastName = "User"
         };
 
         Assert.True((await userManager.CreateAsync(user)).Succeeded);

@@ -24,18 +24,19 @@
                     Model.CalorieTarget.Value * 100))
             : 0;
     var macroGoals = Model.MacroGoalProgress;
+    var caloriePercentageText = caloriePercentage.ToString(
+        "0.##",
+        System.Globalization.CultureInfo.InvariantCulture);
 
     <div class="dashboard-page">
-
-        <div class="dashboard-heading">
-            <div>
-                <h1 class="dashboard-title">Today</h1>
-
-                <p class="dashboard-date">
-                    @Model.CurrentDate.ToString("dddd, d MMMM")
-                </p>
-            </div>
-        </div>
+        @await Html.PartialAsync(
+            "_ScenicPageHeader",
+            new CalorieTracker.Models.ScenicPageHeaderModel(
+                Title: Model.DashboardGreeting,
+                Subtitle: "Here’s today at a glance. Log what you need, then get on with your day.",
+                Eyebrow: Model.CurrentDate.ToString("dddd, d MMMM"),
+                ArtworkPath: "/images/brand/dashboard-hero-capy.png",
+                CssClass: "dashboard-hero"))
 
         @if (!Model.HasProfileEstimates)
         {
@@ -60,244 +61,206 @@
             </div>
         }
 
-        <div class="dashboard-main-card">
+        <div class="dashboard-primary-grid">
+            <section class="dashboard-main-card"
+                     aria-labelledby="dashboard-calories-heading">
+                <div class="dashboard-card-heading">
+                    <div>
+                        <p class="dashboard-eyebrow">Today</p>
+                        <h2 id="dashboard-calories-heading">Daily calories</h2>
+                    </div>
+                    <a asp-page="/Diary/Index"
+                       asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
+                       class="dashboard-text-link">
+                        View Diary →
+                    </a>
+                </div>
 
-            <div class="dashboard-calorie-section">
-
-                <p class="dashboard-eyebrow">
-                    Daily calories
-                </p>
-
-                <div class="dashboard-calorie-total">
-                    <span class="dashboard-calorie-current">
-                        @Model.CaloriesConsumed.ToString("0")
-                    </span>
-
+                <div class="dashboard-calorie-layout">
                     @if (Model.CalorieTarget.HasValue)
                     {
-                        <span class="dashboard-calorie-target">
-                            / @Model.CalorieTarget.Value.ToString("0") kcal
-                        </span>
+                        var calorieProgressDescription = Model.CaloriesRemaining >= 0
+                            ? $"{Model.CaloriesConsumed:0} kcal consumed of {Model.CalorieTarget.Value:0} kcal. {Model.CaloriesRemaining:0} kcal remaining."
+                            : $"{Model.CaloriesConsumed:0} kcal consumed of {Model.CalorieTarget.Value:0} kcal. {Math.Abs(Model.CaloriesRemaining!.Value):0} kcal over target.";
+
+                        <div class="dashboard-calorie-ring"
+                             style="--dashboard-calorie-progress: @caloriePercentageText%;"
+                             role="progressbar"
+                             aria-label="Daily calorie progress"
+                             aria-valuenow="@caloriePercentageText"
+                             aria-valuemin="0"
+                             aria-valuemax="100"
+                             aria-valuetext="@calorieProgressDescription">
+                            <div class="dashboard-calorie-ring-centre">
+                                <span class="dashboard-calorie-current">
+                                    @Model.CaloriesConsumed.ToString("0")
+                                </span>
+                                <span>kcal consumed</span>
+                            </div>
+                        </div>
+
+                        <dl class="dashboard-calorie-metrics">
+                            <div>
+                                <dt>Daily target</dt>
+                                <dd>@Model.CalorieTarget.Value.ToString("0") kcal</dd>
+                            </div>
+                            <div>
+                                @if (Model.CaloriesRemaining >= 0)
+                                {
+                                    <dt>Remaining</dt>
+                                    <dd>@Model.CaloriesRemaining.Value.ToString("0") kcal</dd>
+                                }
+                                else
+                                {
+                                    <dt>Over target</dt>
+                                    <dd>@Math.Abs(Model.CaloriesRemaining!.Value).ToString("0") kcal</dd>
+                                }
+                            </div>
+                            <div>
+                                <dt>Progress</dt>
+                                <dd>@caloriePercentage.ToString("0")%</dd>
+                            </div>
+                        </dl>
                     }
                     else
                     {
-                        <span class="dashboard-calorie-target">
-                            kcal
-                        </span>
-                    }
-                </div>
-
-                @if (Model.CalorieTarget.HasValue)
-                {
-                    <div class="dashboard-progress"
-                         role="progressbar"
-                         aria-label="Daily calorie progress"
-                         aria-valuenow="@caloriePercentage.ToString("0")"
-                         aria-valuemin="0"
-                         aria-valuemax="100">
-
-                        <div class="dashboard-progress-bar"
-                             style="width: @caloriePercentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%">
+                        <div class="dashboard-calorie-ring is-unset"
+                             role="img"
+                             aria-label="@Model.CaloriesConsumed.ToString("0") calories consumed today. No daily target is available.">
+                            <div class="dashboard-calorie-ring-centre">
+                                <span class="dashboard-calorie-current">
+                                    @Model.CaloriesConsumed.ToString("0")
+                                </span>
+                                <span>kcal consumed</span>
+                            </div>
                         </div>
 
-                    </div>
-
-                    <div class="dashboard-progress-details">
-
-                        <span>
-                            @caloriePercentage.ToString("0")% of daily target
-                        </span>
-
-                        @if (Model.CaloriesRemaining >= 0)
-                        {
-                            <strong>
-                                @Model.CaloriesRemaining?.ToString("0")
-                                kcal remaining
-                            </strong>
-                        }
-                        else
-                        {
-                            <strong>
-                                @Math.Abs(Model.CaloriesRemaining!.Value).ToString("0")
-                                kcal over
-                            </strong>
-                        }
-
-                    </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">
-                        Set up your profile to see your daily target.
-                    </p>
-                }
-
-            </div>
-
-            @if (Model.CapyAppearance != null)
-            {
-                <div class="dashboard-capy-section">
-
-                    <a asp-page="/Customisation"
-                       class="dashboard-capy-frame"
-                       aria-label="Customise @Model.CapyAppearance.DisplayName">
-
-                        <partial name="_CapyAvatar"
-                                 model="Model.CapyAppearance" />
-
-                    </a>
-
-                    <span class="dashboard-capy-name">
-                        @Model.CapyAppearance.DisplayName
-                    </span>
-
-                    <a asp-page="/Customisation"
-                       class="dashboard-capy-link">
-                        Customise Capy →
-                    </a>
-
+                        <div class="dashboard-calorie-empty">
+                            <strong>Your daily target will appear here.</strong>
+                            <p>
+                                Set up your profile to see calories remaining
+                                and personalised macro targets.
+                            </p>
+                        </div>
+                    }
                 </div>
-            }
+            </section>
 
+            <section class="dashboard-macro-section"
+                     aria-labelledby="dashboard-macro-heading">
+                <div class="dashboard-card-heading">
+                    <div>
+                        <p class="dashboard-eyebrow">Today</p>
+                        <h2 id="dashboard-macro-heading">Macros</h2>
+                    </div>
+                    <span class="dashboard-heading-note">grams</span>
+                </div>
+
+                <div id="dashboardMacroCards" class="dashboard-macro-grid">
+                    <div class="dashboard-macro-card">
+                        <div class="dashboard-macro-icon" aria-hidden="true">P</div>
+                        <div class="dashboard-macro-content">
+                            <div class="dashboard-macro-copy">
+                                <span class="dashboard-macro-label">Protein</span>
+                                @if (macroGoals == null)
+                                {
+                                    <strong class="dashboard-macro-value">
+                                        @Model.ProteinConsumed.ToString("0.0") g
+                                    </strong>
+                                }
+                                else
+                                {
+                                    <strong class="dashboard-macro-value">
+                                        @macroGoals.Protein.ConsumedGrams.ToString("0.0")
+                                        <span>/ @macroGoals.Protein.TargetGrams.ToString("0.#") g</span>
+                                    </strong>
+                                }
+                            </div>
+                            @if (macroGoals != null)
+                            {
+                                <div class="macro-goal-progress macro-goal-item--protein"
+                                     role="progressbar"
+                                     aria-label="Protein macro goal progress"
+                                     aria-valuenow="@macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuetext="@macroGoals.Protein.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Protein.TargetGrams.ToString("0.#") grams">
+                                    <span style="width: @macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="dashboard-macro-card">
+                        <div class="dashboard-macro-icon" aria-hidden="true">C</div>
+                        <div class="dashboard-macro-content">
+                            <div class="dashboard-macro-copy">
+                                <span class="dashboard-macro-label">Carbohydrates</span>
+                                @if (macroGoals == null)
+                                {
+                                    <strong class="dashboard-macro-value">
+                                        @Model.CarbohydratesConsumed.ToString("0.0") g
+                                    </strong>
+                                }
+                                else
+                                {
+                                    <strong class="dashboard-macro-value">
+                                        @macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0")
+                                        <span>/ @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") g</span>
+                                    </strong>
+                                }
+                            </div>
+                            @if (macroGoals != null)
+                            {
+                                <div class="macro-goal-progress macro-goal-item--carbohydrates"
+                                     role="progressbar"
+                                     aria-label="Carbohydrates macro goal progress"
+                                     aria-valuenow="@macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuetext="@macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") grams">
+                                    <span style="width: @macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="dashboard-macro-card">
+                        <div class="dashboard-macro-icon" aria-hidden="true">F</div>
+                        <div class="dashboard-macro-content">
+                            <div class="dashboard-macro-copy">
+                                <span class="dashboard-macro-label">Fat</span>
+                                @if (macroGoals == null)
+                                {
+                                    <strong class="dashboard-macro-value">
+                                        @Model.FatConsumed.ToString("0.0") g
+                                    </strong>
+                                }
+                                else
+                                {
+                                    <strong class="dashboard-macro-value">
+                                        @macroGoals.Fat.ConsumedGrams.ToString("0.0")
+                                        <span>/ @macroGoals.Fat.TargetGrams.ToString("0.#") g</span>
+                                    </strong>
+                                }
+                            </div>
+                            @if (macroGoals != null)
+                            {
+                                <div class="macro-goal-progress macro-goal-item--fat"
+                                     role="progressbar"
+                                     aria-label="Fat macro goal progress"
+                                     aria-valuenow="@macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuetext="@macroGoals.Fat.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Fat.TargetGrams.ToString("0.#") grams">
+                                    <span style="width: @macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-
-        <section class="dashboard-macro-section"
-                 aria-labelledby="dashboard-macro-heading">
-
-            <div class="dashboard-macro-heading">
-                <h2 id="dashboard-macro-heading" class="visually-hidden">
-                    Macronutrients
-                </h2>
-            </div>
-
-            <div id="dashboardMacroCards" class="dashboard-macro-grid">
-
-            <div class="dashboard-macro-card">
-
-                <div class="dashboard-macro-icon"
-                     aria-hidden="true">
-                    P
-                </div>
-
-                <div class="dashboard-macro-content">
-                    <span class="dashboard-macro-label">
-                        Protein
-                    </span>
-
-                    @if (macroGoals == null)
-                    {
-                        <strong class="dashboard-macro-value">
-                            @Model.ProteinConsumed.ToString("0.0") g
-                        </strong>
-                    }
-
-                    @if (macroGoals != null)
-                    {
-                        <div class="dashboard-macro-goal">
-                            <strong class="dashboard-macro-value">
-                                @macroGoals.Protein.ConsumedGrams.ToString("0.0") /
-                                @macroGoals.Protein.TargetGrams.ToString("0.#") g
-                            </strong>
-                            <div class="macro-goal-progress macro-goal-item--protein"
-                                 role="progressbar"
-                                 aria-label="Protein macro goal progress"
-                                 aria-valuenow="@macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100"
-                                 aria-valuetext="@macroGoals.Protein.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Protein.TargetGrams.ToString("0.#") grams">
-                                <span style="width: @macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-            </div>
-
-            <div class="dashboard-macro-card">
-
-                <div class="dashboard-macro-icon"
-                     aria-hidden="true">
-                    C
-                </div>
-
-                <div class="dashboard-macro-content">
-                    <span class="dashboard-macro-label">
-                        Carbohydrates
-                    </span>
-
-                    @if (macroGoals == null)
-                    {
-                        <strong class="dashboard-macro-value">
-                            @Model.CarbohydratesConsumed.ToString("0.0") g
-                        </strong>
-                    }
-
-                    @if (macroGoals != null)
-                    {
-                        <div class="dashboard-macro-goal">
-                            <strong class="dashboard-macro-value">
-                                @macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") /
-                                @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") g
-                            </strong>
-                            <div class="macro-goal-progress macro-goal-item--carbohydrates"
-                                 role="progressbar"
-                                 aria-label="Carbohydrates macro goal progress"
-                                 aria-valuenow="@macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100"
-                                 aria-valuetext="@macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") grams">
-                                <span style="width: @macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-            </div>
-
-            <div class="dashboard-macro-card">
-
-                <div class="dashboard-macro-icon"
-                     aria-hidden="true">
-                    F
-                </div>
-
-                <div class="dashboard-macro-content">
-                    <span class="dashboard-macro-label">
-                        Fat
-                    </span>
-
-                    @if (macroGoals == null)
-                    {
-                        <strong class="dashboard-macro-value">
-                            @Model.FatConsumed.ToString("0.0") g
-                        </strong>
-                    }
-
-                    @if (macroGoals != null)
-                    {
-                        <div class="dashboard-macro-goal">
-                            <strong class="dashboard-macro-value">
-                                @macroGoals.Fat.ConsumedGrams.ToString("0.0") /
-                                @macroGoals.Fat.TargetGrams.ToString("0.#") g
-                            </strong>
-                            <div class="macro-goal-progress macro-goal-item--fat"
-                                 role="progressbar"
-                                 aria-label="Fat macro goal progress"
-                                 aria-valuenow="@macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100"
-                                 aria-valuetext="@macroGoals.Fat.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Fat.TargetGrams.ToString("0.#") grams">
-                                <span style="width: @macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-            </div>
-
-            </div>
-
-        </section>
 
         @if (Model.CalorieBalanceYear is { } balanceYear)
         {
@@ -528,12 +491,32 @@
                     @foreach (var definition in
                               CalorieBalanceClassifier.LegendDefinitions)
                     {
-                        <li>
+                        var legendDescription = definition.Classification switch
+                        {
+                            CalorieBalanceClassification.HeavyCut =>
+                                $"20% or more below maintenance. Exact boundary: {definition.PercentageRange}.",
+                            CalorieBalanceClassification.LightCut =>
+                                $"More than 5% and less than 20% below maintenance. Exact boundary: {definition.PercentageRange}.",
+                            CalorieBalanceClassification.Maintenance =>
+                                $"Within 5% of maintenance, including the boundaries. Exact boundary: {definition.PercentageRange}.",
+                            CalorieBalanceClassification.LightGain =>
+                                $"More than 5% and less than 20% above maintenance. Exact boundary: {definition.PercentageRange}.",
+                            CalorieBalanceClassification.HeavyGain =>
+                                $"20% or more above maintenance. Exact boundary: {definition.PercentageRange}.",
+                            _ => definition.PercentageRange
+                        };
+                        var legendDescriptionId =
+                            $"calorie-year-legend-{definition.Classification.ToString().ToLowerInvariant()}-description";
+
+                        <li aria-describedby="@legendDescriptionId">
                             <span class="calorie-year-legend-swatch @StateClass(definition.Classification)"
                                   aria-hidden="true"></span>
                             <span>
                                 <strong>@definition.DisplayName</strong>
-                                <small>@definition.PercentageRange</small>
+                                <span id="@legendDescriptionId"
+                                      class="visually-hidden">
+                                    @legendDescription
+                                </span>
                             </span>
                         </li>
                     }
@@ -542,7 +525,7 @@
                               aria-hidden="true"></span>
                         <span><strong>No Data</strong></span>
                     </li>
-                    <li>
+                    <li class="calorie-year-legend-exception">
                         <span class="calorie-year-legend-swatch is-unclassified"
                               aria-hidden="true"></span>
                         <span><strong>No maintenance data</strong></span>
@@ -554,80 +537,141 @@
 
         @if (Model.HasProfileEstimates && Model.UserProfile != null)
         {
-            <details class="card mt-3 dashboard-estimates-card">
-                <summary class="dashboard-estimates-summary">
-                    Profile estimates
-                </summary>
-
-                <div class="card-body dashboard-estimates-content">
-                    <h2 class="h4">Your profile estimates</h2>
-
-                    <p class="text-muted small">
-                        Based on the details currently saved in your Profile.
-                    </p>
-
-                    <div class="row g-3">
-                        <div class="col-6 col-lg-3">
-                            <strong>Maintenance Calories</strong>
-                            <p class="mb-1">
-                                ~@Model.UserProfile.CalculateTdee(Model.CurrentDate).ToString("0") kcal/day
-                            </p>
-                            <small class="text-muted">
-                                Estimated calories needed to maintain your current weight.
-                            </small>
-                        </div>
-
-                        <div class="col-6 col-lg-3">
-                            <strong>BMR</strong>
-                            <p class="mb-1">
-                                ~@Model.UserProfile.CalculateBmr(Model.CurrentDate).ToString("0") kcal/day
-                            </p>
-                            <small class="text-muted">
-                                Estimated calories your body uses at rest.
-                            </small>
-                        </div>
-
-                        <div class="col-6 col-lg-3">
-                            <strong>BMI</strong>
-                            <p class="mb-1">
-                                @Model.UserProfile.BMI.ToString("0.0")
-                            </p>
-                            <small class="text-muted">
-                                Calculated from your current height and weight.
-                            </small>
-                        </div>
-
-                        <div class="col-6 col-lg-3">
-                            <strong>Age</strong>
-                            <p class="mb-1">
-                                @Model.UserProfile.CalculateAge(Model.CurrentDate) years
-                            </p>
-                            <small class="text-muted">
-                                Used as part of your calorie estimate.
-                            </small>
+            <section class="card dashboard-estimates-card"
+                     aria-labelledby="dashboard-estimates-heading">
+                <div class="card-body">
+                    <div class="dashboard-card-heading">
+                        <div>
+                            <p class="dashboard-eyebrow">Your profile</p>
+                            <h2 id="dashboard-estimates-heading">Profile estimates</h2>
                         </div>
                     </div>
+
+                    <dl class="dashboard-estimate-stats">
+                        <div class="dashboard-estimate-stat">
+                            <dt>Maintenance</dt>
+                            <dd>
+                                ~@Model.UserProfile.CalculateTdee(Model.CurrentDate).ToString("0")
+                                <span>kcal/day</span>
+                            </dd>
+                        </div>
+
+                        <div class="dashboard-estimate-stat">
+                            <dt>BMR</dt>
+                            <dd>
+                                ~@Model.UserProfile.CalculateBmr(Model.CurrentDate).ToString("0")
+                                <span>kcal/day</span>
+                            </dd>
+                        </div>
+
+                        <div class="dashboard-estimate-stat">
+                            <dt>BMI</dt>
+                            <dd>@Model.UserProfile.BMI.ToString("0.0")</dd>
+                        </div>
+
+                        <div class="dashboard-estimate-stat">
+                            <dt>Age</dt>
+                            <dd>
+                                @Model.UserProfile.CalculateAge(Model.CurrentDate)
+                                <span>years</span>
+                            </dd>
+                        </div>
+                    </dl>
 
                     <partial name="_GoalTimeline"
                              model="Model.GoalTimeline" />
                 </div>
-            </details>
+            </section>
         }
 
-        <div class="dashboard-actions">
+        <div class="dashboard-support-grid">
+            <section class="dashboard-quick-actions"
+                     aria-labelledby="dashboard-actions-heading">
+                <div class="dashboard-card-heading">
+                    <div>
+                        <p class="dashboard-eyebrow">Shortcuts</p>
+                        <h2 id="dashboard-actions-heading">Quick actions</h2>
+                    </div>
+                </div>
 
-            <a asp-page="/Diary/Create"
-               asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
-               class="btn btn-primary dashboard-action-primary">
-                + Quick Add Food
-            </a>
+                <div class="dashboard-actions">
+                    <a asp-page="/Diary/Create"
+                       asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
+                       class="dashboard-action">
+                        <span class="dashboard-action-heading">
+                            <svg class="dashboard-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M12 5v14M5 12h14" />
+                            </svg>
+                            <strong>Log food</strong>
+                        </span>
+                        <span>Add something to today’s Diary</span>
+                    </a>
 
-            <a asp-page="/Diary/Index"
-               asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
-               class="btn btn-outline-primary">
-                View Today's Diary
-            </a>
+                    <a asp-page="/Diary/Index"
+                       asp-route-date="@Model.CurrentDate.ToString("yyyy-MM-dd")"
+                       class="dashboard-action">
+                        <span class="dashboard-action-heading">
+                            <svg class="dashboard-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <rect x="4" y="5.5" width="16" height="15" rx="2.5" />
+                                <path d="M8 3.5v4M16 3.5v4M7.5 11h9M7.5 15h6" />
+                            </svg>
+                            <strong>Today’s Diary</strong>
+                        </span>
+                        <span>Review or update today’s entries</span>
+                    </a>
 
+                    <a asp-page="/Foods/Create"
+                       class="dashboard-action">
+                        <span class="dashboard-action-heading">
+                            <svg class="dashboard-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M8 4v7a3 3 0 0 1-3 3V4M5 4v6M8 4v6M5 14v6" />
+                                <path d="M15 4v16M15 4c3 0 4 2.25 4 5s-1 4-4 4" />
+                            </svg>
+                            <strong>Add custom food</strong>
+                        </span>
+                        <span>Create a food you can reuse</span>
+                    </a>
+
+                    <a asp-page="/SavedMeals/Index"
+                       class="dashboard-action">
+                        <span class="dashboard-action-heading">
+                            <svg class="dashboard-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M12 20.25S4.5 16.1 4.5 9.5A4.25 4.25 0 0 1 12 6.75 4.25 4.25 0 0 1 19.5 9.5c0 6.6-7.5 10.75-7.5 10.75Z" />
+                            </svg>
+                            <strong>Saved Meals</strong>
+                        </span>
+                        <span>Log familiar combinations faster</span>
+                    </a>
+                </div>
+            </section>
+
+            <aside class="dashboard-comfy-note"
+                   aria-labelledby="dashboard-comfy-note-heading">
+                <p class="dashboard-eyebrow">A comfy note</p>
+                <h2 id="dashboard-comfy-note-heading">
+                    Keep today simple.
+                </h2>
+                <p>
+                    Log what is useful, use shortcuts when they help,
+                    and leave the rest of the day for living.
+                </p>
+
+                @if (Model.CapyAppearance != null)
+                {
+                    <a asp-page="/Customisation"
+                       class="dashboard-capy-identity"
+                       aria-label="Customise @Model.CapyAppearance.DisplayName">
+                        <span class="dashboard-capy-frame" aria-hidden="true">
+                            <partial name="_CapyAvatar"
+                                     model="Model.CapyAppearance" />
+                        </span>
+                        <span>
+                            <strong>@Model.CapyAppearance.DisplayName</strong>
+                            <small>Customise Capy →</small>
+                        </span>
+                    </a>
+                }
+            </aside>
         </div>
 
     </div>

@@ -2,82 +2,127 @@
 @{
     ViewData["Title"] = "Help & FAQ";
     ViewData["MetaDescription"] =
-        "Find answers about calorie targets, food logging, portions, themes and Capy customisation.";
+        "Find answers about calorie targets, food logging, portions, saved meals, themes and Comfy Capy customisation.";
     ViewData["CanonicalUrl"] = "https://calories.comfycapy.com/Help";
     ViewData["Robots"] = "index,follow";
 }
 
 <div class="content-page">
     <p class="page-eyebrow">Help &amp; FAQ</p>
-    <h1>A few helpful answers</h1>
-    <p class="lead">Got a question? Check out the FAQ!</p>
+    <h1>How can we help?</h1>
+    <p class="lead">
+        New to Comfy Capy or something not making sense? You might find the answer here.
+    </p>
 
     <section class="faq-list" aria-label="Frequently asked questions">
         <details open>
             <summary>How do I get my daily calorie target?</summary>
             <p>
-                Complete your <a asp-page="/Profile/Index">Profile</a>. You can use the calculated estimate
-                based on your details, activity and goal, or enter a custom target.
+                Complete your <a asp-page="/Profile/Index">Profile</a> and Comfy Capy can estimate a
+                daily calorie target using your details, activity level and goal. If you already
+                have a target you'd rather use, you can set your own instead.
             </p>
         </details>
 
         <details>
-            <summary>Where do foods come from?</summary>
+            <summary>Where does the food information come from?</summary>
             <p>
-                You can create custom foods or search USDA FoodData Central. Nutrition for USDA results is
-                resolved by the server before a food is logged. Check any value that matters to you because
-                external and user-entered data can contain mistakes.
+                Food search includes UK and US food data. UK searches use data from the UK's
+                Composition of Foods Integrated Dataset (CoFID), while US searches use USDA
+                FoodData Central. You can switch between them when searching for a food, or create
+                your own custom foods whenever you need to.
+            </p>
+            <p>
+                Food databases and user-entered foods can contain mistakes or differences between
+                products, so it's always worth checking information that's important to you.
             </p>
         </details>
 
         <details>
             <summary>What are portions?</summary>
             <p>
-                Portions let you save familiar amounts such as a slice or bowl against a custom food. You can
-                still log an exact mass or volume whenever you prefer.
+                Portions make it easier to log food in amounts that actually make sense to you,
+                such as a slice, bowl or serving, instead of reaching for the kitchen scales every
+                time. Foods can also be logged using exact measurements when you prefer.
             </p>
         </details>
 
         <details>
-            <summary>Will editing a food change old Diary entries?</summary>
+            <summary>What are approximate portions?</summary>
             <p>
-                No. Diary entries snapshot the food name, serving basis, nutrition and portion description
-                used when you logged them, so your history remains intact if the original food changes later.
+                If you don't know the exact amount you ate, that's okay. Approximate portions let
+                you choose a small, medium or large amount using the food's serving information as
+                a starting point. They're there for the times when a useful estimate is better
+                than not logging at all.
+            </p>
+        </details>
+
+        <details>
+            <summary>What are Saved Meals?</summary>
+            <p>
+                Saved Meals are for combinations of foods you eat regularly. You can create one
+                from your Diary and use it again later, saving you from adding the same foods one
+                by one every time.
+            </p>
+        </details>
+
+        <details>
+            <summary>Can I copy what I logged yesterday?</summary>
+            <p>
+                Yep. Your Diary has a <strong>Copy previous day</strong> option for days when what
+                you're eating looks suspiciously familiar. It copies the previous day's entries
+                into the current day, where you can make any changes you need.
+            </p>
+        </details>
+
+        <details>
+            <summary>Will editing a food change my old Diary entries?</summary>
+            <p>
+                No. Comfy Capy keeps the food and nutrition information that applied when you
+                logged an entry. If you edit the original food later, your previous Diary entries
+                stay as they were.
             </p>
         </details>
 
         <details>
             <summary>How do themes and Capy customisation work?</summary>
             <p>
-                Open <a asp-page="/Customisation">Customise Capy</a> to equip owned cosmetics and choose Light,
-                Dark or System theme. Signed-in theme choices are saved to your profile; signed-out choices use
-                this browser.
+                Head to <a asp-page="/Customisation">Customise Capy</a> to change your Capy's
+                appearance and choose between Light, Dark and System themes. When you're signed
+                in, your choices are saved to your account so they'll still be there when you
+                come back.
             </p>
         </details>
 
         <details>
-            <summary>What if I cannot confirm my email or sign in?</summary>
+            <summary>What if I can't confirm my email or sign in?</summary>
             <p>
-                Use <a asp-area="Identity" asp-page="/Account/ResendEmailConfirmation">Resend email confirmation</a>
-                or <a asp-area="Identity" asp-page="/Account/ForgotPassword">reset your password</a>. If you use
-                two-factor authentication and cannot access your authenticator, use one of your saved recovery codes.
+                You can <a asp-area="Identity" asp-page="/Account/ResendEmailConfirmation">resend your confirmation email</a>
+                or <a asp-area="Identity" asp-page="/Account/ForgotPassword">reset your password</a>.
+                If you use two-factor authentication and can't access your authenticator app,
+                you can sign in using one of your saved recovery codes.
             </p>
         </details>
 
-        <details id="nutrition-estimates" open>
+        <details id="nutrition-estimates">
             <summary>Are calorie and nutrition figures medical advice?</summary>
             <p>
-                No. Calorie, TDEE and nutrition figures are estimates for general information and tracking.
-                Food values may come from your input or an external data source and may be inaccurate. Do not
-                rely on the app as medical advice. If you have medical or specialised dietary needs—including
-                pregnancy, an eating disorder, or a condition affected by nutrition—seek advice from an
+                No. Calorie targets, TDEE estimates and nutrition information in Comfy Capy are
+                provided for general information and tracking. They're estimates, and food data
+                can sometimes be incomplete or inaccurate.
+            </p>
+            <p>
+                Comfy Capy isn't a substitute for medical or professional dietary advice. If you
+                have medical or specialised dietary needs, including during pregnancy, for an
+                eating disorder, or for a condition affected by nutrition, please speak to an
                 appropriately qualified professional.
             </p>
         </details>
     </section>
 
     <p class="mt-4">
-        Still stuck? <a asp-page="/Feedback">Send feedback</a>. Please do not include passwords, recovery codes,
-        medical details or other sensitive information.
+        Still stuck? <a asp-page="/Feedback">Send us some feedback</a> and let us know what's going
+        wrong. Please don't include passwords, recovery codes, medical details or other sensitive
+        information.
     </p>
 </div>

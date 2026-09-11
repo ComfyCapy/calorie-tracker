@@ -3,57 +3,80 @@
 @{
     ViewData["Title"] = "Privacy";
     ViewData["MetaDescription"] =
-        "Learn how Comfy Capy Calories handles account, food, Diary and Capy data.";
+        "Learn what information Comfy Capy Calories stores, why we use it and the choices you have.";
     ViewData["CanonicalUrl"] = "https://calories.comfycapy.com/Privacy";
     ViewData["Robots"] = "index,follow";
 }
 
 <div class="content-page">
     <h1>Privacy</h1>
-    <p class="lead">How Comfy Capy Calories uses and protects your information.</p>
-
-    <h2>Information linked to your account</h2>
-    <p>
-        We store the account details you provide, including your username, first name and email address,
-        along with the security information ASP.NET Core Identity needs for sign-in, email confirmation,
-        password resets and optional authenticator-app two-factor authentication.
-    </p>
-    <p>
-        If you complete your profile, we also store the details used to calculate your estimates: date of
-        birth, height, weight, calculation sex, activity level, goal, optional goal weight and weekly goal,
-        measurement preference, calorie-target preference and theme preference.
+    <p class="lead">
+        The short version: Comfy Capy Calories only stores the information it needs to run the app.
+        We don't use your data for advertising and we don't add analytics tracking.
     </p>
 
-    <h2>Food, Diary and Capy data</h2>
+    <h2>Your account</h2>
     <p>
-        Your custom foods, saved portions, favourites and Diary entries are linked to your account. Diary
-        entries keep a snapshot of the food and nutrition information that applied when you logged them so
-        later edits do not rewrite your history. Your Comfy Capy inventory and equipped appearance are also
-        stored with your account.
-    </p>
-    <p>
-        Foods retrieved from USDA FoodData Central may be cached locally for reuse. Cached USDA food records
-        are shared reference data; your favourites and Diary use remain account-specific.
+        When you create an account, we store the details you provide, such as your username,
+        first name and email address. We also store the security information needed to keep your
+        account working, including information used for sign-in, email confirmation, password
+        resets and optional two-factor authentication.
     </p>
 
-    <h2>Cookies and outside services</h2>
+    <h2>Your profile and calorie goals</h2>
     <p>
-        The application uses technically necessary cookies for sign-in, session security and request
-        protection. It does not add advertising or analytics tracking. USDA FoodData Central processes food
-        searches, and the configured email provider processes transactional account email and feedback
-        delivery.
+        If you complete your profile, we store the information needed to calculate your calorie
+        estimates and goals. This can include your date of birth, height, weight, calculation sex,
+        activity level, goal, optional goal weight and weekly goal, along with preferences such as
+        your measurement system, calorie target and theme.
+    </p>
+
+    <h2>Your foods and Diary</h2>
+    <p>
+        Your custom foods, saved meals, favourites and Diary entries are linked to your account.
+        When you log something in your Diary, we keep the nutrition information that applied at
+        the time. This means that editing a food later won't unexpectedly change your previous
+        Diary entries.
+    </p>
+    <p>
+        Food information from external food databases may be stored by Comfy Capy so it can be
+        reused efficiently. These food records aren't treated as your personal data simply because
+        they appear in a search. Your favourites, saved meals and Diary activity remain linked to
+        your account.
+    </p>
+
+    <h2>Your Comfy Capy</h2>
+    <p>
+        We store the customisation items available to your account and the appearance you've
+        chosen for your Capy. This lets your Capy stay the way you left them when you come back.
+    </p>
+
+    <h2>Cookies</h2>
+    <p>
+        Comfy Capy uses cookies that are necessary for features such as signing in, keeping your
+        session secure and protecting forms and requests. We don't add advertising or analytics
+        tracking cookies.
+    </p>
+
+    <h2>Outside services</h2>
+    <p>
+        Comfy Capy uses external services where they're needed to provide parts of the app. Food
+        searches can use external food-data providers, and our email provider handles transactional
+        emails such as account messages and feedback delivery.
     </p>
 
     <h2>Anonymous feedback</h2>
     <p>
-        Feedback can be sent while signed in or signed out. The feedback form does not ask for account
-        details, but you should not include personal or sensitive information in your message.
+        You can send feedback whether you're signed in or signed out. The feedback form doesn't
+        ask you to identify yourself, so please don't include personal or sensitive information
+        in your message.
     </p>
 
     <h2>Your choices</h2>
     <p>
-        Account settings let you download the personal account data exposed by ASP.NET Core Identity or
-        permanently delete your account. If you have a privacy question that is not answered here, please
-        use the <a asp-page="/Feedback">Feedback page</a> without including sensitive information.
+        Your account settings provide options to download your personal account data or permanently
+        delete your account. If you have a privacy question that isn't answered here, you can use
+        the <a asp-page="/Feedback">Feedback page</a>. Please don't include sensitive information
+        in your message.
     </p>
 </div>

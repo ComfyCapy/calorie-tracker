@@ -41,6 +41,7 @@ public class BrandingTests
         Assert.Contains(">Comfy Capy Calories</span>", html);
         Assert.Contains("/images/capy/expressions/Capy-Base.png", html);
         Assert.Contains("class=\"navbar-brand\"", html);
+        Assert.Contains("fonts.googleapis.com/css2?family=Nunito", html);
         Assert.DoesNotContain("<a class=\"navbar-brand\"", html);
         Assert.Contains("href=\"/\"", html);
         Assert.Contains("A Comfy Capy product", html);
@@ -80,6 +81,56 @@ public class BrandingTests
             "/images/capy/expressions/Capy-Base.png");
         Assert.Equal(HttpStatusCode.OK, iconResponse.StatusCode);
         Assert.Equal("image/png", iconResponse.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task SharedLayout_UsesResponsiveApplicationShellForSignedInUsers()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = CreateClient(factory);
+        client.DefaultRequestHeaders.Add("X-Test-User", "shell-user");
+
+        var html = await client.GetStringAsync("/About");
+
+        Assert.Contains("class=\"app-shell\"", html);
+        Assert.Contains("id=\"appSidebar\"", html);
+        Assert.Contains("class=\"offcanvas-lg offcanvas-start app-sidebar\"", html);
+        Assert.Contains("data-bs-target=\"#appSidebar\"", html);
+        Assert.Contains("aria-label=\"Application navigation\"", html);
+        Assert.Contains("href=\"/Diary\"", html);
+        Assert.Contains("href=\"/Foods\"", html);
+        Assert.Contains("href=\"/SavedMeals\"", html);
+        Assert.Contains("href=\"/Profile\"", html);
+        Assert.Contains("href=\"/Customisation\"", html);
+        Assert.DoesNotContain("id=\"navbarSupportedContent\"", html);
+    }
+
+    [Fact]
+    public async Task Dashboard_UsesReusableScenicHeaderWithHeroArtwork()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = CreateClient(factory);
+        client.DefaultRequestHeaders.Add("X-Test-User", "header-user");
+
+        var html = await client.GetStringAsync("/");
+
+        Assert.Contains(
+            "class=\"ct-scenic-header ct-scenic-header--with-art dashboard-hero\"",
+            html);
+        Assert.Contains("class=\"ct-page-title\">Good afternoon</h1>", html);
+        Assert.Contains("class=\"ct-art-slot ct-scenic-header__art\"", html);
+        Assert.Contains("src=\"/images/brand/dashboard-hero-capy.png\"", html);
+        Assert.DoesNotContain("data-development-artwork=\"true\"", html);
+        Assert.DoesNotContain("HERO ARTWORK GOES HERE", html);
+        Assert.Contains("aria-hidden=\"true\"", html);
+        Assert.Contains("alt=\"\"", html);
+
+        var artworkResponse = await client.GetAsync(
+            "/images/brand/dashboard-hero-capy.png");
+        Assert.Equal(HttpStatusCode.OK, artworkResponse.StatusCode);
+        Assert.Equal(
+            "image/png",
+            artworkResponse.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]
@@ -145,7 +196,7 @@ public class BrandingTests
 
         var privacyHtml = await client.GetStringAsync("/Privacy");
         Assert.Contains(
-            "How Comfy Capy Calories uses and protects your information.",
+            "The short version: Comfy Capy Calories only stores the information it needs to run the app.",
             privacyHtml);
 
         var resendHtml = await client.GetStringAsync(

@@ -59,6 +59,95 @@ public class CalorieBalanceDashboardTests
         Assert.DoesNotContain("dashboard-year-card", html);
     }
 
+    [Fact]
+    public async Task Dashboard_RendersPhaseTwoCompositionWithExistingShortcuts()
+    {
+        using var factory = new IntegrationTestFactory();
+        const string userId = "phase-two-dashboard-user";
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            AddUser(context, userId, "Maya");
+            await context.SaveChangesAsync();
+        }
+
+        using var client = AuthenticatedClient(factory, userId);
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+
+        Assert.Contains("Good afternoon, Maya", html);
+        Assert.Contains("/images/brand/dashboard-hero-capy.png", html);
+        Assert.Contains("class=\"dashboard-primary-grid\"", html);
+        Assert.Contains("class=\"dashboard-calorie-ring is-unset\"", html);
+        Assert.Contains("id=\"dashboardMacroCards\"", html);
+        Assert.Contains("href=\"/Diary/Create?date=2026-09-09\"", html);
+        Assert.Contains("href=\"/Diary?date=2026-09-09\"", html);
+        Assert.Contains("href=\"/Foods/Create\"", html);
+        Assert.Contains("href=\"/SavedMeals\"", html);
+        Assert.DoesNotContain("dashboard-action-primary", html);
+        Assert.Equal(4, Regex.Matches(html, "dashboard-action-icon").Count);
+        Assert.DoesNotContain("PROGRESSION GOES HERE", html);
+
+        var siteCss = await client.GetStringAsync("/css/site.css");
+        Assert.Contains("--ct-calorie-ring: #78a987", siteCss);
+        Assert.Contains(
+            "var(--ct-calorie-ring) var(--dashboard-calorie-progress",
+            siteCss);
+    }
+
+    [Fact]
+    public async Task DashboardGreeting_FallsBackToUsernameWhenFirstNameIsUnavailable()
+    {
+        using var factory = new IntegrationTestFactory();
+        const string userId = "fallback-greeting-user";
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            AddUser(context, userId, " ");
+            await context.SaveChangesAsync();
+        }
+
+        using var client = AuthenticatedClient(factory, userId);
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+
+        Assert.Contains("Good afternoon, fallback-greeting-user@example.test", html);
+    }
+
+    [Theory]
+    [InlineData(0, "Good evening")]
+    [InlineData(4, "Good morning")]
+    [InlineData(12, "Good afternoon")]
+    [InlineData(18, "Good evening")]
+    public async Task DashboardGreeting_UsesExpectedLocalTimeBoundaries(
+        int hour,
+        string expectedGreeting)
+    {
+        using var factory = new IntegrationTestFactory(
+            new FixedTimeProvider(
+                new DateTimeOffset(
+                    2026,
+                    9,
+                    9,
+                    hour,
+                    0,
+                    0,
+                    TimeSpan.Zero)));
+        const string userId = "boundary-greeting-user";
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            AddUser(context, userId, "Maya");
+            await context.SaveChangesAsync();
+        }
+
+        using var client = AuthenticatedClient(factory, userId);
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+
+        Assert.Contains($"{expectedGreeting}, Maya", html);
+    }
+
     [Theory]
     [InlineData(1426, "574", "remaining")]
     [InlineData(2000, "0", "remaining")]
@@ -84,7 +173,9 @@ public class CalorieBalanceDashboardTests
             Assert.DoesNotMatch(
                 new Regex($@"-{expectedAmount}\s+kcal\s+remaining\b"),
                 html);
-            Assert.Contains("style=\"width: 100%\"", html);
+            Assert.Contains(
+                "style=\"--dashboard-calorie-progress: 100%;\"",
+                html);
         }
     }
 
@@ -745,7 +836,8 @@ public class CalorieBalanceDashboardTests
 
     private static void AddUser(
         ApplicationDbContext context,
-        string userId)
+        string userId,
+        string firstName = "")
     {
         context.Users.Add(new ApplicationUser
         {
@@ -754,6 +846,7 @@ public class CalorieBalanceDashboardTests
             NormalizedUserName = $"{userId}@EXAMPLE.TEST",
             Email = $"{userId}@example.test",
             NormalizedEmail = $"{userId}@EXAMPLE.TEST",
+            FirstName = firstName,
             SecurityStamp = Guid.NewGuid().ToString()
         });
     }

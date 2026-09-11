@@ -36,6 +36,7 @@ namespace CalorieTracker.Pages
         public decimal CarbohydratesConsumed { get; set; }
         public decimal FatConsumed { get; set; }
         public MacroGoalProgress? MacroGoalProgress { get; set; }
+        public string DashboardGreeting { get; private set; } = "Hello";
 
         public bool HasProfileEstimates =>
             UserProfile?.HasUsableCalorieEstimatesOn(CurrentDate) == true;
@@ -92,6 +93,21 @@ namespace CalorieTracker.Pages
             {
                 return BadRequest();
             }
+
+            var currentUser = await _userManager.FindByIdAsync(userId);
+            var timeOfDayGreeting = _userLocalTimeProvider.LocalNow.Hour switch
+            {
+                < 4 => "Good evening",
+                < 12 => "Good morning",
+                < 18 => "Good afternoon",
+                _ => "Good evening"
+            };
+            var greetingName = string.IsNullOrWhiteSpace(currentUser?.FirstName)
+                ? currentUser?.UserName
+                : currentUser.FirstName;
+            DashboardGreeting = string.IsNullOrWhiteSpace(greetingName)
+                ? timeOfDayGreeting
+                : $"{timeOfDayGreeting}, {greetingName}";
 
             CalorieBalanceYear = await _calorieBalanceYearService
                 .GetYearAsync(userId, SelectedYear, CurrentDate);

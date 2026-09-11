@@ -80,17 +80,17 @@ public class TechnicalSeoTests
     [InlineData(
         "/About",
         "About · Comfy Capy Calories",
-        "Meet Comfy Capy Calories, a friendly calorie and nutrition tracker for easier food logging.",
+        "Meet Comfy Capy Calories, a friendly calorie and nutrition tracker built to make food logging easier.",
         "https://calories.comfycapy.com/About")]
     [InlineData(
         "/Help",
         "Help & FAQ · Comfy Capy Calories",
-        "Find answers about calorie targets, food logging, portions, themes and Capy customisation.",
+        "Find answers about calorie targets, food logging, portions, saved meals, themes and Comfy Capy customisation.",
         "https://calories.comfycapy.com/Help")]
     [InlineData(
         "/Privacy",
         "Privacy · Comfy Capy Calories",
-        "Learn how Comfy Capy Calories handles account, food, Diary and Capy data.",
+        "Learn what information Comfy Capy Calories stores, why we use it and the choices you have.",
         "https://calories.comfycapy.com/Privacy")]
     public async Task ApprovedPublicPage_EmitsIndexableBrandedMetadata(
         string route,

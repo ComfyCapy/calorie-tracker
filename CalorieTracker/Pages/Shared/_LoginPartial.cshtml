@@ -7,10 +7,13 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext DbContext
 
-<ul class="navbar-nav">
+<ul class="navbar-nav account-nav">
     @if (SignInManager.IsSignedIn(User))
     {
         var currentUser = await UserManager.GetUserAsync(User);
+        var greetingName = string.IsNullOrWhiteSpace(currentUser?.FirstName)
+            ? "there"
+            : currentUser.FirstName;
 
         UserCapyAppearance? navbarCapy = null;
 
@@ -27,65 +30,60 @@
                     appearance.UserId == currentUser.Id);
         }
 
-        <li class="nav-item dropdown d-flex align-items-center account-nav-item">
-
-            @if (navbarCapy != null)
-            {
-                <a asp-area=""
-                   asp-page="/Customisation"
-                   class="navbar-capy me-2"
-                   title="Customise Capy"
-                   aria-label="Customise Capy">
-                    <partial name="_CapyAvatar"
-                             model="navbarCapy" />
-                </a>
-            }
-
-            <a class="nav-link dropdown-toggle"
-               href="#"
-               role="button"
-               data-bs-toggle="dropdown"
-               aria-expanded="false">
-                Hello @currentUser?.FirstName!
-            </a>
-
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                    <a class="dropdown-item"
-                       asp-area=""
-                       asp-page="/Customisation">
-                        Customise Capy
+        <li class="nav-item account-nav-item">
+            <div class="account-nav-summary dropdown dropup">
+                @if (navbarCapy != null)
+                {
+                    <a asp-area=""
+                       asp-page="/Customisation"
+                       class="navbar-capy"
+                       title="Customise Capy"
+                       aria-label="Customise Capy">
+                        <partial name="_CapyAvatar"
+                                 model="navbarCapy" />
                     </a>
-                </li>
+                }
 
-                <li>
-                    <hr class="dropdown-divider" />
-                </li>
+                <button class="nav-link dropdown-toggle account-nav-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        aria-label="Open account menu">
+                    <span class="account-nav-copy">
+                        <span class="account-nav-greeting">Hello</span>
+                        <span class="account-nav-name">@greetingName!</span>
+                    </span>
+                </button>
 
-                <li>
-                    <a class="dropdown-item"
-                       asp-area="Identity"
-                       asp-page="/Account/Manage/Index">
-                        Account settings
-                    </a>
-                </li>
+                <ul class="dropdown-menu dropdown-menu-end account-nav-menu">
+                    <li>
+                        <a class="dropdown-item"
+                           asp-area=""
+                           asp-page="/Customisation">
+                            Customise Capy
+                        </a>
+                    </li>
 
-                <li>
-                    <hr class="dropdown-divider" />
-                </li>
+                    <li>
+                        <a class="dropdown-item"
+                           asp-area="Identity"
+                           asp-page="/Account/Manage/Index">
+                            Account settings
+                        </a>
+                    </li>
 
-                <li>
-                    <form asp-area="Identity"
-                          asp-page="/Account/Logout"
-                          asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
-                        <button type="submit"
-                                class="dropdown-item">
-                            Logout
-                        </button>
-                    </form>
-                </li>
-            </ul>
-
+                    <li class="account-nav-logout">
+                        <form asp-area="Identity"
+                              asp-page="/Account/Logout"
+                              asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+                            <button type="submit"
+                                    class="dropdown-item">
+                                Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
         </li>
     }
     else

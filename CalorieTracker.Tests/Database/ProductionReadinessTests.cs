@@ -28,7 +28,7 @@ public class ProductionReadinessTests
             .ToListAsync();
 
         Assert.Equal(availableMigrations, appliedMigrations);
-        Assert.Equal(32, appliedMigrations.Count);
+        Assert.Equal(33, appliedMigrations.Count);
         Assert.Equal(14, items.Count);
 
         var defaultExpression = Assert.Single(items, item =>

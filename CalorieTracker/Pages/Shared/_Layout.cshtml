@@ -7,9 +7,10 @@
 @inject ApplicationDbContext DbContext
 
 @{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
     string? accountTheme = null;
 
-    if (User.Identity?.IsAuthenticated == true)
+    if (isAuthenticated)
     {
         var userId = UserManager.GetUserId(User);
 
@@ -48,6 +49,10 @@
     <meta name="theme-color" content="#7b61a8" />
     <link rel="icon" type="image/png" href="~/images/capy/expressions/Capy-Base.png" />
     <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" />
     <script src="~/js/browser-time-zone.js" asp-append-version="true"></script>
     <script>
         (() => {
@@ -103,130 +108,166 @@
     <link rel="stylesheet" href="~/CalorieTracker.styles.css" asp-append-version="true" />
 </head>
 
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow">
-            <div class="container">
-                <span class="navbar-brand">
-                    <img class="navbar-brand-mark"
-                         src="~/images/capy/expressions/Capy-Base.png"
-                         width="32"
-                         height="32"
-                         alt="" />
-                    <span>Comfy Capy Calories</span>
-                </span>
-
-                <button class="navbar-toggler"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div id="navbarSupportedContent" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-area=""
-                               asp-page="/Index"
-                               aria-current="@(currentPage == "/Index" ? "page" : null)">
-                                Home
-                            </a>
-                        </li>
-
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-page="/Foods/Index"
-                                   aria-current="@(currentPage?.StartsWith("/Foods", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
-                                    Foods
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-area=""
-                                   asp-page="/Diary/Index"
-                                   aria-current="@(currentPage?.StartsWith("/Diary", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
-                                    Diary
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link"
-                                   asp-area=""
-                                   asp-page="/Profile/Index"
-                                   aria-current="@(currentPage?.StartsWith("/Profile", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
-                                    Profile
-                                </a>
-                            </li>
-                        }
-                    </ul>
-
-                    <partial name="_LoginPartial" />
+<body class="@(isAuthenticated ? "app-shell-body" : "public-shell-body")">
+    <div class="@(isAuthenticated ? "app-shell" : "public-shell")">
+        @if (isAuthenticated)
+        {
+            <aside id="appSidebar"
+                   class="offcanvas-lg offcanvas-start app-sidebar"
+                   tabindex="-1"
+                   aria-labelledby="appSidebarLabel">
+                <div class="offcanvas-header app-sidebar-mobile-heading">
+                    <h2 id="appSidebarLabel" class="h5 mb-0">Navigation</h2>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="offcanvas"
+                            data-bs-target="#appSidebar"
+                            aria-label="Close navigation"></button>
                 </div>
-            </div>
-        </nav>
 
-        <div id="developmentBanner"
-             class="development-banner"
-             role="status"
-             aria-labelledby="developmentBannerMessage"
-             data-development-banner>
-            <div class="container development-banner-inner">
-                <span class="development-banner-icon" aria-hidden="true">🚧</span>
-                <p id="developmentBannerMessage" class="development-banner-message">
-                    Comfy Capy Calories is in active development. Things may change,
-                    and you might encounter the occasional bug while we keep improving
-                    the app.
-                </p>
-                <a class="development-banner-link"
-                   asp-area=""
-                   asp-page="/Feedback">
-                    Send feedback →
-                </a>
-                <button type="button"
-                        class="development-banner-dismiss"
-                        data-development-banner-dismiss
-                        aria-label="Dismiss active development notice">
-                    <span aria-hidden="true">×</span>
-                </button>
+                <div class="offcanvas-body app-sidebar-body">
+                    <div class="app-sidebar-brand">
+                        <span class="navbar-brand">
+                            <img class="navbar-brand-mark"
+                                 src="~/images/capy/expressions/Capy-Base.png"
+                                 width="40"
+                                 height="40"
+                                 alt="" />
+                            <span>Comfy Capy Calories</span>
+                        </span>
+                        <span class="app-brand-tagline">Tracking made comfier.</span>
+                    </div>
+
+                    <partial name="_AppNavigation" />
+
+                    <div class="app-sidebar-account">
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+            </aside>
+        }
+
+        <div class="shell-main @(isAuthenticated ? "app-shell-main" : "public-shell-main")">
+            <header>
+                @if (isAuthenticated)
+                {
+                    <nav class="navbar app-mobile-header" aria-label="Mobile application navigation">
+                        <button class="navbar-toggler app-mobile-menu-button"
+                                type="button"
+                                data-bs-toggle="offcanvas"
+                                data-bs-target="#appSidebar"
+                                aria-controls="appSidebar"
+                                aria-label="Open navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+
+                        <span class="app-mobile-brand">
+                            <img class="navbar-brand-mark"
+                                 src="~/images/capy/expressions/Capy-Base.png"
+                                 width="32"
+                                 height="32"
+                                 alt="" />
+                            <span>Comfy Capy Calories</span>
+                        </span>
+                    </nav>
+                }
+                else
+                {
+                    <nav class="navbar navbar-expand-sm navbar-toggleable-sm public-navbar border-bottom box-shadow">
+                        <div class="container">
+                            <span class="navbar-brand">
+                                <img class="navbar-brand-mark"
+                                     src="~/images/capy/expressions/Capy-Base.png"
+                                     width="32"
+                                     height="32"
+                                     alt="" />
+                                <span>Comfy Capy Calories</span>
+                            </span>
+
+                            <button class="navbar-toggler"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#navbarSupportedContent"
+                                    aria-controls="navbarSupportedContent"
+                                    aria-expanded="false"
+                                    aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+
+                            <div id="navbarSupportedContent" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                                <ul class="navbar-nav flex-grow-1">
+                                    <li class="nav-item">
+                                        <a class="nav-link"
+                                           asp-area=""
+                                           asp-page="/Index"
+                                           aria-current="@(currentPage == "/Index" ? "page" : null)">
+                                            Home
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <partial name="_LoginPartial" />
+                            </div>
+                        </div>
+                    </nav>
+                }
+
+                <div id="developmentBanner"
+                     class="development-banner"
+                     role="status"
+                     aria-labelledby="developmentBannerMessage"
+                     data-development-banner>
+                    <div class="@(isAuthenticated ? "app-content-width" : "container") development-banner-inner">
+                        <span class="development-banner-icon" aria-hidden="true">🚧</span>
+                        <p id="developmentBannerMessage" class="development-banner-message">
+                            Comfy Capy Calories is in active development. Things may change,
+                            and you might encounter the occasional bug while we keep improving
+                            the app.
+                        </p>
+                        <a class="development-banner-link"
+                           asp-area=""
+                           asp-page="/Feedback">
+                            Send feedback →
+                        </a>
+                        <button type="button"
+                                class="development-banner-dismiss"
+                                data-development-banner-dismiss
+                                aria-label="Dismiss active development notice">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="shell-content @(isAuthenticated ? "app-content app-content-width" : "container")">
+                <main role="main" class="pb-3">
+                    @if (TempData["UiStatusMessage"] is string statusMessage)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="status">
+                            @statusMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @RenderBody()
+                </main>
             </div>
+
+            <footer class="border-top footer text-muted @(isAuthenticated ? "app-footer" : "public-footer")">
+                <div class="@(isAuthenticated ? "app-content-width" : "container") d-flex flex-wrap justify-content-between gap-2">
+                    <span>
+                        &copy; 2026 · Comfy Capy Calories · A Comfy Capy product
+                    </span>
+                    <nav class="footer-links" aria-label="Footer">
+                        <a asp-area="" asp-page="/About">About</a>
+                        <a asp-area="" asp-page="/Help">Help</a>
+                        <a asp-area="" asp-page="/Privacy">Privacy</a>
+                        <a asp-area="" asp-page="/Feedback">Feedback</a>
+                        <a href="https://ko-fi.com/comfycapy" target="_blank" rel="noopener noreferrer">Support Comfy Capy ❤️</a>
+                    </nav>
+                </div>
+            </footer>
         </div>
-    </header>
-
-    <div class="container">
-        <main role="main" class="pb-3">
-            @if (TempData["UiStatusMessage"] is string statusMessage)
-            {
-                <div class="alert alert-success alert-dismissible fade show" role="status">
-                    @statusMessage
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-            @RenderBody()
-        </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container d-flex flex-wrap justify-content-between gap-2">
-            <span>
-                &copy; 2026 · Comfy Capy Calories · A Comfy Capy product
-            </span>
-            <nav class="footer-links" aria-label="Footer">
-                <a asp-area="" asp-page="/About">About</a>
-                <a asp-area="" asp-page="/Help">Help</a>
-                <a asp-area="" asp-page="/Privacy">Privacy</a>
-                <a asp-area="" asp-page="/Feedback">Feedback</a>
-                <a href="https://ko-fi.com/comfycapy" target="_blank" rel="noopener noreferrer">Support Comfy Capy ❤️</a>
-            </nav>
-        </div>
-    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

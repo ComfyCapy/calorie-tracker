@@ -82,14 +82,14 @@ public class GoalTimelinePageTests
             Assert.Contains("This is an estimate. Actual progress may vary.", html);
         }
 
-        Assert.Contains("Maintenance Calories", dashboard);
+        Assert.Contains("<dt>Maintenance</dt>", dashboard);
         Assert.Contains("BMR", dashboard);
         Assert.Contains("BMI", dashboard);
         Assert.Contains("Age", dashboard);
     }
 
     [Fact]
-    public async Task DashboardPlacesCollapsedProfileEstimatesAfterMacros()
+    public async Task DashboardPlacesAlwaysVisibleProfileEstimatesAfterYearMap()
     {
         const string userId = "dashboard-layout-user";
         using var factory = new IntegrationTestFactory();
@@ -99,14 +99,15 @@ public class GoalTimelinePageTests
         var dashboard = await client.GetStringAsync("/");
 
         Assert.Contains(
-            "<details class=\"card mt-3 dashboard-estimates-card\">",
+            "<section class=\"card dashboard-estimates-card\"",
             dashboard);
         Assert.Contains(
-            "<summary class=\"dashboard-estimates-summary\">",
+            "dashboard-estimate-stats",
             dashboard);
         Assert.DoesNotContain(
-            "<details class=\"card mt-3 dashboard-estimates-card\" open",
+            "dashboard-estimates-summary",
             dashboard);
+        Assert.DoesNotContain("<details", dashboard);
 
         var macrosIndex = dashboard.IndexOf(
             "dashboard-macro-grid",

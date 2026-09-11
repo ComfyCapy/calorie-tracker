@@ -1,0 +1,46 @@
+@model CalorieTracker.Models.ScenicPageHeaderModel
+
+@{
+    var hasArtwork =
+        !string.IsNullOrWhiteSpace(Model.ArtworkPath) ||
+        !string.IsNullOrWhiteSpace(Model.ArtworkPlaceholderText);
+    var classes = $"ct-scenic-header{(hasArtwork ? " ct-scenic-header--with-art" : string.Empty)}{(string.IsNullOrWhiteSpace(Model.CssClass) ? string.Empty : $" {Model.CssClass}")}";
+    var artworkAlt = Model.ArtworkIsDecorative
+        ? string.Empty
+        : Model.ArtworkAlt ?? string.Empty;
+}
+
+<section class="@classes">
+    <div class="ct-scenic-header__content">
+        @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
+        {
+            <p class="ct-eyebrow">@Model.Eyebrow</p>
+        }
+
+        <h1 class="ct-page-title">@Model.Title</h1>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+        {
+            <p class="ct-page-subtitle">@Model.Subtitle</p>
+        }
+    </div>
+
+    @if (hasArtwork)
+    {
+        <div class="ct-art-slot ct-scenic-header__art"
+             aria-hidden="@(Model.ArtworkIsDecorative || !string.IsNullOrWhiteSpace(Model.ArtworkPlaceholderText) ? "true" : null)"
+             data-development-artwork="@(!string.IsNullOrWhiteSpace(Model.ArtworkPlaceholderText) ? "true" : null)">
+            @if (!string.IsNullOrWhiteSpace(Model.ArtworkPath))
+            {
+                <img src="@Url.Content(Model.ArtworkPath)"
+                     alt="@artworkAlt" />
+            }
+            else
+            {
+                <span class="ct-art-placeholder">
+                    @Model.ArtworkPlaceholderText
+                </span>
+            }
+        </div>
+    }
+</section>
