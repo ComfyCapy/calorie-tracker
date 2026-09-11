@@ -1,550 +1,524 @@
-﻿@page
+@page
 @model CalorieTracker.Pages.Profile.IndexModel
 @using CalorieTracker.Services
 @{
     ViewData["Title"] = "Profile & Goals";
 }
 
-@if (Model.IsFirstTimeSetup)
-{
-    <h1>Set up your profile</h1>
+<div class="profile-page">
+    @await Html.PartialAsync(
+        "_ScenicPageHeader",
+        new CalorieTracker.Models.ScenicPageHeaderModel(
+            Title: "Profile & Goals",
+            Subtitle: "Set your goals, find your pace. These details help Comfy Capy estimate your daily calorie needs.",
+            CssClass: "profile-hero"))
 
-    <p class="text-muted">
-        Tell us a little about yourself so we can estimate your daily calorie needs.
-        You can change these settings at any time.
-    </p>
-}
-else
-{
-    <h1>Profile & Goals</h1>
+    @if (!string.IsNullOrWhiteSpace(Model.ProfileStatusMessage))
+    {
+        <div class="alert alert-success profile-status" role="status">
+            @Model.ProfileStatusMessage
+        </div>
+    }
 
-    <p class="text-muted">
-        Update your details, goals and calorie target.
-    </p>
-}
+    <form method="post" class="profile-form">
+        <div asp-validation-summary="All"
+             class="alert alert-danger validation-summary"
+             role="alert"></div>
 
-@if (!string.IsNullOrWhiteSpace(Model.ProfileStatusMessage))
-{
-    <div class="alert alert-success">
-        @Model.ProfileStatusMessage
-    </div>
-}
+        <input asp-for="UserProfile.ThemePreference"
+               type="hidden"
+               id="profileThemePreference" />
 
-<form method="post" class="form-shell">
+        <div class="profile-layout">
+            <div class="profile-column profile-column--main">
+                <fieldset class="ct-card profile-card profile-body-card">
+                    <legend class="profile-card-legend">
+                        <span class="profile-card-icon" aria-hidden="true">◎</span>
+                        <span>Body details</span>
+                    </legend>
 
-    <div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
+                    <p class="profile-card-intro">
+                        Tell us a little about yourself so we can estimate your needs.
+                    </p>
 
-    <input asp-for="UserProfile.ThemePreference"
-           type="hidden"
-           id="profileThemePreference" />
+                    <div class="profile-fields profile-fields--two">
+                        <div class="profile-field">
+                            <label asp-for="UserProfile.DateOfBirth" class="form-label">
+                                Date of Birth
+                            </label>
 
-    <fieldset class="form-section">
-        <legend>Body details</legend>
-    <div class="mb-3">
-        <label asp-for="UserProfile.DateOfBirth" class="form-label">
-            Date of Birth
-        </label>
+                            <input asp-for="UserProfile.DateOfBirth"
+                                   type="date"
+                                   class="form-control"
+                                   max="@Model.CurrentDate.ToString("yyyy-MM-dd")"
+                                   data-msg-max="Date of birth cannot be in the future."
+                                   aria-required="true" />
 
-        <input asp-for="UserProfile.DateOfBirth"
-               type="date"
-               class="form-control"
-               max="@Model.CurrentDate.ToString("yyyy-MM-dd")"
-               data-msg-max="Date of birth cannot be in the future."
-               aria-required="true" />
+                            <span asp-validation-for="UserProfile.DateOfBirth"
+                                  class="text-danger"></span>
+                        </div>
 
-        <span asp-validation-for="UserProfile.DateOfBirth"
-              class="text-danger"></span>
-    </div>
+                        <div class="profile-field">
+                            <label asp-for="UserProfile.CalculationSex" class="form-label">
+                                Sex used for calorie calculation
+                            </label>
 
-    <div class="mb-3">
-        <fieldset class="border-0 p-0 m-0">
-            <legend class="form-label">Measurement System</legend>
+                            <select asp-for="UserProfile.CalculationSex"
+                                    class="form-select"
+                                    aria-required="true">
+                                <option value="">Select...</option>
+                                <option value="@ProfileOptions.Male">Male</option>
+                                <option value="@ProfileOptions.Female">Female</option>
+                            </select>
 
-        <div>
-            <div class="form-check form-check-inline">
-                <input asp-for="UserProfile.MeasurementSystem"
-                       class="form-check-input"
-                       type="radio"
-                       value="@ProfileOptions.Metric"
-                       id="metricSystem" />
+                            <div class="form-text">
+                                Used to estimate your BMR and daily calorie needs.
+                            </div>
 
-                <label class="form-check-label" for="metricSystem">
-                    Metric
-                </label>
+                            <span asp-validation-for="UserProfile.CalculationSex"
+                                  class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <fieldset class="profile-fieldset">
+                        <legend class="form-label">Measurement System</legend>
+
+                        <div class="profile-unit-choices">
+                            <div class="form-check profile-unit-choice">
+                                <input asp-for="UserProfile.MeasurementSystem"
+                                       class="form-check-input"
+                                       type="radio"
+                                       value="@ProfileOptions.Metric"
+                                       id="metricSystem" />
+
+                                <label class="form-check-label" for="metricSystem">
+                                    <strong>Metric</strong>
+                                    <span>Centimetres and kilograms</span>
+                                </label>
+                            </div>
+
+                            <div class="form-check profile-unit-choice">
+                                <input asp-for="UserProfile.MeasurementSystem"
+                                       class="form-check-input"
+                                       type="radio"
+                                       value="@ProfileOptions.Imperial"
+                                       id="imperialSystem" />
+
+                                <label class="form-check-label" for="imperialSystem">
+                                    <strong>Imperial</strong>
+                                    <span>Feet, inches and pounds</span>
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div class="profile-fields profile-fields--two">
+                        <div id="metricHeightSection" class="profile-field">
+                            <label asp-for="UserProfile.HeightCm" class="form-label">
+                                Height (cm)
+                            </label>
+
+                            <input asp-for="UserProfile.HeightCm"
+                                   class="form-control" />
+
+                            <span asp-validation-for="UserProfile.HeightCm"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div id="imperialHeightSection"
+                             class="profile-field"
+                             style="display: none;">
+                            <div class="form-label">Height</div>
+
+                            <div class="profile-height-fields">
+                                <div>
+                                    <label for="HeightFeet" class="visually-hidden">Height in feet</label>
+                                    <div class="input-group">
+                                        <input asp-for="HeightFeet" class="form-control" />
+                                        <span class="input-group-text">ft</span>
+                                    </div>
+
+                                    <span asp-validation-for="HeightFeet"
+                                          class="text-danger"></span>
+                                </div>
+
+                                <div>
+                                    <label for="HeightInches" class="visually-hidden">Height in inches</label>
+                                    <div class="input-group">
+                                        <input asp-for="HeightInches"
+                                               class="form-control"
+                                               step="0.01" />
+                                        <span class="input-group-text">in</span>
+                                    </div>
+
+                                    <span asp-validation-for="HeightInches"
+                                          class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="metricWeightSection" class="profile-field">
+                            <label asp-for="UserProfile.WeightKg" class="form-label">
+                                Current Weight (kg)
+                            </label>
+
+                            <input asp-for="UserProfile.WeightKg"
+                                   class="form-control" />
+
+                            <span asp-validation-for="UserProfile.WeightKg"
+                                  class="text-danger"></span>
+                        </div>
+
+                        <div id="imperialWeightSection"
+                             class="profile-field"
+                             style="display: none;">
+                            <label asp-for="WeightLb" class="form-label">
+                                Current Weight (lb)
+                            </label>
+
+                            <input asp-for="WeightLb"
+                                   class="form-control"
+                                   step="0.1" />
+
+                            <span asp-validation-for="WeightLb"
+                                  class="text-danger"></span>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="ct-card profile-card profile-activity-card">
+                    <legend class="profile-card-legend">
+                        <span class="profile-card-icon" aria-hidden="true">↟</span>
+                        <span>Activity & plan</span>
+                    </legend>
+
+                    <p class="profile-card-intro">
+                        Choose the option that best reflects your typical week.
+                    </p>
+
+                    <div class="profile-field">
+                        <label asp-for="UserProfile.ActivityLevel" class="form-label">
+                            Activity Level
+                        </label>
+
+                        <select asp-for="UserProfile.ActivityLevel"
+                                class="form-select"
+                                aria-required="true">
+                            <option value="">Select...</option>
+                            <option value="@ProfileOptions.Sedentary">
+                                Sedentary — little or no exercise
+                            </option>
+                            <option value="@ProfileOptions.LightlyActive">
+                                Lightly active — exercise 1–3 days/week
+                            </option>
+                            <option value="@ProfileOptions.ModeratelyActive">
+                                Moderately active — exercise 3–5 days/week
+                            </option>
+                            <option value="@ProfileOptions.VeryActive">
+                                Very active — hard exercise 6–7 days/week
+                            </option>
+                            <option value="@ProfileOptions.ExtraActive">
+                                Extra active — very hard exercise or physical job
+                            </option>
+                        </select>
+
+                        <div class="form-text">
+                            This affects your estimated maintenance calories.
+                        </div>
+
+                        <span asp-validation-for="UserProfile.ActivityLevel"
+                              class="text-danger"></span>
+                    </div>
+                </fieldset>
+
+                <fieldset class="ct-card profile-card profile-target-card">
+                    <legend class="profile-card-legend">
+                        <span class="profile-card-icon" aria-hidden="true">◇</span>
+                        <span>Your daily target</span>
+                    </legend>
+
+                    @if (Model.HasProfileEstimates && Model.EstimatesProfile != null)
+                    {
+                        <div class="profile-target-summary">
+                            <div class="profile-target-highlight">
+                                <span>Daily calorie target</span>
+                                <strong>
+                                    @Model.EstimatesProfile.CalculateEffectiveCalorieTarget(Model.CurrentDate).ToString("0")
+                                    <small>kcal</small>
+                                </strong>
+                                <span>per day</span>
+
+                                @if (Model.EstimatesProfile.CustomCalorieTarget.HasValue)
+                                {
+                                    <p>Your custom calorie target.</p>
+                                }
+                                else if (Model.EstimatesProfile.Goal == ProfileOptions.Maintain)
+                                {
+                                    <p>Calculated to maintain your current weight.</p>
+                                }
+                                else if (Model.EstimatesProfile.Goal == ProfileOptions.Lose)
+                                {
+                                    <p>Calculated for your selected rate of weight loss.</p>
+                                }
+                                else if (Model.EstimatesProfile.Goal == ProfileOptions.Gain)
+                                {
+                                    <p>Calculated for your selected rate of weight gain.</p>
+                                }
+                            </div>
+
+                            <dl class="profile-estimate-grid">
+                                <div>
+                                    <dt>Maintenance</dt>
+                                    <dd>~@Model.EstimatesProfile.CalculateTdee(Model.CurrentDate).ToString("0") <span>kcal/day</span></dd>
+                                </div>
+                                <div>
+                                    <dt>BMR</dt>
+                                    <dd>~@Model.EstimatesProfile.CalculateBmr(Model.CurrentDate).ToString("0") <span>kcal/day</span></dd>
+                                </div>
+                                <div>
+                                    <dt>BMI</dt>
+                                    <dd>@Model.EstimatesProfile.BMI.ToString("0.0")</dd>
+                                </div>
+                                <div>
+                                    <dt>Age</dt>
+                                    <dd>@Model.EstimatesProfile.CalculateAge(Model.CurrentDate) <span>years</span></dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <partial name="_GoalTimeline"
+                                 model="Model.GoalTimeline" />
+
+                        <p class="profile-estimate-note">
+                            These figures are estimates based on your profile, not exact measurements or medical advice.
+                            <a asp-page="/Help" asp-fragment="nutrition-estimates">Read the nutrition guidance.</a>
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="profile-target-empty">
+                            <strong>Your estimate will appear here.</strong>
+                            <p>Save complete body, activity, and goal details to calculate your daily target.</p>
+                        </div>
+                    }
+
+                    <fieldset class="profile-fieldset profile-target-options">
+                        <legend class="form-label">Target preference</legend>
+
+                        <div class="profile-choice-list">
+                            <div class="form-check profile-choice">
+                                <input asp-for="UseCustomCalorieTarget"
+                                       class="form-check-input"
+                                       type="radio"
+                                       value="false"
+                                       id="calculatedTarget" />
+
+                                <label class="form-check-label" for="calculatedTarget">
+                                    <strong>Use calculated target</strong>
+                                    <span>Based on your profile and selected goal.</span>
+                                </label>
+                            </div>
+
+                            <div class="form-check profile-choice">
+                                <input asp-for="UseCustomCalorieTarget"
+                                       class="form-check-input"
+                                       type="radio"
+                                       value="true"
+                                       id="customTarget" />
+
+                                <label class="form-check-label" for="customTarget">
+                                    <strong>Use custom target</strong>
+                                    <span>Choose this if you already know your daily target.</span>
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <div id="customCalorieTargetSection" class="profile-field">
+                        <label asp-for="UserProfile.CustomCalorieTarget" class="form-label">
+                            Custom Daily Calorie Target
+                        </label>
+
+                        <div class="input-group">
+                            <input asp-for="UserProfile.CustomCalorieTarget"
+                                   class="form-control" />
+                            <span class="input-group-text">kcal/day</span>
+                        </div>
+
+                        <span asp-validation-for="UserProfile.CustomCalorieTarget"
+                              class="text-danger"></span>
+                    </div>
+                </fieldset>
             </div>
 
-            <div class="form-check form-check-inline">
-                <input asp-for="UserProfile.MeasurementSystem"
-                       class="form-check-input"
-                       type="radio"
-                       value="@ProfileOptions.Imperial"
-                       id="imperialSystem" />
+            <div class="profile-column profile-column--supporting">
+                <fieldset class="ct-card profile-card profile-goal-card">
+                    <legend class="profile-card-legend">
+                        <span class="profile-card-icon" aria-hidden="true">↗</span>
+                        <span>Your goal</span>
+                    </legend>
 
-                <label class="form-check-label" for="imperialSystem">
-                    Imperial
-                </label>
+                    <p class="profile-card-intro">
+                        Choose the direction and pace that suit you.
+                    </p>
+
+                    <div class="profile-field">
+                        <label asp-for="UserProfile.Goal" class="form-label">
+                            Goal
+                        </label>
+
+                        <select asp-for="UserProfile.Goal"
+                                id="goalSelect"
+                                class="form-select"
+                                aria-required="true">
+                            <option value="">Select...</option>
+                            <option value="@ProfileOptions.Lose">Lose weight</option>
+                            <option value="@ProfileOptions.Maintain">Maintain weight</option>
+                            <option value="@ProfileOptions.Gain">Gain weight</option>
+                        </select>
+
+                        <span asp-validation-for="UserProfile.Goal"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="profile-fields profile-fields--goal">
+                        <div id="metricGoalWeightSection" class="profile-field">
+                            <label asp-for="UserProfile.GoalWeightKg" class="form-label">
+                                Goal Weight (kg)
+                            </label>
+
+                            <input asp-for="UserProfile.GoalWeightKg"
+                                   class="form-control"
+                                   aria-describedby="metricGoalConsistencyError" />
+
+                            <div class="form-text">
+                                Used to track progress towards your goal.
+                            </div>
+
+                            <span asp-validation-for="UserProfile.GoalWeightKg"
+                                  class="text-danger"></span>
+                            <span id="metricGoalConsistencyError"
+                                  class="text-danger"
+                                  role="status"
+                                  aria-live="polite"
+                                  aria-atomic="true"></span>
+                        </div>
+
+                        <div id="imperialGoalWeightSection"
+                             class="profile-field"
+                             style="display: none;">
+                            <label asp-for="GoalWeightLb" class="form-label">
+                                Goal Weight (lb)
+                            </label>
+
+                            <input asp-for="GoalWeightLb"
+                                   class="form-control"
+                                   step="0.1"
+                                   aria-describedby="imperialGoalConsistencyError" />
+
+                            <div class="form-text">
+                                Used to track progress towards your goal.
+                            </div>
+
+                            <span asp-validation-for="GoalWeightLb"
+                                  class="text-danger"></span>
+                            <span id="imperialGoalConsistencyError"
+                                  class="text-danger"
+                                  role="status"
+                                  aria-live="polite"
+                                  aria-atomic="true"></span>
+                        </div>
+
+                        <div id="weeklyGoalSection" class="profile-field">
+                            <label asp-for="UserProfile.WeeklyGoalKg" class="form-label">
+                                Weekly Weight Change
+                            </label>
+
+                            <select asp-for="UserProfile.WeeklyGoalKg"
+                                    id="weeklyGoalSelect"
+                                    class="form-select">
+                                <option value="">Select...</option>
+                                <option value="0.25"
+                                        data-metric="0.25 kg per week"
+                                        data-imperial="0.55 lb per week">
+                                    0.25 kg per week
+                                </option>
+                                <option value="0.5"
+                                        data-metric="0.5 kg per week"
+                                        data-imperial="1.1 lb per week">
+                                    0.5 kg per week
+                                </option>
+                                <option value="0.75"
+                                        data-metric="0.75 kg per week"
+                                        data-imperial="1.65 lb per week">
+                                    0.75 kg per week
+                                </option>
+                                <option value="1.0"
+                                        data-metric="1.0 kg per week"
+                                        data-imperial="2.2 lb per week">
+                                    1.0 kg per week
+                                </option>
+                            </select>
+
+                            <div class="form-text">
+                                Used to estimate your daily calorie target.
+                            </div>
+
+                            <span asp-validation-for="UserProfile.WeeklyGoalKg"
+                                  class="text-danger"></span>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <aside class="ct-card profile-motivation-card">
+                    <div class="profile-motivation-copy">
+                        <span>A Comfy reminder</span>
+                        <strong>Small steps still move you forward.</strong>
+                    </div>
+
+                    <div class="profile-motivation-art" aria-hidden="true">
+                        <img src="~/images/brand/dashboard-hero-capy.png" alt="" />
+                    </div>
+                </aside>
+
+                <section class="ct-card profile-tips-card" aria-labelledby="profileTipsTitle">
+                    <header class="profile-tips-heading">
+                        <span class="profile-card-icon" aria-hidden="true">✦</span>
+                        <h2 id="profileTipsTitle">Tips &amp; reminders</h2>
+                    </header>
+
+                    <ul class="profile-tips-list">
+                        <li>
+                            <strong>Be honest with your activity level.</strong>
+                            <span>Choose the option that reflects a typical week.</span>
+                        </li>
+                        <li>
+                            <strong>Choose a realistic goal.</strong>
+                            <span>Pick a pace you can keep reviewing over time.</span>
+                        </li>
+                        <li>
+                            <strong>Progress does not need to be perfect.</strong>
+                            <span>Small, consistent updates still count.</span>
+                        </li>
+                    </ul>
+                </section>
             </div>
         </div>
-        </fieldset>
-    </div>
 
-    <div id="metricHeightSection" class="mb-3">
-        <label asp-for="UserProfile.HeightCm" class="form-label">
-            Height (cm)
-        </label>
-
-        <input asp-for="UserProfile.HeightCm"
-               class="form-control" />
-
-        <span asp-validation-for="UserProfile.HeightCm"
-              class="text-danger"></span>
-    </div>
-
-    <div id="imperialHeightSection"
-         class="mb-3"
-         style="display: none;">
-
-        <div class="form-label">Height</div>
-
-        <div class="row g-2">
-            <div class="col">
-                <label for="HeightFeet" class="visually-hidden">Height in feet</label>
-                <div class="input-group">
-                    <input asp-for="HeightFeet"
-                           class="form-control" />
-
-                    <span class="input-group-text">ft</span>
-                </div>
-
-                <span asp-validation-for="HeightFeet"
-                      class="text-danger"></span>
+        <div class="profile-save-bar">
+            <div>
+                <strong>@(Model.IsFirstTimeSetup ? "Ready when you are" : "Keep your plan up to date")</strong>
+                <span>Your information is saved securely and used to personalise your experience.</span>
             </div>
 
-            <div class="col">
-                <label for="HeightInches" class="visually-hidden">Height in inches</label>
-                <div class="input-group">
-                    <input asp-for="HeightInches"
-                           class="form-control"
-                           step="0.01" />
-
-                    <span class="input-group-text">in</span>
-                </div>
-
-                <span asp-validation-for="HeightInches"
-                      class="text-danger"></span>
-            </div>
+            <button type="submit" class="btn btn-primary">
+                Save changes
+            </button>
         </div>
-    </div>
-
-    <div id="metricWeightSection" class="mb-3">
-        <label asp-for="UserProfile.WeightKg" class="form-label">
-            Current Weight (kg)
-        </label>
-
-        <input asp-for="UserProfile.WeightKg"
-               class="form-control" />
-
-        <span asp-validation-for="UserProfile.WeightKg"
-              class="text-danger"></span>
-    </div>
-
-    <div id="imperialWeightSection"
-         class="mb-3"
-         style="display: none;">
-
-        <label asp-for="WeightLb" class="form-label">
-            Current Weight (lb)
-        </label>
-
-        <input asp-for="WeightLb"
-               class="form-control"
-               step="0.1" />
-
-        <span asp-validation-for="WeightLb"
-              class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="UserProfile.CalculationSex" class="form-label">
-            Sex used for calorie calculation
-        </label>
-
-        <select asp-for="UserProfile.CalculationSex"
-                class="form-select"
-                aria-required="true">
-
-            <option value="">Select...</option>
-            <option value="@ProfileOptions.Male">Male</option>
-            <option value="@ProfileOptions.Female">Female</option>
-        </select>
-
-        <div class="form-text">
-            Used to estimate your BMR and daily calorie needs.
-        </div>
-
-        <span asp-validation-for="UserProfile.CalculationSex"
-              class="text-danger"></span>
-    </div>
-
-    </fieldset>
-    <fieldset class="form-section">
-        <legend>Activity & goals</legend>
-    <div class="mb-3">
-        <label asp-for="UserProfile.ActivityLevel" class="form-label">
-            Activity Level
-        </label>
-
-        <select asp-for="UserProfile.ActivityLevel"
-                class="form-select"
-                aria-required="true">
-
-            <option value="">Select...</option>
-
-            <option value="@ProfileOptions.Sedentary">
-                Sedentary — little or no exercise
-            </option>
-
-            <option value="@ProfileOptions.LightlyActive">
-                Lightly active — exercise 1–3 days/week
-            </option>
-
-            <option value="@ProfileOptions.ModeratelyActive">
-                Moderately active — exercise 3–5 days/week
-            </option>
-
-            <option value="@ProfileOptions.VeryActive">
-                Very active — hard exercise 6–7 days/week
-            </option>
-
-            <option value="@ProfileOptions.ExtraActive">
-                Extra active — very hard exercise or physical job
-            </option>
-        </select>
-
-        <div class="form-text">
-            Choose the option that best reflects your typical week.
-            This affects your estimated maintenance calories.
-        </div>
-
-        <span asp-validation-for="UserProfile.ActivityLevel"
-              class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="UserProfile.Goal" class="form-label">
-            Goal
-        </label>
-
-        <select asp-for="UserProfile.Goal"
-                id="goalSelect"
-                class="form-select"
-                aria-required="true">
-
-            <option value="">Select...</option>
-            <option value="@ProfileOptions.Lose">Lose weight</option>
-            <option value="@ProfileOptions.Maintain">Maintain weight</option>
-            <option value="@ProfileOptions.Gain">Gain weight</option>
-        </select>
-
-        <span asp-validation-for="UserProfile.Goal"
-              class="text-danger"></span>
-    </div>
-
-    <div id="metricGoalWeightSection"
-         class="mb-3">
-
-        <label asp-for="UserProfile.GoalWeightKg"
-               class="form-label">
-            Goal Weight (kg)
-        </label>
-
-        <input asp-for="UserProfile.GoalWeightKg"
-               class="form-control"
-               aria-describedby="metricGoalConsistencyError" />
-
-        <div class="form-text">
-            Used to track your progress towards your goal.
-        </div>
-
-        <span asp-validation-for="UserProfile.GoalWeightKg"
-              class="text-danger"></span>
-
-        <span id="metricGoalConsistencyError"
-              class="text-danger"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"></span>
-    </div>
-
-    <div id="imperialGoalWeightSection"
-         class="mb-3"
-         style="display: none;">
-
-        <label asp-for="GoalWeightLb"
-               class="form-label">
-            Goal Weight (lb)
-        </label>
-
-        <input asp-for="GoalWeightLb"
-               class="form-control"
-               step="0.1"
-               aria-describedby="imperialGoalConsistencyError" />
-
-        <span asp-validation-for="GoalWeightLb"
-              class="text-danger"></span>
-
-        <span id="imperialGoalConsistencyError"
-              class="text-danger"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"></span>
-
-        <div class="form-text">
-            Used to track your progress towards your goal.
-        </div>
-    </div>
-
-    <div id="weeklyGoalSection"
-         class="mb-3">
-
-        <label asp-for="UserProfile.WeeklyGoalKg"
-               class="form-label">
-            Weekly Weight Change
-        </label>
-
-        <select asp-for="UserProfile.WeeklyGoalKg"
-                id="weeklyGoalSelect"
-                class="form-select">
-
-            <option value="">Select...</option>
-
-            <option value="0.25"
-                    data-metric="0.25 kg per week"
-                    data-imperial="0.55 lb per week">
-                0.25 kg per week
-            </option>
-
-            <option value="0.5"
-                    data-metric="0.5 kg per week"
-                    data-imperial="1.1 lb per week">
-                0.5 kg per week
-            </option>
-
-            <option value="0.75"
-                    data-metric="0.75 kg per week"
-                    data-imperial="1.65 lb per week">
-                0.75 kg per week
-            </option>
-
-            <option value="1.0"
-                    data-metric="1.0 kg per week"
-                    data-imperial="2.2 lb per week">
-                1.0 kg per week
-            </option>
-        </select>
-
-        <div class="form-text">
-            Used to estimate your daily calorie target.
-        </div>
-
-        <span asp-validation-for="UserProfile.WeeklyGoalKg"
-              class="text-danger"></span>
-    </div>
-
-    </fieldset>
-    <fieldset class="form-section">
-        <legend>Calorie target</legend>
-    <div class="mb-3">
-        <fieldset class="border-0 p-0 m-0">
-            <legend class="form-label">Daily Calorie Target</legend>
-
-        <div class="form-check">
-            <input asp-for="UseCustomCalorieTarget"
-                   class="form-check-input"
-                   type="radio"
-                   value="false"
-                   id="calculatedTarget" />
-
-            <label class="form-check-label"
-                   for="calculatedTarget">
-                Use calculated target
-            </label>
-        </div>
-
-        <div class="form-text mb-2">
-            Estimated from your age, height, weight,
-            activity level and weight-change goal.
-        </div>
-
-        <div class="form-check">
-            <input asp-for="UseCustomCalorieTarget"
-                   class="form-check-input"
-                   type="radio"
-                   value="true"
-                   id="customTarget" />
-
-            <label class="form-check-label"
-                   for="customTarget">
-                Use custom target
-            </label>
-        </div>
-
-        <div class="form-text">
-            Choose this if you already know the daily
-            calorie target you want to use.
-        </div>
-        </fieldset>
-    </div>
-
-    <div id="customCalorieTargetSection"
-         class="mb-3">
-
-        <label asp-for="UserProfile.CustomCalorieTarget"
-               class="form-label">
-            Custom Daily Calorie Target
-        </label>
-
-        <div class="input-group">
-            <input asp-for="UserProfile.CustomCalorieTarget"
-                   class="form-control" />
-
-            <span class="input-group-text">
-                kcal/day
-            </span>
-        </div>
-
-        <span asp-validation-for="UserProfile.CustomCalorieTarget"
-              class="text-danger"></span>
-    </div>
-
-    </fieldset>
-    <button type="submit"
-            class="btn btn-primary">
-        Save Profile
-    </button>
-</form>
-
-
-@if (Model.HasProfileEstimates && Model.EstimatesProfile != null)
-{
-    <div class="card form-shell mt-4">
-        <div class="card-body">
-
-            <h2 class="card-title h3">
-                Your Estimates
-            </h2>
-
-            <p class="text-muted">
-                These estimates are based on the information in your profile.
-            </p>
-
-            <div class="border rounded p-3 mb-4">
-                <small class="text-muted">
-                    Daily Calorie Target
-                </small>
-
-                <h3 class="mb-1 h2">
-                    @Model.EstimatesProfile.CalculateEffectiveCalorieTarget(Model.CurrentDate).ToString("0")
-                    <small class="fs-6 fw-normal">kcal/day</small>
-                </h3>
-
-                @if (Model.EstimatesProfile.CustomCalorieTarget.HasValue)
-                {
-                    <p class="text-muted mb-0">
-                        Your custom calorie target.
-                    </p>
-                }
-                else if (Model.EstimatesProfile.Goal == ProfileOptions.Maintain)
-                {
-                    <p class="text-muted mb-0">
-                        Calculated to maintain your current weight.
-                    </p>
-                }
-                else if (Model.EstimatesProfile.Goal == ProfileOptions.Lose)
-                {
-                    <p class="text-muted mb-0">
-                        Calculated for your selected rate of weight loss.
-                    </p>
-                }
-                else if (Model.EstimatesProfile.Goal == ProfileOptions.Gain)
-                {
-                    <p class="text-muted mb-0">
-                        Calculated for your selected rate of weight gain.
-                    </p>
-                }
-            </div>
-
-            <div class="row g-3">
-
-                <div class="col-md-3">
-                    <strong>Maintenance Calories</strong>
-
-                    <p class="mb-1">
-                        ~@Model.EstimatesProfile.CalculateTdee(Model.CurrentDate).ToString("0") kcal/day
-                    </p>
-
-                    <small class="text-muted">
-                        Estimated calories needed to maintain your current weight.
-                    </small>
-                </div>
-
-                <div class="col-md-3">
-                    <strong>BMR</strong>
-
-                    <p class="mb-1">
-                        ~@Model.EstimatesProfile.CalculateBmr(Model.CurrentDate).ToString("0") kcal/day
-                    </p>
-
-                    <small class="text-muted">
-                        Estimated calories your body uses at rest.
-                    </small>
-                </div>
-
-                <div class="col-md-3">
-                    <strong>BMI</strong>
-
-                    <p class="mb-1">
-                        @Model.EstimatesProfile.BMI.ToString("0.0")
-                    </p>
-
-                    <small class="text-muted">
-                        Calculated from your current height and weight.
-                    </small>
-                </div>
-
-                <div class="col-md-3">
-                    <strong>Age</strong>
-
-                    <p class="mb-1">
-                        @Model.EstimatesProfile.CalculateAge(Model.CurrentDate) years
-                    </p>
-
-                    <small class="text-muted">
-                        Used as part of your calorie estimate.
-                    </small>
-                </div>
-
-            </div>
-
-            <partial name="_GoalTimeline"
-                     model="Model.GoalTimeline" />
-
-            <hr class="my-4" />
-
-            <small class="text-muted">
-                Calorie needs vary between individuals and these figures are estimates,
-                not exact measurements or medical advice. Your actual needs may change over time.
-                <a asp-page="/Help" asp-fragment="nutrition-estimates">Read the nutrition guidance.</a>
-            </small>
-
-        </div>
-    </div>
-}
-
+    </form>
+</div>
 
 @section Scripts {
-
     <script src="~/js/profile.js" asp-append-version="true"></script>
-
     <partial name="_ValidationScriptsPartial" />
 }

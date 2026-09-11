@@ -57,6 +57,9 @@ customisationPage.addEventListener("click", async event => {
 
     const category = button.dataset.category;
     const itemId = button.dataset.itemId;
+    const itemName = button.querySelector(
+        ".capy-item-details strong"
+    )?.textContent.trim();
     button.disabled = true;
 
     try {
@@ -90,10 +93,21 @@ customisationPage.addEventListener("click", async event => {
         ).forEach(tile => {
             tile.classList.remove("is-equipped");
             tile.setAttribute("aria-pressed", "false");
+            const status = tile.querySelector(".capy-item-status");
+            if (status) status.textContent = "Unlocked";
         });
 
         button.classList.add("is-equipped");
         button.setAttribute("aria-pressed", "true");
+        const selectedStatus = button.querySelector(".capy-item-status");
+        if (selectedStatus) selectedStatus.textContent = "Equipped";
+
+        const loadoutValue = document.querySelector(
+            `[data-capy-loadout="${category}"]`
+        );
+        if (loadoutValue) {
+            loadoutValue.textContent = itemId ? itemName : "None";
+        }
 
         // Update every visible Capy renderer: the preview and navbar avatar.
         document.querySelectorAll(
@@ -134,6 +148,25 @@ updateSelectedTheme();
 
 document.querySelectorAll(".capy-theme-option").forEach(button => {
     button.addEventListener("click", updateSelectedTheme);
+});
+
+document.querySelectorAll(".capy-category-tab").forEach(button => {
+    button.addEventListener("click", () => {
+        const selectedCategory = button.dataset.categoryFilter;
+
+        document.querySelectorAll("[data-capy-category-group]").forEach(
+            group => {
+                group.hidden = selectedCategory !== "all" &&
+                    group.dataset.capyCategoryGroup !== selectedCategory;
+            }
+        );
+
+        document.querySelectorAll(".capy-category-tab").forEach(tab => {
+            const isSelected = tab === button;
+            tab.classList.toggle("is-selected", isSelected);
+            tab.setAttribute("aria-pressed", isSelected ? "true" : "false");
+        });
+    });
 });
 
 document.querySelectorAll(".capy-inventory-filter").forEach(button => {
@@ -197,55 +230,14 @@ document.querySelectorAll(".capy-secret-crown").forEach(crown => {
 
             const result = await response.json();
 
-            // Turn the locked catalogue tile into an owned item.
-            const lockedItem = document.querySelector(
-                `.capy-item-locked img[src="${result.imagePath}"]`
-            )?.closest(".capy-item-locked");
-
-            if (lockedItem) {
-                const button = document.createElement("button");
-                button.type = "button";
-                button.className = "capy-item-tile";
-                button.dataset.category = result.category;
-                button.dataset.itemId = result.itemId;
-                button.title = result.name;
-                button.setAttribute("aria-label", result.name);
-                button.setAttribute("aria-pressed", "false");
-
-                const image = document.createElement("img");
-                image.src = result.imagePath;
-                image.alt = result.name;
-                button.appendChild(image);
-                lockedItem.replaceWith(button);
-            }
-
-            // Show our extremely serious royal announcement.
             const message = document.getElementById("capy-unlock-message");
-            message.innerHTML =
-                `👑 <strong>${result.name} Unlocked!</strong> Your Capy is now legally royalty.`;
+            message.textContent =
+                `${result.name} unlocked. A cozy new choice is ready for your Capy.`;
             message.hidden = false;
 
             setTimeout(() => {
-                message.hidden = true;
-                document.querySelectorAll(".capy-secret-crown").forEach(
-                    secretCrown => secretCrown.remove()
-                );
-            }, 4000);
-
-            // Mandatory celebratory crown boing.
-            document.querySelectorAll(".capy-secret-crown").forEach(
-                secretCrown => {
-                    secretCrown.animate(
-                        [
-                            { transform: "scale(1) rotate(0deg)" },
-                            { transform: "scale(1.45) rotate(-12deg)" },
-                            { transform: "scale(1.25) rotate(12deg)" },
-                            { transform: "scale(1) rotate(0deg)" }
-                        ],
-                        { duration: 550, easing: "ease-out" }
-                    );
-                }
-            );
+                window.location.reload();
+            }, 900);
         } catch (error) {
             console.error(error);
             const feedback = document.getElementById("capy-error");

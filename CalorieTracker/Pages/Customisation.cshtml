@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model CalorieTracker.Pages.CustomisationModel
 @using CalorieTracker.Services
 
@@ -9,45 +9,59 @@
     {
         new
         {
-            Key = CapyCategories.Background,
-            Name = "Background",
-            Icon = "Icon-Background.png",
-            Optional = false
-        },
-        new
-        {
-            Key = CapyCategories.Expression,
-            Name = "Expression",
-            Icon = "Icon-Expression.png",
-            Optional = false
-        },
-        new
-        {
-            Key = CapyCategories.Clothes,
-            Name = "Clothes",
+            Key = "outfits",
+            Name = "Outfits",
             Icon = "Icon-Clothes.png",
-            Optional = true
+            ItemCategories = new[] { CapyCategories.Clothes },
+            OptionalCategories = new[] { CapyCategories.Clothes }
         },
         new
         {
-            Key = CapyCategories.NeckAccessory,
-            Name = "Neck Accessories",
-            Icon = "Icon-NeckAccessory.png",
-            Optional = true
-        },
-        new
-        {
-            Key = CapyCategories.HatHair,
-            Name = "Hats & Hair",
-            Icon = "Icon-HatHair.png",
-            Optional = true
-        },
-        new
-        {
-            Key = CapyCategories.FaceAccessory,
+            Key = "face-accessories",
             Name = "Face Accessories",
             Icon = "Icon-FaceAccessory.png",
-            Optional = true
+            ItemCategories = new[] { CapyCategories.FaceAccessory },
+            OptionalCategories = new[] { CapyCategories.FaceAccessory }
+        },
+        new
+        {
+            Key = "neck-accessories",
+            Name = "Neck Accessories",
+            Icon = "Icon-NeckAccessory.png",
+            ItemCategories = new[] { CapyCategories.NeckAccessory },
+            OptionalCategories = new[] { CapyCategories.NeckAccessory }
+        },
+        new
+        {
+            Key = "hats",
+            Name = "Hats",
+            Icon = "Icon-HatHair.png",
+            ItemCategories = new[] { CapyCategories.HatHair },
+            OptionalCategories = new[] { CapyCategories.HatHair }
+        },
+        new
+        {
+            Key = "backgrounds",
+            Name = "Backgrounds",
+            Icon = "Icon-Background.png",
+            ItemCategories = new[] { CapyCategories.Background },
+            OptionalCategories = Array.Empty<string>()
+        },
+        new
+        {
+            Key = "colours",
+            Name = "Colours",
+            Icon = "Icon-Expression.png",
+            ItemCategories = new[] { CapyCategories.Expression },
+            OptionalCategories = Array.Empty<string>()
+        },
+        new
+        {
+            Key = "titles",
+            Name = "Titles",
+            Icon = "Icon-Expression.png",
+            ItemCategories = Array.Empty<string>(),
+            OptionalCategories = Array.Empty<string>()
         }
     };
 
@@ -62,296 +76,330 @@
             CapyCategories.FaceAccessory => Model.CapyAppearance?.FaceAccessoryId,
             _ => null
         };
-        var ownsGoldCrown = Model.OwnedItems
-       .Any(item => item.Id == 14);
+
+    var ownedItemIds = Model.OwnedItems
+        .Select(item => item.Id)
+        .ToHashSet();
+    var unlockedCount = Model.CatalogueItems.Count(item => ownedItemIds.Contains(item.Id));
+    var ownsGoldCrown = ownedItemIds.Contains(14);
 }
 
 <div class="customisation-page"
      data-needs-provisioning="@(Model.NeedsProvisioning ? "true" : "false")">
     @Html.AntiForgeryToken()
+
     <div id="capy-error" class="alert alert-danger" role="alert" hidden></div>
-
-    <div class="text-center mb-4">
-
-    <h1 class="capy-customisation-title">
-
-        @if (!ownsGoldCrown)
-        {
-            <button type="button"
-                    class="capy-secret-crown"
-                    data-unlock-item-id="14"
-                    aria-label="Unlock gold crown">
-                👑
-            </button>
-        }
-
-        <span>Customisation</span>
-
-        @if (!ownsGoldCrown)
-        {
-            <button type="button"
-                    class="capy-secret-crown"
-                    data-unlock-item-id="14"
-                    aria-label="Unlock gold crown">
-                👑
-            </button>
-        }
-
-    </h1>
-        <p class="text-muted">
-            Make your Comfy Capy your own.
-        </p>
-        <div id="capy-unlock-message"
-             class="alert alert-success capy-unlock-message"
-             role="status"
-             hidden>
-        </div>
+    <div id="capy-unlock-message"
+         class="alert alert-success capy-unlock-message"
+         role="status"
+         hidden>
     </div>
+
+    <section class="capy-customisation-hero">
+        <div class="capy-customisation-hero-copy">
+            <p class="ct-eyebrow">Customisation</p>
+            <h1>@(Model.CapyAppearance?.DisplayName ?? "Your Comfy Capy")</h1>
+            <p class="capy-hero-role">Your calm little companion</p>
+
+            @if (Model.CapyAppearance != null)
+            {
+                <div class="capy-hero-collection">
+                    <span>Cosmetics unlocked</span>
+                    <strong>@unlockedCount</strong>
+                </div>
+            }
+
+            <p class="capy-hero-message">Small steps still move you forward.</p>
+        </div>
+
+        <div class="capy-customisation-hero-art" aria-hidden="true">
+            <img src="/images/brand/dashboard-hero-capy.png" alt="" />
+        </div>
+    </section>
 
     @if (Model.CapyAppearance == null)
     {
-        <div id="capy-provision-status" class="alert alert-info" role="status">
-            Setting up your Comfy Capy…
+        <div id="capy-provision-status" class="ct-card capy-provision-card" role="status">
+            <strong>Making your companion comfortable…</strong>
+            <span>Your Comfy Capy collection will be ready in a moment.</span>
         </div>
     }
     else
     {
         <div class="capy-customisation-layout">
+            <main class="capy-customisation-main">
+                <nav class="capy-category-tabs" aria-label="Cosmetic categories">
+                    <button type="button"
+                            class="capy-category-tab is-selected"
+                            data-category-filter="all"
+                            aria-pressed="true">
+                        All items
+                    </button>
 
-            <section class="capy-preview-panel">
-
-                <h2 class="capy-preview-title">
-                    @Model.CapyAppearance.DisplayName
-                </h2>
-
-                <div class="capy-preview">
-                    <partial name="_CapyAvatar"
-                             model="Model.CapyAppearance" />
-                </div>
-
-                <details class="capy-name-editor">
-                    <summary>
-                        @(string.IsNullOrWhiteSpace(Model.CapyAppearance.Name)
-                            ? "Name your Capy"
-                            : $"Rename {Model.CapyAppearance.DisplayName}")
-                    </summary>
-
-                    <form method="post"
-                          asp-page-handler="Rename"
-                          class="capy-name-form">
-                        <div asp-validation-summary="ModelOnly"
-                             class="text-danger"
-                             role="alert"></div>
-
-                        <label asp-for="CapyName"
-                               class="form-label">
-                            Capy name
-                        </label>
-
-                        <input asp-for="CapyName"
-                               class="form-control"
-                               maxlength="40"
-                               placeholder="Comfy Capy"
-                               autocomplete="nickname" />
-
-                        <div class="form-text">
-                            Clear the name to restore “Comfy Capy”.
-                        </div>
-
-                        <span asp-validation-for="CapyName"
-                              class="text-danger"></span>
-
-                        <button type="submit"
-                                class="btn btn-outline-primary mt-2">
-                            Save name
-                        </button>
-                    </form>
-                </details>
-
-            </section>
-
-            <section class="capy-inventory">
-
-                <h2 class="visually-hidden">Capy inventory</h2>
-
-                <div class="d-flex justify-content-end mb-2">
-                    <div class="btn-group btn-group-sm"
-                         role="group"
-                         aria-label="Capy inventory filter">
-
+                    @foreach (var category in categories)
+                    {
                         <button type="button"
-                                class="btn btn-outline-secondary capy-inventory-filter"
-                                data-filter="owned"
+                                class="capy-category-tab"
+                                data-category-filter="@category.Key"
                                 aria-pressed="false">
-                            Owned only
+                            @category.Name
                         </button>
+                    }
+                </nav>
 
-                        <button type="button"
-                                class="btn btn-primary capy-inventory-filter"
-                                data-filter="all"
-                                aria-pressed="true">
-                            All items
-                        </button>
-
-                    </div>
-                </div>
-
-                @foreach (var category in categories)
-                {
-                    var equippedItemId =
-                        getEquippedItemId(category.Key);
-
-                    var categoryItems = Model.CatalogueItems
-                        .Where(item =>
-                            item.Category == category.Key)
-                        .ToList();
-
-                    var ownedItemIds = Model.OwnedItems
-                        .Select(item => item.Id)
-                        .ToHashSet();
-
-                    <div class="capy-inventory-row"
-                         role="group"
-                         aria-labelledby="capy-category-@category.Key">
-
-                        <div class="capy-category-icon"
-                             title="@category.Name"
-                             aria-hidden="true">
-
-                            <img src="/images/capy/ui/@category.Icon"
-                                 alt="" />
-
+                <section class="ct-card capy-collection-card" aria-labelledby="capyCollectionTitle">
+                    <header class="capy-collection-heading">
+                        <div>
+                            <p class="ct-eyebrow">Your collection</p>
+                            <h2 id="capyCollectionTitle">Choose something comfy</h2>
                         </div>
 
-                        <h3 id="capy-category-@category.Key"
-                            class="visually-hidden">
-                            @category.Name
-                        </h3>
+                        <div class="capy-inventory-filters"
+                             role="group"
+                             aria-label="Capy inventory filter">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary capy-inventory-filter"
+                                    data-filter="owned"
+                                    aria-pressed="false">
+                                Unlocked only
+                            </button>
+                            <button type="button"
+                                    class="btn btn-sm btn-primary capy-inventory-filter"
+                                    data-filter="all"
+                                    aria-pressed="true">
+                                Show all
+                            </button>
+                        </div>
+                        @if (!ownsGoldCrown)
+                        {
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary capy-secret-crown"
+                                    data-unlock-item-id="14"
+                                    aria-label="Reveal hidden cosmetic">
+                                <span aria-hidden="true">👑</span>
+                            </button>
+                        }
+                    </header>
 
-                        <div class="capy-item-list">
+                    <div class="capy-inventory">
+                        @foreach (var category in categories)
+                        {
+                            var categoryItems = Model.CatalogueItems
+                                .Where(item => category.ItemCategories.Contains(item.Category))
+                                .ToList();
 
-                            @if (category.Optional)
-                            {
-                                <button type="button"
-                                        class="capy-item-tile capy-none-tile @(equippedItemId == null ? "is-equipped" : "")"
-                                        data-category="@category.Key"
-                                        data-item-id=""
-                                        title="None"
-                                        aria-label="No @category.Name"
-                                        aria-pressed="@(equippedItemId == null ? "true" : "false")">
+                            <section class="capy-inventory-group"
+                                     id="capy-category-@category.Key"
+                                     data-capy-category-group="@category.Key"
+                                     aria-labelledby="capy-category-title-@category.Key">
+                                <header class="capy-inventory-group-heading">
+                                    <span class="capy-category-icon" aria-hidden="true">
+                                        <img src="/images/capy/ui/@category.Icon" alt="" />
+                                    </span>
+                                    <div>
+                                        <h3 id="capy-category-title-@category.Key">@category.Name</h3>
+                                        <span>@categoryItems.Count @(categoryItems.Count == 1 ? "item" : "items")</span>
+                                    </div>
+                                </header>
 
-                                    <span>×</span>
-
-                                </button>
-                            }
-
-                            @foreach (var item in categoryItems)
-                            {
-                                var isOwned = ownedItemIds.Contains(item.Id);
-
-                                if (isOwned)
+                                @if (categoryItems.Count == 0)
                                 {
-                                    <button type="button"
-                                            class="capy-item-tile @(equippedItemId == item.Id ? "is-equipped" : "")"
-                                            data-category="@category.Key"
-                                            data-item-id="@item.Id"
-                                            title="@item.Name"
-                                            aria-label="@item.Name"
-                                            aria-pressed="@(equippedItemId == item.Id ? "true" : "false")">
-
-                                        <img src="@item.ImagePath"
-                                             alt="@item.Name" />
-
-                                    </button>
+                                    <div class="capy-category-empty">
+                                        <strong>No @category.Name.ToLowerInvariant() are available yet.</strong>
+                                        <span>This collection will stay calm and uncluttered until there is something real to choose.</span>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <div class="capy-item-tile capy-item-locked"
-                                         title="@item.Name — Locked"
-                                         role="img"
-                                         aria-label="@item.Name, locked">
+                                    <div class="capy-item-grid">
+                                        @foreach (var optionalCategory in category.OptionalCategories)
+                                        {
+                                            var equippedItemId = getEquippedItemId(optionalCategory);
+                                            var noneLabel = optionalCategory switch
+                                            {
+                                                CapyCategories.Clothes => "No outfit",
+                                                CapyCategories.HatHair => "No hat",
+                                                CapyCategories.FaceAccessory => "No face accessory",
+                                                CapyCategories.NeckAccessory => "No neck accessory",
+                                                _ => "None"
+                                            };
 
-                                        <img src="@item.ImagePath"
-                                             alt="" />
+                                            <button type="button"
+                                                    class="capy-item-tile capy-none-tile @(equippedItemId == null ? "is-equipped" : "")"
+                                                    data-category="@optionalCategory"
+                                                    data-item-id=""
+                                                    title="@noneLabel"
+                                                    aria-label="@noneLabel"
+                                                    aria-pressed="@(equippedItemId == null ? "true" : "false")">
+                                                <span class="capy-item-visual" aria-hidden="true">×</span>
+                                                <span class="capy-item-details">
+                                                    <strong>@noneLabel</strong>
+                                                    <span class="capy-item-requirement">Always available</span>
+                                                    <span class="capy-item-status">@(equippedItemId == null ? "Equipped" : "Unlocked")</span>
+                                                </span>
+                                            </button>
+                                        }
 
-                                        <span class="capy-lock-icon"
-                                              aria-hidden="true">
-                                            🔒
-                                        </span>
+                                        @foreach (var item in categoryItems)
+                                        {
+                                            var isOwned = ownedItemIds.Contains(item.Id);
+                                            var isEquipped = getEquippedItemId(item.Category) == item.Id;
 
+                                            if (isOwned)
+                                            {
+                                                <button type="button"
+                                                        class="capy-item-tile @(isEquipped ? "is-equipped" : "")"
+                                                        data-category="@item.Category"
+                                                        data-item-id="@item.Id"
+                                                        title="@item.Name"
+                                                        aria-label="@item.Name, @(isEquipped ? "equipped" : "unlocked")"
+                                                        aria-pressed="@(isEquipped ? "true" : "false")">
+                                                    <span class="capy-item-visual">
+                                                        <img src="@item.ImagePath" alt="" />
+                                                    </span>
+                                                    <span class="capy-item-details">
+                                                        <strong>@item.Name</strong>
+                                                        <span class="capy-item-requirement">Included in your collection</span>
+                                                        <span class="capy-item-status">@(isEquipped ? "Equipped" : "Unlocked")</span>
+                                                    </span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <div class="capy-item-tile capy-item-locked"
+                                                     title="@item.Name — Locked"
+                                                     role="img"
+                                                     aria-label="@item.Name, locked. Secret unlock requirement.">
+                                                    <span class="capy-item-visual">
+                                                        <img src="@item.ImagePath" alt="" />
+                                                        <span class="capy-lock-icon" aria-hidden="true">🔒</span>
+                                                    </span>
+                                                    <span class="capy-item-details">
+                                                        <strong>@item.Name</strong>
+                                                        <span class="capy-item-requirement">Secret unlock</span>
+                                                        <span class="capy-item-status">Locked</span>
+                                                    </span>
+                                                </div>
+                                            }
+                                        }
                                     </div>
                                 }
-                            }
-
-                        </div>
-
+                            </section>
+                        }
                     </div>
-                }
+                </section>
 
-            </section>
+                <section class="ct-card capy-collection-summary" aria-labelledby="capyCollectionSummaryTitle">
+                    <div class="capy-collection-summary-copy">
+                        <div>
+                            <p class="ct-eyebrow">Your collection</p>
+                            <h2 id="capyCollectionSummaryTitle">@unlockedCount cosmetics unlocked</h2>
+                        </div>
+                    </div>
+                </section>
+            </main>
 
+            <aside class="capy-customisation-sidebar" aria-label="Your Comfy Capy">
+                <section class="ct-card capy-preview-panel" aria-labelledby="capyPreviewTitle">
+                    <header class="capy-sidebar-heading">
+                        <div>
+                            <p class="ct-eyebrow">Right now</p>
+                            <h2 id="capyPreviewTitle">Live Capy preview</h2>
+                        </div>
+                        <span class="capy-live-indicator">Live</span>
+                    </header>
+
+                    <div class="capy-preview" aria-label="Preview of @Model.CapyAppearance.DisplayName">
+                        <partial name="_CapyAvatar" model="Model.CapyAppearance" />
+                    </div>
+
+                    <details class="capy-name-editor">
+                        <summary>
+                            @(string.IsNullOrWhiteSpace(Model.CapyAppearance.Name)
+                                ? "Name your Capy"
+                                : $"Rename {Model.CapyAppearance.DisplayName}")
+                        </summary>
+
+                        <form method="post"
+                              asp-page-handler="Rename"
+                              class="capy-name-form">
+                            <div asp-validation-summary="ModelOnly"
+                                 class="text-danger"
+                                 role="alert"></div>
+
+                            <label asp-for="CapyName" class="form-label">Capy name</label>
+                            <input asp-for="CapyName"
+                                   class="form-control"
+                                   maxlength="40"
+                                   placeholder="Comfy Capy"
+                                   autocomplete="nickname" />
+                            <div class="form-text">Clear the name to restore “Comfy Capy”.</div>
+                            <span asp-validation-for="CapyName" class="text-danger"></span>
+                            <button type="submit" class="btn btn-outline-primary mt-2">Save name</button>
+                        </form>
+                    </details>
+                </section>
+
+                <section class="ct-card capy-loadout-card" aria-labelledby="capyLoadoutTitle">
+                    <h2 id="capyLoadoutTitle">Current loadout</h2>
+                    <dl class="capy-loadout-list">
+                        <div><dt>Hat</dt><dd data-capy-loadout="@CapyCategories.HatHair">@(Model.CapyAppearance.HatHair?.Name ?? "None")</dd></div>
+                        <div><dt>Outfit</dt><dd data-capy-loadout="@CapyCategories.Clothes">@(Model.CapyAppearance.Clothes?.Name ?? "None")</dd></div>
+                        <div><dt>Neck accessory</dt><dd data-capy-loadout="@CapyCategories.NeckAccessory">@(Model.CapyAppearance.NeckAccessory?.Name ?? "None")</dd></div>
+                        <div><dt>Face accessory</dt><dd data-capy-loadout="@CapyCategories.FaceAccessory">@(Model.CapyAppearance.FaceAccessory?.Name ?? "None")</dd></div>
+                        <div><dt>Background</dt><dd data-capy-loadout="@CapyCategories.Background">@(Model.CapyAppearance.Background?.Name ?? "None")</dd></div>
+                        <div><dt>Colour</dt><dd data-capy-loadout="@CapyCategories.Expression">@(Model.CapyAppearance.Expression?.Name ?? "None")</dd></div>
+                        <div><dt>Title</dt><dd>Not available</dd></div>
+                    </dl>
+                </section>
+
+                <aside class="ct-card capy-motivation-card">
+                    <span aria-hidden="true">🌿</span>
+                    <div>
+                        <p class="ct-eyebrow">A Comfy reminder</p>
+                        <strong>Progress isn’t perfection.</strong>
+                    </div>
+                </aside>
+
+                <section class="ct-card capy-theme-section" aria-labelledby="capyThemeTitle">
+                    <h2 id="capyThemeTitle" class="capy-theme-title">Theme</h2>
+                    <p class="text-muted">Choose how Comfy Capy Calories looks.</p>
+
+                    <div class="capy-theme-options">
+                        <button type="button"
+                                class="capy-theme-option theme-option"
+                                data-theme="light"
+                                aria-pressed="false">
+                            <span class="capy-theme-option-title">Light</span>
+                            <span class="capy-theme-option-description">Always use light mode</span>
+                        </button>
+                        <button type="button"
+                                class="capy-theme-option theme-option"
+                                data-theme="dark"
+                                aria-pressed="false">
+                            <span class="capy-theme-option-title">Dark</span>
+                            <span class="capy-theme-option-description">Always use dark mode</span>
+                        </button>
+                        <button type="button"
+                                class="capy-theme-option theme-option"
+                                data-theme="system"
+                                aria-pressed="false">
+                            <span class="capy-theme-option-title">System</span>
+                            <span class="capy-theme-option-description">Match your device setting</span>
+                        </button>
+                    </div>
+
+                    @if (!Model.HasUserProfile)
+                    {
+                        <p class="text-body-secondary small mt-2 mb-0">
+                            Your browser theme is saved now; complete your profile to also save it to your account.
+                        </p>
+                    }
+                </section>
+            </aside>
         </div>
-
-        <section class="capy-theme-section">
-            <h2 class="capy-theme-title">Theme</h2>
-
-            <p class="text-muted mb-3">
-                Choose how Comfy Capy Calories looks.
-            </p>
-
-            <div class="capy-theme-options">
-
-                <button type="button"
-                        class="capy-theme-option theme-option"
-                        data-theme="light"
-                        aria-pressed="false">
-                    <span class="capy-theme-option-title">
-                        Light
-                    </span>
-
-                    <span class="capy-theme-option-description">
-                        Always use light mode
-                    </span>
-                </button>
-
-                <button type="button"
-                        class="capy-theme-option theme-option"
-                        data-theme="dark"
-                        aria-pressed="false">
-                    <span class="capy-theme-option-title">
-                        Dark
-                    </span>
-
-                    <span class="capy-theme-option-description">
-                        Always use dark mode
-                    </span>
-                </button>
-
-                <button type="button"
-                        class="capy-theme-option theme-option"
-                        data-theme="system"
-                        aria-pressed="false">
-                    <span class="capy-theme-option-title">
-                        System
-                    </span>
-
-                    <span class="capy-theme-option-description">
-                        Match your device setting
-                    </span>
-                </button>
-
-            </div>
-            @if (!Model.HasUserProfile)
-            {
-                <p class="text-body-secondary small mt-2 mb-0">
-                    Your browser theme is saved now; complete your profile to also save it to your account.
-                </p>
-            }
-        </section>
     }
-
 </div>
-
 
 @section Scripts
 {

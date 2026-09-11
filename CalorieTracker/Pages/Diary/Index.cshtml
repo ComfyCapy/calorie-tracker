@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model CalorieTracker.Pages.Diary.IndexModel
 @{
     ViewData["Title"] = "Daily Diary";
@@ -8,441 +8,423 @@
       href="~/react-food-search/assets/food-search.css"
       asp-append-version="true" />
 
-<h1>Daily Diary</h1>
+<div class="diary-page">
+    <div class="diary-header">
+        @await Html.PartialAsync(
+            "_ScenicPageHeader",
+            new CalorieTracker.Models.ScenicPageHeaderModel(
+                Title: "Daily Diary",
+                Subtitle: "One day at a time. See what you’ve eaten and keep things comfy.",
+                ArtworkPath: "/images/brand/dashboard-hero-capy.png",
+                CssClass: "diary-hero"))
 
-<div class="d-flex align-items-center gap-2 mb-4 flex-wrap diary-date-navigation">
-    @if (Model.PreviousDate.HasValue)
-    {
-        <a asp-page="./Index"
-           asp-route-date="@Model.PreviousDate.Value.ToString("yyyy-MM-dd")"
-           class="btn btn-outline-secondary"
-           aria-label="Previous diary day">
-            ← Previous
-        </a>
-    }
-    else
-    {
-        <button class="btn btn-outline-secondary"
-                type="button"
-                disabled
-                aria-label="Previous diary day">
-            ← Previous
-        </button>
-    }
-
-    <strong class="diary-date-label">
-        @Model.SelectedDate.ToString("dddd, d MMMM yyyy")
-    </strong>
-
-    @if (DateOnly.FromDateTime(Model.SelectedDate) == Model.CurrentDate)
-    {
-        <span class="btn btn-outline-secondary disabled"
-              aria-current="date"
-              aria-disabled="true">
-            Today
-        </span>
-    }
-    else
-    {
-        <a asp-page="./Index"
-           class="btn btn-outline-secondary"
-           aria-label="Go to today">
-            Today
-        </a>
-    }
-
-    @if (Model.NextDate.HasValue)
-    {
-        <a asp-page="./Index"
-           asp-route-date="@Model.NextDate.Value.ToString("yyyy-MM-dd")"
-           class="btn btn-outline-secondary"
-           aria-label="Next diary day">
-            Next →
-        </a>
-    }
-    else
-    {
-        <button class="btn btn-outline-secondary"
-                type="button"
-                disabled
-                aria-label="Next diary day">
-            Next →
-        </button>
-    }
-
-    <form method="get" class="d-flex align-items-center gap-2 ms-2 diary-date-picker">
-        <label for="diaryDate" class="visually-hidden">Diary date</label>
-        <input id="diaryDate"
-               type="date"
-               name="date"
-               min="1900-01-01"
-               max="2100-12-31"
-               value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
-               class="form-control" />
-
-        <button type="submit" class="btn btn-outline-secondary">
-            Go
-        </button>
-    </form>
-</div>
-
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="daily-progress-heading">
-            <h2 class="card-title h4 mb-0">Daily Progress</h2>
-
-            @if (Model.MacroGoalProgress != null)
+        <div class="d-flex align-items-center gap-2 flex-wrap diary-date-navigation">
+            @if (Model.PreviousDate.HasValue)
             {
-                <div class="form-check form-switch mb-0">
-                    <input id="showMacroGoals"
-                           class="form-check-input"
-                           type="checkbox"
-                           role="switch"
-                           data-macro-goals-toggle
-                           aria-controls="diaryMacroGoals" />
-                    <label class="form-check-label" for="showMacroGoals">
-                        Show macro goals
-                    </label>
-                </div>
+                <a asp-page="./Index"
+                   asp-route-date="@Model.PreviousDate.Value.ToString("yyyy-MM-dd")"
+                   class="btn btn-outline-secondary"
+                   aria-label="Previous diary day">
+                    ← Previous
+                </a>
             }
+            else
+            {
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        disabled
+                        aria-label="Previous diary day">
+                    ← Previous
+                </button>
+            }
+
+            <strong class="diary-date-label">
+                @Model.SelectedDate.ToString("dddd, d MMMM yyyy")
+            </strong>
+
+            @if (DateOnly.FromDateTime(Model.SelectedDate) == Model.CurrentDate)
+            {
+                <span class="btn btn-outline-secondary disabled"
+                      aria-current="date"
+                      aria-disabled="true">
+                    Today
+                </span>
+            }
+            else
+            {
+                <a asp-page="./Index"
+                   class="btn btn-outline-secondary"
+                   aria-label="Go to today">
+                    Today
+                </a>
+            }
+
+            @if (Model.NextDate.HasValue)
+            {
+                <a asp-page="./Index"
+                   asp-route-date="@Model.NextDate.Value.ToString("yyyy-MM-dd")"
+                   class="btn btn-outline-secondary"
+                   aria-label="Next diary day">
+                    Next →
+                </a>
+            }
+            else
+            {
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        disabled
+                        aria-label="Next diary day">
+                    Next →
+                </button>
+            }
+
+            <form method="get" class="d-flex align-items-center gap-2 ms-2 diary-date-picker">
+                <label for="diaryDate" class="visually-hidden">Diary date</label>
+                <input id="diaryDate"
+                       type="date"
+                       name="date"
+                       min="1900-01-01"
+                       max="2100-12-31"
+                       value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                       class="form-control" />
+
+                <button type="submit" class="btn btn-outline-secondary">
+                    Go
+                </button>
+            </form>
         </div>
+    </div>
 
-        @if (Model.DailyCalorieTarget > 0)
-        {
-            <div class="d-flex justify-content-between align-items-end mb-2">
-                <div>
-                    <span class="fs-3 fw-bold">
-                        @Model.TotalCalories.ToString("0")
-                    </span>
+    <div class="diary-layout">
+        <div class="diary-meals-column">
+            <div class="d-flex flex-wrap gap-2 diary-reuse-actions">
+                <a asp-page="/SavedMeals/Index" class="btn btn-outline-primary">
+                    Saved meals
+                </a>
+                @if (Model.SelectedDate > CalorieTracker.Services.ValidationRules.MinimumDiaryDate)
+                {
+                    <details class="diary-copy-details">
+                        <summary class="btn btn-outline-secondary">Copy previous day</summary>
+                        <form method="post"
+                              asp-page-handler="CopyPreviousDay"
+                              class="card card-body mt-2 diary-copy-form"
+                              data-copy-form>
+                            <input type="hidden"
+                                   name="targetDate"
+                                   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                            <p class="mb-2">
+                                Copy everything from
+                                <strong>@Model.SelectedDate.AddDays(-1).ToString("d MMM yyyy")</strong>
+                                into
+                                <strong>@Model.SelectedDate.ToString("d MMM yyyy")</strong>.
+                                Existing entries are never removed.
+                            </p>
+                            @if (Model.Entries.Count > 0)
+                            {
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="confirmAdditive"
+                                           value="true"
+                                           id="confirmPreviousDay" />
+                                    <label class="form-check-label" for="confirmPreviousDay">
+                                        Add these entries alongside what is already logged
+                                    </label>
+                                </div>
+                            }
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                Copy previous day
+                            </button>
+                        </form>
+                    </details>
+                }
+            </div>
 
-                    <span class="text-muted">
-                        / @Model.DailyCalorieTarget.ToString("0") kcal
-                    </span>
-                </div>
+            @foreach (var meal in new[] { "Breakfast", "Lunch", "Dinner", "Snack" })
+            {
+                var mealEntries = Model.Entries
+                    .Where(entry => entry.MealType == meal)
+                    .ToList();
 
-                <div class="text-end">
-                    @if (Model.CaloriesRemaining >= 0)
+                var mealCalories = mealEntries.Sum(entry => entry.CaloriesConsumed);
+                var mealProtein = mealEntries.Sum(entry => entry.ProteinConsumed);
+                var mealCarbs = mealEntries.Sum(entry => entry.CarbohydratesConsumed);
+                var mealFat = mealEntries.Sum(entry => entry.FatConsumed);
+
+                <section class="diary-meal-card">
+                    <div class="d-flex justify-content-between align-items-end mb-2 diary-meal-heading">
+                        <div>
+                            <h2 class="mb-0 h3">@meal</h2>
+
+                            @if (mealEntries.Count > 0)
+                            {
+                                <small class="text-muted diary-meal-summary">
+                                    @mealCalories.ToString("0") kcal ·
+                                    @mealProtein.ToString("0.0")g protein ·
+                                    @mealCarbs.ToString("0.0")g carbs ·
+                                    @mealFat.ToString("0.0")g fat
+                                </small>
+                            }
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 diary-meal-header-actions">
+                            <a asp-page="./Create"
+                               asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                               asp-route-meal="@meal"
+                               class="btn btn-sm btn-outline-primary diary-action-button"
+                               aria-label="Add food to @meal">
+                                + Add Food
+                            </a>
+                            @if (mealEntries.Count > 0)
+                            {
+                                <a asp-page="/SavedMeals/Create"
+                                   asp-route-sourceDate="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                                   asp-route-sourceMeal="@meal"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    Save meal
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    @if (mealEntries.Count == 0)
                     {
-                        <strong>
-                            @Model.CaloriesRemaining.ToString("0") kcal remaining
-                        </strong>
+                        <div class="food-search-result diary-empty-state">
+                            <span class="text-muted">
+                                No foods logged yet.
+                            </span>
+                        </div>
                     }
                     else
                     {
-                        <strong>
-                            @Math.Abs(Model.CaloriesRemaining).ToString("0") kcal over
-                        </strong>
+                        <div class="food-search-list diary-entry-list">
+                            @foreach (var entry in mealEntries)
+                            {
+                                <article class="food-search-result diary-entry-row">
+                                    <div class="food-search-result-main">
+                                        <div>
+                                            <h3>@entry.FoodNameSnapshot</h3>
+
+                                            @if (entry.IsApproximate)
+                                            {
+                                                <p>
+                                                    <span class="badge text-bg-info">Estimate</span>
+                                                    @entry.ApproximationLabel
+                                                    @if (entry.PortionQuantity.HasValue &&
+                                                         !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
+                                                    {
+                                                        <text>· @entry.PortionQuantity.Value.ToString("0.##") × @entry.PortionNameSnapshot</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>· @entry.Quantity.ToString("0.##") @entry.PortionLabelSnapshot</text>
+                                                    }
+                                                </p>
+                                                @if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Measured)
+                                                {
+                                                    <small class="text-muted">
+                                                        @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
+                                                        @entry.ServingUnitSnapshot used for nutrition
+                                                    </small>
+                                                }
+                                            }
+                                            else if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion)
+                                            {
+                                                <p>
+                                                    @entry.Quantity.ToString("0.##")
+                                                    @entry.PortionLabelSnapshot
+                                                </p>
+                                            }
+                                            else if (entry.PortionQuantity.HasValue &&
+                                                 !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
+                                            {
+                                                <p>
+                                                    @entry.PortionQuantity.Value.ToString("0.##")
+                                                    ×
+                                                    @entry.PortionNameSnapshot
+                                                </p>
+
+                                                <small class="text-muted">
+                                                    @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
+                                                    @entry.ServingUnitSnapshot
+                                                </small>
+                                            }
+                                            else
+                                            {
+                                                <p>
+                                                    @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
+                                                    @entry.ServingUnitSnapshot
+                                                </p>
+                                            }
+                                        </div>
+
+                                        <strong class="food-search-calories">
+                                            @entry.CaloriesConsumed.ToString("0") kcal
+                                        </strong>
+                                    </div>
+
+                                    <div class="food-search-result-bottom">
+                                        <div class="food-search-macros">
+                                            <span>
+                                                <strong aria-hidden="true">P</strong>
+                                                <span class="visually-hidden">Protein </span>
+                                                @entry.ProteinConsumed.ToString("0.0")g
+                                            </span>
+
+                                            <span>
+                                                <strong aria-hidden="true">C</strong>
+                                                <span class="visually-hidden">Carbohydrates </span>
+                                                @entry.CarbohydratesConsumed.ToString("0.0")g
+                                            </span>
+
+                                            <span>
+                                                <strong aria-hidden="true">F</strong>
+                                                <span class="visually-hidden">Fat </span>
+                                                @entry.FatConsumed.ToString("0.0")g
+                                            </span>
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-2 diary-entry-actions">
+                                            <a asp-page="./Edit"
+                                               asp-route-id="@entry.Id"
+                                               class="btn btn-sm btn-outline-primary diary-action-button"
+                                               aria-label="Edit @entry.FoodNameSnapshot diary entry">
+                                                Edit
+                                            </a>
+
+                                            <a asp-page="./Delete"
+                                               asp-route-id="@entry.Id"
+                                               class="btn btn-sm btn-outline-danger diary-action-button"
+                                               aria-label="Delete @entry.FoodNameSnapshot diary entry">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </article>
+                            }
+                        </div>
                     }
-                </div>
-            </div>
-
-            <div class="progress mb-3" style="height: 20px;">
-                <div class="progress-bar"
-                     role="progressbar"
-                     aria-label="Daily calorie progress"
-                     style="width: @Model.CalorieProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
-                     aria-valuenow="@Model.CalorieProgressPercent"
-                     aria-valuemin="0"
-                     aria-valuemax="100">
-                    @Model.CalorieProgressPercent.ToString("0")%
-                </div>
-            </div>
-        }
-        else
-        {
-            <p class="text-muted">
-                Set up your profile and goals to see your daily calorie target.
-            </p>
-        }
-
-        <div>
-            <strong>@Model.TotalProtein.ToString("0.0") g</strong> protein
-            <span class="mx-2">·</span>
-
-            <strong>@Model.TotalCarbohydrates.ToString("0.0") g</strong> carbs
-            <span class="mx-2">·</span>
-
-            <strong>@Model.TotalFat.ToString("0.0") g</strong> fat
-        </div>
-
-        @if (Model.MacroGoalProgress is { } macroGoals)
-        {
-            <div id="diaryMacroGoals"
-                 class="macro-goal-grid mt-3"
-                 data-macro-goals-content
-                 hidden>
-                <div class="macro-goal-item macro-goal-item--protein">
-                    <div class="macro-goal-heading">
-                        <span>Protein</span>
-                        <strong>
-                            @macroGoals.Protein.ConsumedGrams.ToString("0.0") g /
-                            @macroGoals.Protein.TargetGrams.ToString("0.#") g
-                        </strong>
-                    </div>
-                    <div class="macro-goal-progress macro-goal-item--protein"
-                         role="progressbar"
-                         aria-label="Protein macro goal progress"
-                         aria-valuenow="@macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                         aria-valuemin="0"
-                         aria-valuemax="100"
-                         aria-valuetext="@macroGoals.Protein.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Protein.TargetGrams.ToString("0.#") grams">
-                        <span style="width: @macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                    </div>
-                </div>
-
-                <div class="macro-goal-item macro-goal-item--carbohydrates">
-                    <div class="macro-goal-heading">
-                        <span>Carbohydrates</span>
-                        <strong>
-                            @macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") g /
-                            @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") g
-                        </strong>
-                    </div>
-                    <div class="macro-goal-progress macro-goal-item--carbohydrates"
-                         role="progressbar"
-                         aria-label="Carbohydrates macro goal progress"
-                         aria-valuenow="@macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                         aria-valuemin="0"
-                         aria-valuemax="100"
-                         aria-valuetext="@macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") grams">
-                        <span style="width: @macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                    </div>
-                </div>
-
-                <div class="macro-goal-item macro-goal-item--fat">
-                    <div class="macro-goal-heading">
-                        <span>Fat</span>
-                        <strong>
-                            @macroGoals.Fat.ConsumedGrams.ToString("0.0") g /
-                            @macroGoals.Fat.TargetGrams.ToString("0.#") g
-                        </strong>
-                    </div>
-                    <div class="macro-goal-progress macro-goal-item--fat"
-                         role="progressbar"
-                         aria-label="Fat macro goal progress"
-                         aria-valuenow="@macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                         aria-valuemin="0"
-                         aria-valuemax="100"
-                         aria-valuetext="@macroGoals.Fat.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Fat.TargetGrams.ToString("0.#") grams">
-                        <span style="width: @macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-</div>
-
-<div class="d-flex flex-wrap gap-2 mb-4 diary-reuse-actions">
-    <a asp-page="/SavedMeals/Index" class="btn btn-outline-primary">
-        Saved meals
-    </a>
-    @if (Model.SelectedDate > CalorieTracker.Services.ValidationRules.MinimumDiaryDate)
-    {
-        <details class="diary-copy-details">
-            <summary class="btn btn-outline-secondary">Copy previous day</summary>
-            <form method="post"
-                  asp-page-handler="CopyPreviousDay"
-                  class="card card-body mt-2 diary-copy-form"
-                  data-copy-form>
-                <input type="hidden"
-                       name="targetDate"
-                       value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                <p class="mb-2">
-                    Copy everything from
-                    <strong>@Model.SelectedDate.AddDays(-1).ToString("d MMM yyyy")</strong>
-                    into
-                    <strong>@Model.SelectedDate.ToString("d MMM yyyy")</strong>.
-                    Existing entries are never removed.
-                </p>
-                @if (Model.Entries.Count > 0)
-                {
-                    <div class="form-check mb-2">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="confirmAdditive"
-                               value="true"
-                               id="confirmPreviousDay" />
-                        <label class="form-check-label" for="confirmPreviousDay">
-                            Add these entries alongside what is already logged
-                        </label>
-                    </div>
-                }
-                <button type="submit" class="btn btn-primary btn-sm">
-                    Copy previous day
-                </button>
-            </form>
-        </details>
-    }
-</div>
-
-@foreach (var meal in new[] { "Breakfast", "Lunch", "Dinner", "Snack" })
-{
-    var mealEntries = Model.Entries
-        .Where(entry => entry.MealType == meal)
-        .ToList();
-
-    var mealCalories = mealEntries.Sum(entry => entry.CaloriesConsumed);
-    var mealProtein = mealEntries.Sum(entry => entry.ProteinConsumed);
-    var mealCarbs = mealEntries.Sum(entry => entry.CarbohydratesConsumed);
-    var mealFat = mealEntries.Sum(entry => entry.FatConsumed);
-
-    <section class="mb-5">
-        <div class="d-flex justify-content-between align-items-end mb-2 diary-meal-heading">
-            <div>
-                <h2 class="mb-0 h3">@meal</h2>
-
-                @if (mealEntries.Count > 0)
-                {
-                    <small class="text-muted">
-                        @mealCalories.ToString("0") kcal ·
-                        @mealProtein.ToString("0.0")g protein ·
-                        @mealCarbs.ToString("0.0")g carbs ·
-                        @mealFat.ToString("0.0")g fat
-                    </small>
-                }
-            </div>
-
-            <div class="d-flex flex-wrap gap-2 diary-meal-header-actions">
-            <a asp-page="./Create"
-               asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
-               asp-route-meal="@meal"
-               class="btn btn-sm btn-outline-primary diary-action-button"
-               aria-label="Add food to @meal">
-                + Add Food
-            </a>
-            @if (mealEntries.Count > 0)
-            {
-                <a asp-page="/SavedMeals/Create"
-                   asp-route-sourceDate="@Model.SelectedDate.ToString("yyyy-MM-dd")"
-                   asp-route-sourceMeal="@meal"
-                   class="btn btn-sm btn-outline-secondary">
-                    Save meal
-                </a>
+                </section>
             }
-            </div>
         </div>
 
-        @if (mealEntries.Count == 0)
-        {
-            <div class="food-search-result">
-                <span class="text-muted">
-                    No foods logged yet.
-                </span>
-            </div>
-        }
-        else
-        {
-            <div class="food-search-list">
-                @foreach (var entry in mealEntries)
-                {
-                    <article class="food-search-result">
-                        <div class="food-search-result-main">
-                            <div>
-                                <h3>@entry.FoodNameSnapshot</h3>
+        <aside class="diary-summary-rail" aria-label="Daily summary">
+            <div class="card diary-summary-card">
+                <div class="card-body">
+                    <div class="daily-progress-heading">
+                        <h2 class="card-title h4 mb-0">Daily Summary</h2>
+                    </div>
 
-                                @if (entry.IsApproximate)
-                                {
-                                    <p>
-                                        <span class="badge text-bg-info">Estimate</span>
-                                        @entry.ApproximationLabel
-                                        @if (entry.PortionQuantity.HasValue &&
-                                             !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
-                                        {
-                                            <text>· @entry.PortionQuantity.Value.ToString("0.##") × @entry.PortionNameSnapshot</text>
-                                        }
-                                        else
-                                        {
-                                            <text>· @entry.Quantity.ToString("0.##") @entry.PortionLabelSnapshot</text>
-                                        }
-                                    </p>
-                                    @if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Measured)
-                                    {
-                                        <small class="text-muted">
-                                            @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
-                                            @entry.ServingUnitSnapshot used for nutrition
-                                        </small>
-                                    }
-                                }
-                                else if (entry.ServingBasisSnapshot == CalorieTracker.Models.FoodServingBasis.Portion)
-                                {
-                                    <p>
-                                        @entry.Quantity.ToString("0.##")
-                                        @entry.PortionLabelSnapshot
-                                    </p>
-                                }
-                                else if (entry.PortionQuantity.HasValue &&
-                                     !string.IsNullOrWhiteSpace(entry.PortionNameSnapshot))
-                                {
-                                    <p>
-                                        @entry.PortionQuantity.Value.ToString("0.##")
-                                        ×
-                                        @entry.PortionNameSnapshot
-                                    </p>
+                    @if (Model.DailyCalorieTarget > 0)
+                    {
+                        <div class="diary-calorie-summary">
+                            <div class="diary-calorie-ring"
+                                 role="progressbar"
+                                 aria-label="Daily calorie progress"
+                                 aria-valuenow="@Model.CalorieProgressPercent"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"
+                                 aria-valuetext="@Model.TotalCalories.ToString("0") of @Model.DailyCalorieTarget.ToString("0") calories"
+                                 style="--diary-calorie-progress: @Model.CalorieProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%">
+                                <div class="diary-calorie-ring-content">
+                                    <strong>@Model.TotalCalories.ToString("0")</strong>
+                                    <span>of @Model.DailyCalorieTarget.ToString("0") kcal</span>
+                                </div>
+                            </div>
 
-                                    <small class="text-muted">
-                                        @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
-                                        @entry.ServingUnitSnapshot
-                                    </small>
+                            <p class="diary-calorie-status">
+                                @if (Model.CaloriesRemaining >= 0)
+                                {
+                                    <strong>@Model.CaloriesRemaining.ToString("0") kcal remaining</strong>
                                 }
                                 else
                                 {
-                                    <p>
-                                        @CalorieTracker.Services.MeasurementUnits.FromCanonical(entry.Quantity, entry.ServingUnitSnapshot).ToString("0.##")
-                                        @entry.ServingUnitSnapshot
-                                    </p>
+                                    <strong>@Math.Abs(Model.CaloriesRemaining).ToString("0") kcal over</strong>
                                 }
-                            </div>
-
-                            <strong class="food-search-calories">
-                                @entry.CaloriesConsumed.ToString("0") kcal
-                            </strong>
+                            </p>
                         </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted diary-calorie-target-message">
+                            Set up your profile and goals to see your daily calorie target.
+                        </p>
+                    }
 
-                        <div class="food-search-result-bottom">
-                            <div class="food-search-macros">
-                                <span>
-                                    <strong aria-hidden="true">P</strong>
-                                    <span class="visually-hidden">Protein </span>
-                                    @entry.ProteinConsumed.ToString("0.0")g
-                                </span>
+                    <div class="diary-macro-totals">
+                        <span><strong>@Model.TotalProtein.ToString("0.0") g</strong> protein</span>
+                        <span><strong>@Model.TotalCarbohydrates.ToString("0.0") g</strong> carbs</span>
+                        <span><strong>@Model.TotalFat.ToString("0.0") g</strong> fat</span>
+                    </div>
 
-                                <span>
-                                    <strong aria-hidden="true">C</strong>
-                                    <span class="visually-hidden">Carbohydrates </span>
-                                    @entry.CarbohydratesConsumed.ToString("0.0")g
-                                </span>
-
-                                <span>
-                                    <strong aria-hidden="true">F</strong>
-                                    <span class="visually-hidden">Fat </span>
-                                    @entry.FatConsumed.ToString("0.0")g
-                                </span>
+                    @if (Model.MacroGoalProgress is { } macroGoals)
+                    {
+                        <div id="diaryMacroGoals"
+                             class="macro-goal-grid mt-3">
+                            <div class="macro-goal-item macro-goal-item--protein">
+                                <div class="macro-goal-heading">
+                                    <span>Protein</span>
+                                    <strong>
+                                        @macroGoals.Protein.ConsumedGrams.ToString("0.0") g /
+                                        @macroGoals.Protein.TargetGrams.ToString("0.#") g
+                                    </strong>
+                                </div>
+                                <div class="macro-goal-progress macro-goal-item--protein"
+                                     role="progressbar"
+                                     aria-label="Protein macro goal progress"
+                                     aria-valuenow="@macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuetext="@macroGoals.Protein.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Protein.TargetGrams.ToString("0.#") grams">
+                                    <span style="width: @macroGoals.Protein.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                </div>
                             </div>
 
-                            <div class="d-flex align-items-center gap-2 diary-entry-actions">
-                                <a asp-page="./Edit"
-                                   asp-route-id="@entry.Id"
-                                   class="btn btn-sm btn-outline-primary diary-action-button"
-                                   aria-label="Edit @entry.FoodNameSnapshot diary entry">
-                                    Edit
-                                </a>
+                            <div class="macro-goal-item macro-goal-item--carbohydrates">
+                                <div class="macro-goal-heading">
+                                    <span>Carbohydrates</span>
+                                    <strong>
+                                        @macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") g /
+                                        @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") g
+                                    </strong>
+                                </div>
+                                <div class="macro-goal-progress macro-goal-item--carbohydrates"
+                                     role="progressbar"
+                                     aria-label="Carbohydrates macro goal progress"
+                                     aria-valuenow="@macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuetext="@macroGoals.Carbohydrates.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Carbohydrates.TargetGrams.ToString("0.#") grams">
+                                    <span style="width: @macroGoals.Carbohydrates.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                </div>
+                            </div>
 
-                                <a asp-page="./Delete"
-                                   asp-route-id="@entry.Id"
-                                   class="btn btn-sm btn-outline-danger diary-action-button"
-                                   aria-label="Delete @entry.FoodNameSnapshot diary entry">
-                                    Delete
-                                </a>
+                            <div class="macro-goal-item macro-goal-item--fat">
+                                <div class="macro-goal-heading">
+                                    <span>Fat</span>
+                                    <strong>
+                                        @macroGoals.Fat.ConsumedGrams.ToString("0.0") g /
+                                        @macroGoals.Fat.TargetGrams.ToString("0.#") g
+                                    </strong>
+                                </div>
+                                <div class="macro-goal-progress macro-goal-item--fat"
+                                     role="progressbar"
+                                     aria-label="Fat macro goal progress"
+                                     aria-valuenow="@macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     aria-valuetext="@macroGoals.Fat.ConsumedGrams.ToString("0.0") grams consumed of @macroGoals.Fat.TargetGrams.ToString("0.#") grams">
+                                    <span style="width: @macroGoals.Fat.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                </div>
                             </div>
                         </div>
-                    </article>
-                }
+                    }
+                </div>
             </div>
-        }
-    </section>
-}
+        </aside>
+    </div>
+</div>
 
 @section Scripts {
-    <script src="~/js/macro-goals-preference.js" asp-append-version="true"></script>
     <script src="~/js/diary-copy.js" asp-append-version="true"></script>
 }
