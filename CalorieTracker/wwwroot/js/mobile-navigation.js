@@ -21,6 +21,14 @@
             && Math.abs(horizontalDistance) >= verticalDistance * horizontalIntentRatio;
     }
 
+    function getTouchPoint(event) {
+        const touch = event.touches?.[0] ?? event.changedTouches?.[0];
+
+        return touch
+            ? { x: touch.clientX, y: touch.clientY }
+            : null;
+    }
+
     function initialize(scope) {
         const sidebar = scope.document?.getElementById("appSidebar");
         const offcanvas = scope.bootstrap?.Offcanvas;
@@ -46,31 +54,37 @@
             resetGesture();
         });
 
-        sidebar.addEventListener("pointerdown", event => {
-            if (!isOpen
-                || !mobileViewport.matches
-                || event.pointerType !== "touch"
-                || !event.isPrimary) {
+        sidebar.addEventListener("touchstart", event => {
+            if (!isOpen || !mobileViewport.matches) {
+                return;
+            }
+
+            const point = getTouchPoint(event);
+            if (!point) {
                 return;
             }
 
             gesture = {
-                pointerId: event.pointerId,
-                startX: event.clientX,
-                startY: event.clientY,
-                endX: event.clientX,
-                endY: event.clientY,
+                startX: point.x,
+                startY: point.y,
+                endX: point.x,
+                endY: point.y,
                 hasVerticalIntent: false
             };
-        });
+        }, { capture: true, passive: true });
 
-        scope.addEventListener("pointermove", event => {
-            if (!gesture || event.pointerId !== gesture.pointerId) {
+        sidebar.addEventListener("touchmove", event => {
+            if (!gesture) {
                 return;
             }
 
-            gesture.endX = event.clientX;
-            gesture.endY = event.clientY;
+            const point = getTouchPoint(event);
+            if (!point) {
+                return;
+            }
+
+            gesture.endX = point.x;
+            gesture.endY = point.y;
 
             const horizontalDistance = Math.abs(gesture.endX - gesture.startX);
             const verticalDistance = Math.abs(gesture.endY - gesture.startY);
@@ -79,24 +93,28 @@
                 && verticalDistance > horizontalDistance) {
                 gesture.hasVerticalIntent = true;
             }
-        }, { passive: true });
+        }, { capture: true, passive: true });
 
-        scope.addEventListener("pointerup", event => {
-            if (!gesture || event.pointerId !== gesture.pointerId) {
+        sidebar.addEventListener("touchend", event => {
+            if (!gesture) {
                 return;
             }
 
-            gesture.endX = event.clientX;
-            gesture.endY = event.clientY;
+            const point = getTouchPoint(event);
+            if (point) {
+                gesture.endX = point.x;
+                gesture.endY = point.y;
+            }
+
             const shouldClose = isDeliberateLeftSwipe(gesture);
             resetGesture();
 
             if (shouldClose && isOpen && mobileViewport.matches) {
                 offcanvas.getOrCreateInstance(sidebar).hide();
             }
-        }, { passive: true });
+        }, { capture: true, passive: true });
 
-        scope.addEventListener("pointercancel", resetGesture, { passive: true });
+        sidebar.addEventListener("touchcancel", resetGesture, { capture: true, passive: true });
     }
 
     return {

@@ -76,23 +76,20 @@ function setupNavigation() {
     };
 }
 
-function swipeLeft(navigation, pointerType = "touch") {
-    navigation.sidebar.dispatch("pointerdown", {
-        pointerId: 1,
-        pointerType,
-        isPrimary: true,
-        clientX: 200,
-        clientY: 200
+function touchPoint(clientX, clientY) {
+    return { clientX, clientY };
+}
+
+function swipeLeft(navigation) {
+    navigation.sidebar.dispatch("touchstart", {
+        touches: [touchPoint(200, 200)]
     });
-    navigation.scope.dispatch("pointermove", {
-        pointerId: 1,
-        clientX: 120,
-        clientY: 210
+    navigation.sidebar.dispatch("touchmove", {
+        touches: [touchPoint(120, 210)]
     });
-    navigation.scope.dispatch("pointerup", {
-        pointerId: 1,
-        clientX: 120,
-        clientY: 210
+    navigation.sidebar.dispatch("touchend", {
+        touches: [],
+        changedTouches: [touchPoint(120, 210)]
     });
 }
 
@@ -113,11 +110,36 @@ test("a left swipe is ignored while the drawer is not open", () => {
     assert.equal(navigation.hideCount(), 0);
 });
 
-test("mouse movement does not trigger swipe-to-close", () => {
+test("vertical touch movement does not trigger swipe-to-close", () => {
     const navigation = setupNavigation();
 
     navigation.sidebar.dispatch("shown.bs.offcanvas");
-    swipeLeft(navigation, "mouse");
+    navigation.sidebar.dispatch("touchstart", {
+        touches: [touchPoint(200, 200)]
+    });
+    navigation.sidebar.dispatch("touchmove", {
+        touches: [touchPoint(190, 260)]
+    });
+    navigation.sidebar.dispatch("touchend", {
+        touches: [],
+        changedTouches: [touchPoint(190, 260)]
+    });
+
+    assert.equal(navigation.hideCount(), 0);
+});
+
+test("a cancelled touch gesture does not trigger swipe-to-close", () => {
+    const navigation = setupNavigation();
+
+    navigation.sidebar.dispatch("shown.bs.offcanvas");
+    navigation.sidebar.dispatch("touchstart", {
+        touches: [touchPoint(200, 200)]
+    });
+    navigation.sidebar.dispatch("touchcancel");
+    navigation.sidebar.dispatch("touchend", {
+        touches: [],
+        changedTouches: [touchPoint(120, 200)]
+    });
 
     assert.equal(navigation.hideCount(), 0);
 });
