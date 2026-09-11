@@ -25,9 +25,9 @@ public class DailyMaintenanceSnapshotMigrationTests
         await using var context = new ApplicationDbContext(options);
         await context.Database.MigrateAsync(PreviousProductionMigration);
 
-        AddUser(context, "user-1");
-        AddUser(context, "user-2");
-        AddUser(context, "invalid-user");
+        await AddUserAsync(context, "user-1");
+        await AddUserAsync(context, "user-2");
+        await AddUserAsync(context, "invalid-user");
 
         var firstProfile = Profile(
             "user-1",
@@ -98,20 +98,13 @@ public class DailyMaintenanceSnapshotMigrationTests
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
     }
 
-    private static void AddUser(
+    private static Task AddUserAsync(
         ApplicationDbContext context,
-        string userId)
-    {
-        context.Users.Add(new ApplicationUser
-        {
-            Id = userId,
-            UserName = userId,
-            NormalizedUserName = userId.ToUpperInvariant(),
-            Email = $"{userId}@example.test",
-            NormalizedEmail = $"{userId}@example.test".ToUpperInvariant(),
-            SecurityStamp = Guid.NewGuid().ToString()
-        });
-    }
+        string userId) =>
+        LegacyDatabaseFixtures.InsertUserAsync(
+            context,
+            userId,
+            $"{userId}@example.test");
 
     private static UserProfile Profile(
         string userId,

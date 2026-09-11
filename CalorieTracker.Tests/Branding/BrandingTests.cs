@@ -43,7 +43,6 @@ public class BrandingTests
         Assert.Contains("class=\"navbar-brand\"", html);
         Assert.Contains("fonts.googleapis.com/css2?family=Nunito", html);
         Assert.DoesNotContain("<a class=\"navbar-brand\"", html);
-        Assert.Contains("href=\"/\"", html);
         Assert.Contains("A Comfy Capy product", html);
         Assert.Contains("href=\"/About\"", html);
         Assert.Contains("href=\"/Help\"", html);

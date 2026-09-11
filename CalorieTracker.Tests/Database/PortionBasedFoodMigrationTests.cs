@@ -1,5 +1,6 @@
 using CalorieTracker.Data;
 using CalorieTracker.Models;
+using CalorieTracker.Tests.TestSupport;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,16 +24,10 @@ public class PortionBasedFoodMigrationTests
         await using var context = new ApplicationDbContext(options);
         await context.Database.MigrateAsync(PreviousMigration);
 
-        context.Users.Add(new ApplicationUser
-        {
-            Id = "user-1",
-            UserName = "user-1",
-            NormalizedUserName = "USER-1",
-            Email = "user-1@example.test",
-            NormalizedEmail = "USER-1@EXAMPLE.TEST",
-            SecurityStamp = Guid.NewGuid().ToString()
-        });
-        await context.SaveChangesAsync();
+        await LegacyDatabaseFixtures.InsertUserAsync(
+            context,
+            "user-1",
+            "user-1@example.test");
 
         await context.Database.ExecuteSqlRawAsync("""
             INSERT INTO "Foods"

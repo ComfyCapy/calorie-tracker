@@ -21,13 +21,7 @@ public sealed class RecipeCleanupMigrationTests
         await using var context = new ApplicationDbContext(options);
         var migrator = context.GetService<IMigrator>();
         await migrator.MigrateAsync("20260910052902_AddLazycoreFoodReuse");
-        context.Users.Add(new ApplicationUser
-        {
-            Id = "owner",
-            UserName = "owner",
-            NormalizedUserName = "OWNER",
-            SecurityStamp = Guid.NewGuid().ToString()
-        });
+        await LegacyDatabaseFixtures.InsertUserAsync(context, "owner");
         var recipeFood = TestData.Food("owner", name: "Historical recipe");
         recipeFood.Source = "Recipe";
         recipeFood.ServingBasis = FoodServingBasis.Portion;
