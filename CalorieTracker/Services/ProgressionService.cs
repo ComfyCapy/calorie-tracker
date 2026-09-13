@@ -7,6 +7,7 @@ namespace CalorieTracker.Services;
 public sealed class ProgressionService
 {
     public const int DailyActivityXp = 5;
+    public const int CurrentAchievementBackfillVersion = 1;
 
     private const string DailyEventPrefix = "daily:";
     private const string AchievementEventPrefix = "achievement:";
@@ -101,12 +102,125 @@ public sealed class ProgressionService
         return new AchievementGrantResult(wasGranted, definition);
     }
 
+    public async Task<AchievementReconciliationResult>
+        ReconcileAchievementsAsync(
+            string userId,
+            CancellationToken cancellationToken = default)
+    {
+        ValidateUserId(userId);
+
+        await using var transaction = await _context.Database
+            .BeginTransactionAsync(cancellationToken);
+
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            INSERT OR IGNORE INTO "UserProgressionStates"
+                ("UserId", "AchievementBackfillVersion")
+            VALUES
+                ({userId}, 0);
+            """,
+            cancellationToken);
+
+        var previousVersion = await _context.UserProgressionStates
+            .AsNoTracking()
+            .Where(state => state.UserId == userId)
+            .Select(state => state.AchievementBackfillVersion)
+            .SingleAsync(cancellationToken);
+
+        if (previousVersion >= CurrentAchievementBackfillVersion)
+        {
+            await transaction.CommitAsync(cancellationToken);
+            return new AchievementReconciliationResult(
+                previousVersion,
+                CurrentAchievementBackfillVersion,
+                false,
+                []);
+        }
+
+        var recognizedAtUtc = UtcNow();
+        var qualifiedKeys = new HashSet<string>(StringComparer.Ordinal);
+
+        if (previousVersion < 1)
+        {
+            qualifiedKeys.UnionWith(await QualifiedDiaryAchievementKeysAsync(
+                userId,
+                cancellationToken));
+            qualifiedKeys.UnionWith(await QualifiedProfileAchievementKeysAsync(
+                userId,
+                cancellationToken));
+            qualifiedKeys.UnionWith(await QualifiedFoodAchievementKeysAsync(
+                userId,
+                cancellationToken));
+            qualifiedKeys.UnionWith(
+                await QualifiedSavedMealAchievementKeysAsync(
+                    userId,
+                    cancellationToken));
+            qualifiedKeys.UnionWith(
+                await QualifiedCustomisationAchievementKeysAsync(
+                    userId,
+                    cancellationToken));
+
+            // Activity achievements are derived only from durable activity rows.
+            // No activity or daily XP is synthesized during reconciliation.
+            qualifiedKeys.UnionWith(
+                await QualifiedActivityAchievementKeysAsync(
+                    userId,
+                    DateOnly.FromDateTime(recognizedAtUtc),
+                    cancellationToken));
+        }
+
+        var unlocked = await GrantAchievementKeysCoreAsync(
+            userId,
+            qualifiedKeys,
+            recognizedAtUtc,
+            cancellationToken);
+
+        var advanced = await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            UPDATE "UserProgressionStates"
+            SET "AchievementBackfillVersion" =
+                {CurrentAchievementBackfillVersion}
+            WHERE "UserId" = {userId}
+              AND "AchievementBackfillVersion" = {previousVersion};
+            """,
+            cancellationToken);
+
+        if (advanced != 1)
+        {
+            throw new InvalidOperationException(
+                $"Progression reconciliation state for user '{userId}' " +
+                "was not advanced.");
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return new AchievementReconciliationResult(
+            previousVersion,
+            CurrentAchievementBackfillVersion,
+            true,
+            unlocked);
+    }
+
     public async Task<ProgressionEvaluationResult>
         EvaluateDiaryAchievementsAsync(
             string userId,
             CancellationToken cancellationToken = default)
     {
         ValidateUserId(userId);
+        var qualifiedKeys = await QualifiedDiaryAchievementKeysAsync(
+            userId,
+            cancellationToken);
+
+        return await GrantQualifiedAchievementsAsync(
+            userId,
+            qualifiedKeys,
+            cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>>
+        QualifiedDiaryAchievementKeysAsync(
+            string userId,
+            CancellationToken cancellationToken)
+    {
         var qualifiedKeys = new List<string>();
         var ownedEntries = _context.DiaryEntries
             .AsNoTracking()
@@ -138,10 +252,7 @@ public sealed class ProgressionService
             qualifiedKeys.Add(AchievementDefinitions.DiaryAllMealTypesKey);
         }
 
-        return await GrantQualifiedAchievementsAsync(
-            userId,
-            qualifiedKeys,
-            cancellationToken);
+        return qualifiedKeys;
     }
 
     public async Task<ProgressionEvaluationResult>
@@ -150,20 +261,30 @@ public sealed class ProgressionService
             CancellationToken cancellationToken = default)
     {
         ValidateUserId(userId);
-        var profile = await _context.UserProfiles
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                candidate => candidate.UserId == userId,
-                cancellationToken);
-        string[] qualifiedKeys = profile != null &&
-            IsStructurallyComplete(profile)
-                ? [AchievementDefinitions.ProfileCompletedKey]
-                : [];
+        var qualifiedKeys = await QualifiedProfileAchievementKeysAsync(
+            userId,
+            cancellationToken);
 
         return await GrantQualifiedAchievementsAsync(
             userId,
             qualifiedKeys,
             cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>>
+        QualifiedProfileAchievementKeysAsync(
+            string userId,
+            CancellationToken cancellationToken)
+    {
+        var profile = await _context.UserProfiles
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                candidate => candidate.UserId == userId,
+                cancellationToken);
+
+        return profile != null && IsStructurallyComplete(profile)
+            ? [AchievementDefinitions.ProfileCompletedKey]
+            : [];
     }
 
     public async Task<ProgressionEvaluationResult>
@@ -172,6 +293,21 @@ public sealed class ProgressionService
             CancellationToken cancellationToken = default)
     {
         ValidateUserId(userId);
+        var qualifiedKeys = await QualifiedFoodAchievementKeysAsync(
+            userId,
+            cancellationToken);
+
+        return await GrantQualifiedAchievementsAsync(
+            userId,
+            qualifiedKeys,
+            cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>>
+        QualifiedFoodAchievementKeysAsync(
+            string userId,
+            CancellationToken cancellationToken)
+    {
         var hasOwnedCustomFood = await _context.Foods
             .AsNoTracking()
             .AnyAsync(
@@ -180,14 +316,10 @@ public sealed class ProgressionService
                     food.Source == null &&
                     food.ExternalId == null,
                 cancellationToken);
-        string[] qualifiedKeys = hasOwnedCustomFood
+
+        return hasOwnedCustomFood
             ? [AchievementDefinitions.FoodsFirstCustomKey]
             : [];
-
-        return await GrantQualifiedAchievementsAsync(
-            userId,
-            qualifiedKeys,
-            cancellationToken);
     }
 
     public async Task<ProgressionEvaluationResult>
@@ -196,19 +328,30 @@ public sealed class ProgressionService
             CancellationToken cancellationToken = default)
     {
         ValidateUserId(userId);
-        var hasOwnedSavedMeal = await _context.SavedMeals
-            .AsNoTracking()
-            .AnyAsync(
-                meal => meal.UserId == userId,
-                cancellationToken);
-        string[] qualifiedKeys = hasOwnedSavedMeal
-            ? [AchievementDefinitions.SavedMealsFirstKey]
-            : [];
+        var qualifiedKeys = await QualifiedSavedMealAchievementKeysAsync(
+            userId,
+            cancellationToken);
 
         return await GrantQualifiedAchievementsAsync(
             userId,
             qualifiedKeys,
             cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>>
+        QualifiedSavedMealAchievementKeysAsync(
+            string userId,
+            CancellationToken cancellationToken)
+    {
+        var hasOwnedSavedMeal = await _context.SavedMeals
+            .AsNoTracking()
+            .AnyAsync(
+                meal => meal.UserId == userId,
+                cancellationToken);
+
+        return hasOwnedSavedMeal
+            ? [AchievementDefinitions.SavedMealsFirstKey]
+            : [];
     }
 
     public async Task<ProgressionEvaluationResult>
@@ -217,6 +360,22 @@ public sealed class ProgressionService
             CancellationToken cancellationToken = default)
     {
         ValidateUserId(userId);
+        var qualifiedKeys =
+            await QualifiedCustomisationAchievementKeysAsync(
+                userId,
+                cancellationToken);
+
+        return await GrantQualifiedAchievementsAsync(
+            userId,
+            qualifiedKeys,
+            cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<string>>
+        QualifiedCustomisationAchievementKeysAsync(
+            string userId,
+            CancellationToken cancellationToken)
+    {
         var appearance = await _context.UserCapyAppearances
             .AsNoTracking()
             .Where(candidate => candidate.UserId == userId)
@@ -262,14 +421,9 @@ public sealed class ProgressionService
             }
         }
 
-        string[] qualifiedKeys = qualifies
+        return qualifies
             ? [AchievementDefinitions.CustomisationFirstEquipKey]
             : [];
-
-        return await GrantQualifiedAchievementsAsync(
-            userId,
-            qualifiedKeys,
-            cancellationToken);
     }
 
     public async Task<ProgressionEvaluationResult>

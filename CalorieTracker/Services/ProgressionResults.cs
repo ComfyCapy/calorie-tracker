@@ -11,6 +11,12 @@ public sealed record AchievementGrantResult(
 public sealed record ProgressionEvaluationResult(
     IReadOnlyList<AchievementDefinition> NewlyUnlockedAchievements);
 
+public sealed record AchievementReconciliationResult(
+    int PreviousVersion,
+    int CurrentVersion,
+    bool WasReconciled,
+    IReadOnlyList<AchievementDefinition> NewlyUnlockedAchievements);
+
 public sealed record UnlockedAchievementSummary(
     string Key,
     DateTime UnlockedAtUtc,
