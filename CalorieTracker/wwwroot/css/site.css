@@ -4089,7 +4089,16 @@ summary:focus-visible {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: nowrap;
         gap: var(--ct-space-3);
+    }
+
+    .app-mobile-menu-button {
+        order: -1;
+    }
+
+    .app-mobile-brand {
+        justify-content: flex-end;
     }
 
     .app-sidebar .account-nav-item {
