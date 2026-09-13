@@ -150,7 +150,9 @@ public class MacroTargetCalculatorTests
             new TestUserLocalTimeProvider(CurrentDate),
             new DiaryCopyService(
                 database.Context,
-                new DailyMaintenanceSnapshotService(database.Context)));
+                new DailyMaintenanceSnapshotService(database.Context),
+                PageModelTestContext.CreateProgressionHooks(
+                    database.Context)));
         PageModelTestContext.Attach(diary, "user-1");
 
         await dashboard.OnGetAsync();

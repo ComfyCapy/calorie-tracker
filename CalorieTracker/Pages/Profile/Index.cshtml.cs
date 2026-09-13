@@ -21,19 +21,22 @@ namespace CalorieTracker.Pages.Profile
         private readonly GoalTimelineCalculator _goalTimelineCalculator;
         private readonly DailyMaintenanceSnapshotService _snapshotService;
         private readonly IUserLocalTimeProvider _userLocalTimeProvider;
+        private readonly ProgressionAchievementHooks _progressionHooks;
 
         public IndexModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             GoalTimelineCalculator goalTimelineCalculator,
             DailyMaintenanceSnapshotService snapshotService,
-            IUserLocalTimeProvider userLocalTimeProvider)
+            IUserLocalTimeProvider userLocalTimeProvider,
+            ProgressionAchievementHooks progressionHooks)
         {
             _context = context;
             _userManager = userManager;
             _goalTimelineCalculator = goalTimelineCalculator;
             _snapshotService = snapshotService;
             _userLocalTimeProvider = userLocalTimeProvider;
+            _progressionHooks = progressionHooks;
         }
 
         [BindProperty]
@@ -119,7 +122,8 @@ namespace CalorieTracker.Pages.Profile
             }
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(
+            CancellationToken cancellationToken = default)
         {
             CurrentDate = _userLocalTimeProvider.Today;
             var userId = _userManager.GetUserId(User);
@@ -175,6 +179,9 @@ namespace CalorieTracker.Pages.Profile
                 userId,
                 profileToSave);
             await _snapshotService.SaveChangesAsync();
+            await _progressionHooks.EvaluateProfileAsync(
+                userId,
+                cancellationToken);
 
             ProfileStatusMessage = "Profile saved successfully.";
 

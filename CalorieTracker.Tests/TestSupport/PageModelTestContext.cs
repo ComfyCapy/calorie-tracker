@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CalorieTracker.Data;
+using CalorieTracker.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,21 @@ namespace CalorieTracker.Tests.TestSupport;
 
 public static class PageModelTestContext
 {
+    public static ProgressionAchievementHooks CreateProgressionHooks(
+        ApplicationDbContext context)
+    {
+        var timeProvider = new FixedTimeProvider(
+            new DateTimeOffset(2026, 9, 13, 12, 0, 0, TimeSpan.Zero));
+
+        return new ProgressionAchievementHooks(
+            new ProgressionService(
+                context,
+                new ProgressionLevelCalculator(),
+                new ActivityStreakCalculator(),
+                timeProvider),
+            NullLogger<ProgressionAchievementHooks>.Instance);
+    }
+
     public static UserManager<ApplicationUser> CreateUserManager() =>
         new(
             new TestUserStore(),

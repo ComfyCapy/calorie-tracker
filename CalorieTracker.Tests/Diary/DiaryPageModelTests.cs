@@ -636,7 +636,8 @@ public class DiaryPageModelTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider())
+            new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context))
         {
             DiaryEntry = new DiaryEntry
             {
@@ -659,7 +660,8 @@ public class DiaryPageModelTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider());
+            new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

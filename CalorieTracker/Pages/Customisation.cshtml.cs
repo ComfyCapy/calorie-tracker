@@ -15,15 +15,18 @@ namespace CalorieTracker.Pages
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly CapyProvisioningService _capyProvisioningService;
+        private readonly ProgressionAchievementHooks _progressionHooks;
 
         public CustomisationModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            CapyProvisioningService capyProvisioningService)
+            CapyProvisioningService capyProvisioningService,
+            ProgressionAchievementHooks progressionHooks)
         {
             _context = context;
             _userManager = userManager;
             _capyProvisioningService = capyProvisioningService;
+            _progressionHooks = progressionHooks;
         }
 
         public UserCapyAppearance? CapyAppearance { get; set; }
@@ -153,8 +156,9 @@ namespace CalorieTracker.Pages
         }
 
         public async Task<IActionResult> OnPostEquipAsync(
-        int? itemId,
-        string category)
+            int? itemId,
+            string category,
+            CancellationToken cancellationToken = default)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -232,6 +236,9 @@ namespace CalorieTracker.Pages
             }
 
             await _context.SaveChangesAsync();
+            await _progressionHooks.EvaluateCustomisationAsync(
+                userId,
+                cancellationToken);
 
             return new JsonResult(new
             {

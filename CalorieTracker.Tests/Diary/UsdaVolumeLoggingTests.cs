@@ -160,7 +160,8 @@ public class UsdaVolumeLoggingTests
     private static CreateModel Create(TestDatabase database, Food food, FoodPortion portion, decimal count)
     {
         var model = new CreateModel(database.Context, PageModelTestContext.CreateUserManager(),
-            new DailyMaintenanceSnapshotService(database.Context), new TestUserLocalTimeProvider())
+            new DailyMaintenanceSnapshotService(database.Context), new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context))
         {
             DiaryEntry = new DiaryEntry { FoodId = food.Id, Date = TestTime.Today.ToDateTime(TimeOnly.MinValue),
                 MealType = "Dinner" },

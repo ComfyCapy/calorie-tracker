@@ -39,7 +39,8 @@ public class GoalTimelinePageTests
             PageModelTestContext.CreateUserManager(),
             calculator,
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider(CurrentDate));
+            new TestUserLocalTimeProvider(CurrentDate),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
         PageModelTestContext.Attach(profilePage, "user-1");
         await profilePage.OnGetAsync();
 

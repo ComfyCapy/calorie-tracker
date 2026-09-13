@@ -230,7 +230,8 @@ public class CapyNameTests
         var model = new CustomisationModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            new CapyProvisioningService(database.Context));
+            new CapyProvisioningService(database.Context),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

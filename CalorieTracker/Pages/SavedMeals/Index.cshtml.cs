@@ -55,7 +55,8 @@ public sealed class IndexModel : PageModel
     public async Task<IActionResult> OnPostAddAsync(
         int id,
         DateTime date,
-        string mealType)
+        string mealType,
+        CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid ||
             date.Date < ValidationRules.MinimumDiaryDate ||
@@ -76,7 +77,8 @@ public sealed class IndexModel : PageModel
             userId,
             id,
             date.Date,
-            mealType);
+            mealType,
+            cancellationToken);
 
         if (count == null)
         {

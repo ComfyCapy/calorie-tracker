@@ -208,6 +208,7 @@ builder.Services.AddScoped<IUserLocalTimeProvider, UserLocalTimeProvider>();
 builder.Services.AddSingleton<ProgressionLevelCalculator>();
 builder.Services.AddSingleton<ActivityStreakCalculator>();
 builder.Services.AddScoped<ProgressionService>();
+builder.Services.AddScoped<ProgressionAchievementHooks>();
 builder.Services.AddScoped<ProgressionActivityPageFilter>();
 builder.Services.AddSingleton<GoalTimelineCalculator>();
 builder.Services.AddSingleton<MacroTargetCalculator>();

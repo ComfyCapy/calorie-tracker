@@ -119,5 +119,6 @@ public sealed class DiaryCopyServiceTests
     private static DiaryCopyService CreateService(TestDatabase database) =>
         new(
             database.Context,
-            new DailyMaintenanceSnapshotService(database.Context));
+            new DailyMaintenanceSnapshotService(database.Context),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
 }

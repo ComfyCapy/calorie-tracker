@@ -169,7 +169,8 @@ public class CapyTests
         var model = new CustomisationModel(
             database.Context,
             PageModelTestContext.CreateUserManager(),
-            provisioning);
+            provisioning,
+            PageModelTestContext.CreateProgressionHooks(database.Context));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

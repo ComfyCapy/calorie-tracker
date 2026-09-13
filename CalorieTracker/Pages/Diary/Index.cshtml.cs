@@ -117,7 +117,8 @@ namespace CalorieTracker.Pages.Diary
 
         public async Task<IActionResult> OnPostCopyPreviousDayAsync(
             DateTime targetDate,
-            bool confirmAdditive)
+            bool confirmAdditive,
+            CancellationToken cancellationToken = default)
         {
             if (!ValidationRules.IsValidDiaryDate(targetDate) ||
                 targetDate.Date <= ValidationRules.MinimumDiaryDate)
@@ -141,7 +142,8 @@ namespace CalorieTracker.Pages.Diary
                 userId,
                 targetDate.AddDays(-1),
                 targetDate,
-                confirmAdditive);
+                confirmAdditive,
+                cancellationToken);
 
             TempData["UiStatusMessage"] = result.Outcome switch
             {

@@ -13,13 +13,16 @@ namespace CalorieTracker.Pages.Foods
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ProgressionAchievementHooks _progressionHooks;
 
         public CreateModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            ProgressionAchievementHooks progressionHooks)
         {
             _context = context;
             _userManager = userManager;
+            _progressionHooks = progressionHooks;
         }
 
         [BindProperty]
@@ -47,7 +50,8 @@ namespace CalorieTracker.Pages.Foods
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(
+            CancellationToken cancellationToken = default)
         {
             if (!HasValidDiaryContext())
             {
@@ -80,6 +84,9 @@ namespace CalorieTracker.Pages.Foods
 
             _context.Foods.Add(Food);
             await _context.SaveChangesAsync();
+            await _progressionHooks.EvaluateFoodsAsync(
+                userId,
+                cancellationToken);
             TempData["UiStatusMessage"] = "Food added.";
 
             if (ReturnToDiary)

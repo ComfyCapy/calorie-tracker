@@ -16,17 +16,20 @@ public sealed class CreateModel : PageModel
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ReusableMealService _reusableMealService;
     private readonly IUserLocalTimeProvider _userLocalTimeProvider;
+    private readonly ProgressionAchievementHooks _progressionHooks;
 
     public CreateModel(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         ReusableMealService reusableMealService,
-        IUserLocalTimeProvider userLocalTimeProvider)
+        IUserLocalTimeProvider userLocalTimeProvider,
+        ProgressionAchievementHooks progressionHooks)
     {
         _context = context;
         _userManager = userManager;
         _reusableMealService = reusableMealService;
         _userLocalTimeProvider = userLocalTimeProvider;
+        _progressionHooks = progressionHooks;
     }
 
     [BindProperty]
@@ -48,7 +51,8 @@ public sealed class CreateModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync()
+    public async Task<IActionResult> OnPostAsync(
+        CancellationToken cancellationToken = default)
     {
         ValidateInput();
         var userId = _userManager.GetUserId(User);
@@ -85,6 +89,9 @@ public sealed class CreateModel : PageModel
         };
         _context.SavedMeals.Add(meal);
         await _context.SaveChangesAsync();
+        await _progressionHooks.EvaluateSavedMealsAsync(
+            userId,
+            cancellationToken);
         TempData["UiStatusMessage"] = $"Saved {meal.Name}.";
 
         return RedirectToPage("./Details", new { id = meal.Id });

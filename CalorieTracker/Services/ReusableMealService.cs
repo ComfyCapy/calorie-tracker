@@ -8,13 +8,16 @@ public sealed class ReusableMealService
 {
     private readonly ApplicationDbContext _context;
     private readonly DailyMaintenanceSnapshotService _snapshotService;
+    private readonly ProgressionAchievementHooks _progressionHooks;
 
     public ReusableMealService(
         ApplicationDbContext context,
-        DailyMaintenanceSnapshotService snapshotService)
+        DailyMaintenanceSnapshotService snapshotService,
+        ProgressionAchievementHooks progressionHooks)
     {
         _context = context;
         _snapshotService = snapshotService;
+        _progressionHooks = progressionHooks;
     }
 
     public async Task<List<DiaryEntry>> LoadSourceMealAsync(
@@ -34,7 +37,8 @@ public sealed class ReusableMealService
         string userId,
         int savedMealId,
         DateTime date,
-        string mealType)
+        string mealType,
+        CancellationToken cancellationToken = default)
     {
         if (!ValidationRules.IsValidDiaryDate(date) ||
             !ValidationRules.MealTypes.Contains(mealType))
@@ -54,24 +58,31 @@ public sealed class ReusableMealService
             return null;
         }
 
-        await using var transaction = await _context.Database
-            .BeginTransactionAsync();
+        List<DiaryEntry> entries;
 
-        var entries = savedMeal.Items
-            .OrderBy(item => item.Id)
-            .Select(item => DiarySnapshotFactory.FromSavedMealItem(
-                item,
+        await using (var transaction = await _context.Database
+            .BeginTransactionAsync())
+        {
+            entries = savedMeal.Items
+                .OrderBy(item => item.Id)
+                .Select(item => DiarySnapshotFactory.FromSavedMealItem(
+                    item,
+                    userId,
+                    date,
+                    mealType))
+                .ToList();
+
+            _context.DiaryEntries.AddRange(entries);
+            await _snapshotService.EnsureSnapshotAsync(
                 userId,
-                date,
-                mealType))
-            .ToList();
+                DateOnly.FromDateTime(date));
+            await _snapshotService.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
 
-        _context.DiaryEntries.AddRange(entries);
-        await _snapshotService.EnsureSnapshotAsync(
+        await _progressionHooks.EvaluateDiaryAsync(
             userId,
-            DateOnly.FromDateTime(date));
-        await _snapshotService.SaveChangesAsync();
-        await transaction.CommitAsync();
+            cancellationToken);
 
         return entries.Count;
     }

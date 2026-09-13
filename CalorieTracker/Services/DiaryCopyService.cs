@@ -1,4 +1,5 @@
 using CalorieTracker.Data;
+using CalorieTracker.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CalorieTracker.Services;
@@ -19,20 +20,24 @@ public sealed class DiaryCopyService
 {
     private readonly ApplicationDbContext _context;
     private readonly DailyMaintenanceSnapshotService _snapshotService;
+    private readonly ProgressionAchievementHooks _progressionHooks;
 
     public DiaryCopyService(
         ApplicationDbContext context,
-        DailyMaintenanceSnapshotService snapshotService)
+        DailyMaintenanceSnapshotService snapshotService,
+        ProgressionAchievementHooks progressionHooks)
     {
         _context = context;
         _snapshotService = snapshotService;
+        _progressionHooks = progressionHooks;
     }
 
     public async Task<DiaryCopyResult> CopyAsync(
         string userId,
         DateTime sourceDate,
         DateTime targetDate,
-        bool confirmAdditive)
+        bool confirmAdditive,
+        CancellationToken cancellationToken = default)
     {
         sourceDate = sourceDate.Date;
         targetDate = targetDate.Date;
@@ -68,22 +73,29 @@ public sealed class DiaryCopyService
             return new(DiaryCopyOutcome.TargetNotEmpty);
         }
 
-        await using var transaction = await _context.Database
-            .BeginTransactionAsync();
+        List<DiaryEntry> copies;
 
-        var copies = sourceEntries
-            .Select(entry => DiarySnapshotFactory.CopyEntry(
-                entry,
+        await using (var transaction = await _context.Database
+            .BeginTransactionAsync())
+        {
+            copies = sourceEntries
+                .Select(entry => DiarySnapshotFactory.CopyEntry(
+                    entry,
+                    userId,
+                    targetDate))
+                .ToList();
+
+            _context.DiaryEntries.AddRange(copies);
+            await _snapshotService.EnsureSnapshotAsync(
                 userId,
-                targetDate))
-            .ToList();
+                DateOnly.FromDateTime(targetDate));
+            await _snapshotService.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
 
-        _context.DiaryEntries.AddRange(copies);
-        await _snapshotService.EnsureSnapshotAsync(
+        await _progressionHooks.EvaluateDiaryAsync(
             userId,
-            DateOnly.FromDateTime(targetDate));
-        await _snapshotService.SaveChangesAsync();
-        await transaction.CommitAsync();
+            cancellationToken);
 
         return new(DiaryCopyOutcome.Success, copies.Count);
     }

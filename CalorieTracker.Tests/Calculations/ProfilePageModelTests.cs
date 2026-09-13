@@ -178,7 +178,8 @@ public class ProfilePageModelTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider());
+            new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

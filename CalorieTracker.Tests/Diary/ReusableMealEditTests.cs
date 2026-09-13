@@ -133,5 +133,6 @@ public sealed class ReusableMealEditTests
     private static ReusableMealService CreateService(TestDatabase database) =>
         new(
             database.Context,
-            new DailyMaintenanceSnapshotService(database.Context));
+            new DailyMaintenanceSnapshotService(database.Context),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
 }

@@ -301,7 +301,8 @@ public class CustomPortionFoodTests
     {
         var model = new FoodCreateModel(
             database.Context,
-            PageModelTestContext.CreateUserManager())
+            PageModelTestContext.CreateUserManager(),
+            PageModelTestContext.CreateProgressionHooks(database.Context))
         {
             Food = food
         };
@@ -319,7 +320,8 @@ public class CustomPortionFoodTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider())
+            new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context))
         {
             DiaryEntry = new DiaryEntry
             {

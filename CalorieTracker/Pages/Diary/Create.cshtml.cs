@@ -17,17 +17,20 @@ namespace CalorieTracker.Pages.Diary
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly DailyMaintenanceSnapshotService _snapshotService;
         private readonly IUserLocalTimeProvider _userLocalTimeProvider;
+        private readonly ProgressionAchievementHooks _progressionHooks;
 
         public CreateModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             DailyMaintenanceSnapshotService snapshotService,
-            IUserLocalTimeProvider userLocalTimeProvider)
+            IUserLocalTimeProvider userLocalTimeProvider,
+            ProgressionAchievementHooks progressionHooks)
         {
             _context = context;
             _userManager = userManager;
             _snapshotService = snapshotService;
             _userLocalTimeProvider = userLocalTimeProvider;
+            _progressionHooks = progressionHooks;
         }
 
         [BindProperty]
@@ -147,7 +150,8 @@ namespace CalorieTracker.Pages.Diary
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(
+            CancellationToken cancellationToken = default)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -401,6 +405,9 @@ namespace CalorieTracker.Pages.Diary
                 userId,
                 DateOnly.FromDateTime(DiaryEntry.Date));
             await _snapshotService.SaveChangesAsync();
+            await _progressionHooks.EvaluateDiaryAsync(
+                userId,
+                cancellationToken);
             TempData["UiStatusMessage"] = "Diary entry added.";
 
             return RedirectToPage("./Index", new

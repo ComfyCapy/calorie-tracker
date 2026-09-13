@@ -47,7 +47,8 @@ public class DailyMaintenanceSnapshotTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider(localDate));
+            new TestUserLocalTimeProvider(localDate),
+            PageModelTestContext.CreateProgressionHooks(database.Context));
         PageModelTestContext.Attach(model, "user-1");
 
         var getResult = await model.OnGetAsync(null, "Dinner", food.Id);
@@ -382,7 +383,8 @@ public class DailyMaintenanceSnapshotTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider())
+            new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context))
         {
             DiaryEntry = new DiaryEntry
             {
@@ -437,7 +439,8 @@ public class DailyMaintenanceSnapshotTests
             PageModelTestContext.CreateUserManager(),
             new GoalTimelineCalculator(),
             new DailyMaintenanceSnapshotService(database.Context),
-            new TestUserLocalTimeProvider())
+            new TestUserLocalTimeProvider(),
+            PageModelTestContext.CreateProgressionHooks(database.Context))
         {
             UserProfile = ValidProfile(userId, weightKg: weightKg)
         };
