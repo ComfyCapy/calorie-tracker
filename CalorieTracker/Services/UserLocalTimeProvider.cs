@@ -44,12 +44,25 @@ public sealed class UserLocalTimeProvider : IUserLocalTimeProvider
 
     private TimeZoneInfo ResolveTimeZone()
     {
-        var cookieValue = _httpContextAccessor.HttpContext?
-            .Request.Cookies[TimeZoneCookieName];
+        var request = _httpContextAccessor.HttpContext?.Request;
+
+        return request != null &&
+            TryGetExplicitTimeZone(request, out var timeZone)
+                ? timeZone
+                : TimeZoneInfo.Utc;
+    }
+
+    public static bool TryGetExplicitTimeZone(
+        HttpRequest request,
+        out TimeZoneInfo timeZone)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var cookieValue = request.Cookies[TimeZoneCookieName];
 
         if (string.IsNullOrWhiteSpace(cookieValue))
         {
-            return TimeZoneInfo.Utc;
+            timeZone = TimeZoneInfo.Utc;
+            return false;
         }
 
         string timeZoneId;
@@ -60,26 +73,31 @@ public sealed class UserLocalTimeProvider : IUserLocalTimeProvider
         }
         catch (UriFormatException)
         {
-            return TimeZoneInfo.Utc;
+            timeZone = TimeZoneInfo.Utc;
+            return false;
         }
 
         if (string.IsNullOrWhiteSpace(timeZoneId) ||
             timeZoneId.Length > MaximumTimeZoneIdLength)
         {
-            return TimeZoneInfo.Utc;
+            timeZone = TimeZoneInfo.Utc;
+            return false;
         }
 
         try
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return true;
         }
         catch (TimeZoneNotFoundException)
         {
-            return TimeZoneInfo.Utc;
+            timeZone = TimeZoneInfo.Utc;
+            return false;
         }
         catch (InvalidTimeZoneException)
         {
-            return TimeZoneInfo.Utc;
+            timeZone = TimeZoneInfo.Utc;
+            return false;
         }
     }
 }

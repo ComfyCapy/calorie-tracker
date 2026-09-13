@@ -26,11 +26,15 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>
     private readonly SqliteConnection _connection =
         new("Data Source=:memory:");
     private readonly TimeProvider _timeProvider;
+    private readonly ILoggerProvider? _loggerProvider;
 
-    public IntegrationTestFactory(TimeProvider? timeProvider = null)
+    public IntegrationTestFactory(
+        TimeProvider? timeProvider = null,
+        ILoggerProvider? loggerProvider = null)
     {
         _timeProvider = timeProvider ?? new FixedTimeProvider(
             new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero));
+        _loggerProvider = loggerProvider;
         _connection.Open();
     }
 
@@ -40,7 +44,15 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.ConfigureLogging(logging => logging.ClearProviders());
+        builder.ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+
+            if (_loggerProvider != null)
+            {
+                logging.AddProvider(_loggerProvider);
+            }
+        });
 
         builder.ConfigureAppConfiguration((_, configuration) =>
         {

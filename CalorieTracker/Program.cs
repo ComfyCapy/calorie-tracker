@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net;
 using System.Security.Claims;
@@ -19,6 +20,9 @@ ProductionConfiguration.Validate(builder.Configuration, builder.Environment);
 
 builder.Services.AddRazorPages(options =>
 {
+    options.Conventions.ConfigureFilter(
+        new ServiceFilterAttribute(
+            typeof(ProgressionActivityPageFilter)));
     options.Conventions.AuthorizeAreaFolder(
         "Identity",
         "/Account/Manage");
@@ -201,6 +205,10 @@ builder.Services.AddScoped<CalorieBalanceYearService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddScoped<IUserLocalTimeProvider, UserLocalTimeProvider>();
+builder.Services.AddSingleton<ProgressionLevelCalculator>();
+builder.Services.AddSingleton<ActivityStreakCalculator>();
+builder.Services.AddScoped<ProgressionService>();
+builder.Services.AddScoped<ProgressionActivityPageFilter>();
 builder.Services.AddSingleton<GoalTimelineCalculator>();
 builder.Services.AddSingleton<MacroTargetCalculator>();
 

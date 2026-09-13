@@ -59,9 +59,48 @@ public class UserLocalTimeProviderTests
         Assert.Equal(new DateOnly(2026, 9, 9), provider.Today);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("Not/A_Time_Zone")]
+    [InlineData("%E0%A4%A")]
+    public void MissingOrInvalidTimeZone_IsNotExplicitlyValid(
+        string? timeZoneId)
+    {
+        var context = Context(timeZoneId);
+
+        var isValid = UserLocalTimeProvider.TryGetExplicitTimeZone(
+            context.Request,
+            out _);
+
+        Assert.False(isValid);
+    }
+
+    [Fact]
+    public void ValidTimeZone_IsExplicitlyValid()
+    {
+        var context = Context("America%2FNew_York");
+
+        var isValid = UserLocalTimeProvider.TryGetExplicitTimeZone(
+            context.Request,
+            out var timeZone);
+
+        Assert.True(isValid);
+        Assert.Equal("America/New_York", timeZone.Id);
+    }
+
     private static UserLocalTimeProvider Create(
         DateTimeOffset utcNow,
         string? timeZoneId)
+    {
+        var context = Context(timeZoneId);
+
+        return new UserLocalTimeProvider(
+            new HttpContextAccessor { HttpContext = context },
+            new FixedTimeProvider(utcNow));
+    }
+
+    private static DefaultHttpContext Context(string? timeZoneId)
     {
         var context = new DefaultHttpContext();
 
@@ -71,8 +110,6 @@ public class UserLocalTimeProviderTests
                 $"{UserLocalTimeProvider.TimeZoneCookieName}={timeZoneId}";
         }
 
-        return new UserLocalTimeProvider(
-            new HttpContextAccessor { HttpContext = context },
-            new FixedTimeProvider(utcNow));
+        return context;
     }
 }
