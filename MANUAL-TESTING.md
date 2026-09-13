@@ -31,6 +31,13 @@ Use development/test credentials and configuration. Do not use real personal dat
 - Sign in and sign out using the normal navigation.
 - Request a password reset, follow the link, set a new password and sign in with it.
 
+## Progress
+
+- While signed in, open `/Progress` and confirm the level, XP, activity and achievement summary renders; while signed out, confirm the route redirects to login.
+- From a meaningful product page, confirm the first activity on a new user-local date awards daily XP, then refresh Dashboard and Progress and confirm neither repeated request awards it again.
+- For an existing migrated test user, confirm eligible historical achievements reconcile once without fabricating historical daily activity, daily XP or streaks.
+- Check the Progress page at desktop and narrow viewport widths in Light and Dark themes, including locked/unlocked text and keyboard-readable progress information.
+
 ## Profile
 
 - Complete first-time setup in Metric mode and verify estimates are shown.

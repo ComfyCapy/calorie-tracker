@@ -257,6 +257,30 @@ public class BrandingTests
         Assert.Contains("/Identity/Account/ConfirmEmail", email.HtmlBody);
     }
 
+    [Fact]
+    public void ManualReleaseChecklist_IncludesAuthenticatedProgressSmokeTest()
+    {
+        var checklistPath = Path.GetFullPath(
+            Path.Combine(
+                AppContext.BaseDirectory,
+                "..",
+                "..",
+                "..",
+                "..",
+                "MANUAL-TESTING.md"));
+        var checklist = File.ReadAllText(checklistPath);
+
+        Assert.Contains("## Progress", checklist, StringComparison.Ordinal);
+        Assert.Contains(
+            "While signed in, open `/Progress`",
+            checklist,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "while signed out, confirm the route redirects to login",
+            checklist,
+            StringComparison.Ordinal);
+    }
+
     private static HttpClient CreateClient(IntegrationTestFactory factory) =>
         factory.CreateClient(new WebApplicationFactoryClientOptions
         {
