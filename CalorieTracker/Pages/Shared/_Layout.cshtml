@@ -127,15 +127,20 @@
 
                 <div class="offcanvas-body app-sidebar-body">
                     <div class="app-sidebar-brand">
-                        <span class="navbar-brand">
-                            <img class="navbar-brand-mark"
-                                 src="~/images/capy/expressions/Capy-Base.png"
-                                 width="40"
-                                 height="40"
-                                 alt="" />
-                            <span>Comfy Capy Calories</span>
+                        <span class="app-brand-lockup">
+                            <img class="app-brand-lockup-image app-brand-lockup-image--light"
+                                 src="~/images/brand/capy-logo-light.png"
+                                 width="1200"
+                                 height="512"
+                                 alt="Comfy Capy"
+                                 asp-append-version="true" />
+                            <img class="app-brand-lockup-image app-brand-lockup-image--dark"
+                                 src="~/images/brand/capy-logo-dark.png"
+                                 width="1200"
+                                 height="512"
+                                 alt="Comfy Capy"
+                                 asp-append-version="true" />
                         </span>
-                        <span class="app-brand-tagline">Tracking made comfier.</span>
                     </div>
 
                     <partial name="_AppNavigation" />
@@ -151,6 +156,23 @@
             @if (isAuthenticated)
             {
                 <nav class="navbar app-mobile-header" aria-label="Mobile application navigation">
+                    <span class="app-mobile-brand">
+                        <span class="app-brand-lockup">
+                            <img class="app-brand-lockup-image app-brand-lockup-image--light"
+                                 src="~/images/brand/capy-logo-light.png"
+                                 width="1200"
+                                 height="512"
+                                 alt="Comfy Capy"
+                                 asp-append-version="true" />
+                            <img class="app-brand-lockup-image app-brand-lockup-image--dark"
+                                 src="~/images/brand/capy-logo-dark.png"
+                                 width="1200"
+                                 height="512"
+                                 alt="Comfy Capy"
+                                 asp-append-version="true" />
+                        </span>
+                    </span>
+
                     <button class="navbar-toggler app-mobile-menu-button"
                             type="button"
                             data-bs-toggle="offcanvas"
@@ -159,15 +181,6 @@
                             aria-label="Open navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-
-                    <span class="app-mobile-brand">
-                        <img class="navbar-brand-mark"
-                             src="~/images/capy/expressions/Capy-Base.png"
-                             width="32"
-                             height="32"
-                             alt="" />
-                        <span>Comfy Capy Calories</span>
-                    </span>
                 </nav>
             }
 

@@ -54,9 +54,11 @@ public sealed class LazycoreCleanupRouteTests
 
         var html = await client.GetStringAsync("/Diary?date=2026-09-09");
 
-        Assert.Contains("diary-hero", html);
+        Assert.Contains(
+            "class=\"ct-scenic-header secondary-page-hero diary-hero\"",
+            html);
         Assert.Contains("One day at a time.", html);
-        Assert.Contains("dashboard-hero-capy.png", html);
+        Assert.DoesNotContain("dashboard-hero-capy.png", html);
         Assert.Contains("diary-layout", html);
         Assert.Contains("diary-summary-card", html);
         Assert.Contains("Daily Summary", html);
@@ -144,9 +146,11 @@ public sealed class LazycoreCleanupRouteTests
         var html = await client.GetStringAsync("/SavedMeals");
 
         Assert.DoesNotContain("/SavedMeals/Create", html);
-        Assert.Contains("saved-meals-hero", html);
+        Assert.Contains(
+            "class=\"ct-scenic-header secondary-page-hero saved-meals-hero\"",
+            html);
         Assert.Contains("Your favourite combinations, ready when you are.", html);
-        Assert.Contains("dashboard-hero-capy.png", html);
+        Assert.DoesNotContain("dashboard-hero-capy.png", html);
         Assert.Contains("saved-meals-empty", html);
         Assert.Contains("Log a meal in your Diary, then save it so you can reuse the whole meal later.", html);
         Assert.Contains("Back to Diary", html);

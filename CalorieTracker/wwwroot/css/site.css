@@ -1399,8 +1399,6 @@ html[data-development-banner-dismissed="true"] .development-banner {
 
 .capy-preview-panel {
     text-align: center;
-    position: sticky;
-    top: 2rem;
 }
 
 .capy-preview-title {
@@ -1799,7 +1797,7 @@ html[data-development-banner-dismissed="true"] .development-banner {
 .capy-customisation-hero {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 30rem);
+    grid-template-columns: minmax(0, 1fr);
     min-width: 0;
     min-height: 15rem;
     align-items: center;
@@ -1831,10 +1829,10 @@ html[data-development-banner-dismissed="true"] .development-banner {
     content: "";
 }
 
-.capy-customisation-hero-copy,
-.capy-customisation-hero-art {
+.capy-customisation-hero-copy {
     position: relative;
     z-index: 1;
+    width: min(100%, 48rem);
     min-width: 0;
 }
 
@@ -1877,19 +1875,6 @@ html[data-development-banner-dismissed="true"] .development-banner {
     color: var(--ct-text);
     font-size: 1.05rem;
     font-weight: 700;
-}
-
-.capy-customisation-hero-art {
-    align-self: end;
-}
-
-.capy-customisation-hero-art img {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-height: 12rem;
-    object-fit: contain;
-    object-position: center right;
 }
 
 .capy-provision-card {
@@ -1953,6 +1938,19 @@ html[data-development-banner-dismissed="true"] .development-banner {
     border-color: rgba(var(--bs-primary-rgb), 0.48);
     background: var(--ct-primary-soft);
     color: var(--ct-primary-strong);
+}
+
+@media (min-width: 1300px) {
+    .capy-category-tabs {
+        gap: 0.25rem;
+        padding-bottom: 0;
+        overflow-x: visible;
+    }
+
+    .capy-category-tab {
+        padding-inline: 0.35rem;
+        font-size: 0.8rem;
+    }
 }
 
 .capy-collection-card {
@@ -2439,13 +2437,6 @@ button.capy-item-tile {
     margin: 0;
 }
 
-@media (min-width: 1100px) {
-    .capy-customisation-sidebar {
-        position: sticky;
-        top: 5rem;
-    }
-}
-
 @media (max-width: 1099.98px) {
     .capy-customisation-layout {
         grid-template-columns: 1fr;
@@ -2464,7 +2455,6 @@ button.capy-item-tile {
 
 @media (max-width: 767.98px) {
     .capy-customisation-hero {
-        grid-template-columns: minmax(0, 1fr) minmax(9rem, 15rem);
         min-height: 12rem;
         padding: var(--ct-space-5);
     }
@@ -2489,13 +2479,8 @@ button.capy-item-tile {
     }
 
     .capy-customisation-hero {
-        grid-template-columns: 1fr;
         min-height: 0;
         padding: var(--ct-space-4);
-    }
-
-    .capy-customisation-hero-art {
-        display: none;
     }
 
     .capy-hero-collection {
@@ -3712,27 +3697,30 @@ summary:focus-visible {
     padding: var(--ct-space-2) var(--ct-space-2) var(--ct-space-5);
 }
 
-.app-sidebar-brand .navbar-brand {
-    max-width: 100%;
-    margin: 0;
-    color: var(--ct-text);
-    font-size: 1rem;
-    line-height: 1.15;
-    white-space: normal;
-}
-
-.app-sidebar-brand .navbar-brand-mark {
-    width: 2.5rem;
-    height: 2.5rem;
-    max-width: 2.5rem;
-    max-height: 2.5rem;
-}
-
-.app-brand-tagline {
+.app-brand-lockup {
     display: block;
-    margin: var(--ct-space-1) 0 0 3rem;
-    color: var(--ct-text-muted);
-    font-size: 0.72rem;
+    width: min(11.875rem, 100%);
+    max-width: 100%;
+    aspect-ratio: 1200 / 512;
+    line-height: 0;
+}
+
+.app-brand-lockup-image {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.app-brand-lockup-image--dark {
+    display: none;
+}
+
+[data-bs-theme="dark"] .app-brand-lockup-image--light {
+    display: none;
+}
+
+[data-bs-theme="dark"] .app-brand-lockup-image--dark {
+    display: block;
 }
 
 .app-navigation {
@@ -3916,22 +3904,17 @@ summary:focus-visible {
 }
 
 .app-mobile-brand {
-    display: inline-flex;
+    display: flex;
     min-width: 0;
     flex: 1 1 auto;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--ct-space-2);
     color: var(--ct-text);
-    font-size: 0.95rem;
-    font-weight: 700;
 }
 
-.app-mobile-brand > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.app-mobile-brand .app-brand-lockup {
+    width: min(10.625rem, 100%);
 }
 
 .development-banner {
@@ -4024,6 +4007,44 @@ summary:focus-visible {
     border-color: rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.06);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.ct-scenic-header.secondary-page-hero {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 10.5rem;
+    gap: 0;
+    margin-bottom: 0;
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.ct-scenic-header.secondary-page-hero .ct-scenic-header__content {
+    width: min(100%, 44rem);
+}
+
+.ct-scenic-header.secondary-page-hero .ct-page-title {
+    max-width: 18ch;
+    font-size: clamp(2.1rem, 4.5vw, 3.5rem);
+}
+
+.ct-scenic-header.secondary-page-hero .ct-page-subtitle {
+    max-width: 44rem;
+    font-size: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .ct-scenic-header.secondary-page-hero {
+        min-height: 0;
+        padding: var(--ct-space-4);
+    }
+
+    .ct-scenic-header.secondary-page-hero .ct-page-title {
+        max-width: none;
+        font-size: clamp(1.9rem, 9vw, 2.5rem);
+    }
+
+    .ct-scenic-header.secondary-page-hero .ct-page-subtitle {
+        font-size: 0.9rem;
+    }
 }
 
 @media (min-width: 992px) {
@@ -5246,7 +5267,6 @@ summary:focus-visible {
 
 .profile-motivation-card {
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(8rem, 1.1fr);
     align-items: center;
     gap: var(--ct-space-3);
     overflow: hidden;
@@ -5272,17 +5292,6 @@ summary:focus-visible {
     color: var(--ct-text);
     font-size: 1.05rem;
     line-height: 1.35;
-}
-
-.profile-motivation-art {
-    min-width: 0;
-}
-
-.profile-motivation-art img {
-    display: block;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
 }
 
 .profile-tips-heading {
@@ -5435,15 +5444,6 @@ summary:focus-visible {
     .profile-unit-choices,
     .profile-estimate-grid {
         grid-template-columns: 1fr;
-    }
-
-    .profile-motivation-card {
-        grid-template-columns: 1fr;
-    }
-
-    .profile-motivation-art {
-        width: min(100%, 16rem);
-        justify-self: center;
     }
 
     .profile-card-legend {

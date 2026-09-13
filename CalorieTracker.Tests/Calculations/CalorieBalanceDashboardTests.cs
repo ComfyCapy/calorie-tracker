@@ -76,7 +76,7 @@ public class CalorieBalanceDashboardTests
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
 
         Assert.Contains("Good afternoon, Maya", html);
-        Assert.Contains("/images/brand/dashboard-hero-capy.png", html);
+        Assert.DoesNotContain("dashboard-hero-capy.png", html);
         Assert.Contains("class=\"dashboard-primary-grid\"", html);
         Assert.Contains("class=\"dashboard-calorie-ring is-unset\"", html);
         Assert.Contains("id=\"dashboardMacroCards\"", html);

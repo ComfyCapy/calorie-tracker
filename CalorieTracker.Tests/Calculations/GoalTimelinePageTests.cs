@@ -99,7 +99,9 @@ public class GoalTimelinePageTests
         var profile = await client.GetStringAsync("/Profile/Index");
 
         Assert.Contains("class=\"profile-page\"", profile);
-        Assert.Contains("profile-hero", profile);
+        Assert.Contains(
+            "class=\"ct-scenic-header secondary-page-hero profile-hero\"",
+            profile);
         Assert.Contains("profile-body-card", profile);
         Assert.Contains("profile-activity-card", profile);
         Assert.Contains("profile-goal-card", profile);
@@ -108,7 +110,7 @@ public class GoalTimelinePageTests
         Assert.Contains("profile-motivation-card", profile);
         Assert.Contains("profile-tips-card", profile);
         Assert.Contains("Small steps still move you forward.", profile);
-        Assert.Contains("dashboard-hero-capy", profile);
+        Assert.DoesNotContain("dashboard-hero-capy", profile);
         Assert.Contains("Save changes", profile);
         Assert.Contains("id=\"metricSystem\"", profile);
         Assert.Contains("id=\"imperialSystem\"", profile);

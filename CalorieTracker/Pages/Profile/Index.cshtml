@@ -11,7 +11,7 @@
         new CalorieTracker.Models.ScenicPageHeaderModel(
             Title: "Profile & Goals",
             Subtitle: "Set your goals, find your pace. These details help Comfy Capy estimate your daily calorie needs.",
-            CssClass: "profile-hero"))
+            CssClass: "secondary-page-hero profile-hero"))
 
     @if (!string.IsNullOrWhiteSpace(Model.ProfileStatusMessage))
     {
@@ -474,10 +474,6 @@
                     <div class="profile-motivation-copy">
                         <span>A Comfy reminder</span>
                         <strong>Small steps still move you forward.</strong>
-                    </div>
-
-                    <div class="profile-motivation-art" aria-hidden="true">
-                        <img src="~/images/brand/dashboard-hero-capy.png" alt="" />
                     </div>
                 </aside>
 

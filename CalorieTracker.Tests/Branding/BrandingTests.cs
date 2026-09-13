@@ -105,7 +105,7 @@ public class BrandingTests
     }
 
     [Fact]
-    public async Task Dashboard_UsesReusableScenicHeaderWithHeroArtwork()
+    public async Task Dashboard_UsesReusableScenicHeaderWithoutArtwork()
     {
         using var factory = new IntegrationTestFactory();
         using var client = CreateClient(factory);
@@ -114,22 +114,26 @@ public class BrandingTests
         var html = await client.GetStringAsync("/");
 
         Assert.Contains(
-            "class=\"ct-scenic-header ct-scenic-header--with-art dashboard-hero\"",
+            "class=\"ct-scenic-header dashboard-hero\"",
             html);
+        Assert.DoesNotContain("secondary-page-hero", html);
         Assert.Contains("class=\"ct-page-title\">Good afternoon</h1>", html);
-        Assert.Contains("class=\"ct-art-slot ct-scenic-header__art\"", html);
-        Assert.Contains("src=\"/images/brand/dashboard-hero-capy.png\"", html);
+        Assert.DoesNotContain("class=\"ct-art-slot ct-scenic-header__art\"", html);
+        Assert.DoesNotContain("dashboard-hero-capy.png", html);
         Assert.DoesNotContain("data-development-artwork=\"true\"", html);
         Assert.DoesNotContain("HERO ARTWORK GOES HERE", html);
-        Assert.Contains("aria-hidden=\"true\"", html);
-        Assert.Contains("alt=\"\"", html);
+    }
 
-        var artworkResponse = await client.GetAsync(
-            "/images/brand/dashboard-hero-capy.png");
-        Assert.Equal(HttpStatusCode.OK, artworkResponse.StatusCode);
-        Assert.Equal(
-            "image/png",
-            artworkResponse.Content.Headers.ContentType?.MediaType);
+    [Fact]
+    public async Task About_DoesNotShowAiPlaceholderNotice()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = CreateClient(factory);
+
+        var html = await client.GetStringAsync("/About");
+
+        Assert.DoesNotContain("A note about our images", html);
+        Assert.DoesNotContain("AI-generated placeholders", html);
     }
 
     [Fact]

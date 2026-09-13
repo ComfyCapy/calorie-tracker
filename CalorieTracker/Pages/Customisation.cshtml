@@ -50,7 +50,7 @@
         new
         {
             Key = "colours",
-            Name = "Colours",
+            Name = "Expressions",
             Icon = "Icon-Expression.png",
             ItemCategories = new[] { CapyCategories.Expression },
             OptionalCategories = Array.Empty<string>()
@@ -82,6 +82,16 @@
         .ToHashSet();
     var unlockedCount = Model.CatalogueItems.Count(item => ownedItemIds.Contains(item.Id));
     var ownsGoldCrown = ownedItemIds.Contains(14);
+
+    string getCosmeticDisplayName(CalorieTracker.Models.CapyItem? item) =>
+        item?.Id switch
+        {
+            4 => "Aviators",
+            5 => "Green Scarf",
+            6 => "Green Bow Tie",
+            null => "None",
+            _ => item.Name
+        };
 }
 
 <div class="customisation-page"
@@ -112,9 +122,6 @@
             <p class="capy-hero-message">Small steps still move you forward.</p>
         </div>
 
-        <div class="capy-customisation-hero-art" aria-hidden="true">
-            <img src="/images/brand/dashboard-hero-capy.png" alt="" />
-        </div>
     </section>
 
     @if (Model.CapyAppearance == null)
@@ -244,6 +251,7 @@
                                         {
                                             var isOwned = ownedItemIds.Contains(item.Id);
                                             var isEquipped = getEquippedItemId(item.Category) == item.Id;
+                                            var displayName = getCosmeticDisplayName(item);
 
                                             if (isOwned)
                                             {
@@ -251,14 +259,14 @@
                                                         class="capy-item-tile @(isEquipped ? "is-equipped" : "")"
                                                         data-category="@item.Category"
                                                         data-item-id="@item.Id"
-                                                        title="@item.Name"
-                                                        aria-label="@item.Name, @(isEquipped ? "equipped" : "unlocked")"
+                                                        title="@displayName"
+                                                        aria-label="@displayName, @(isEquipped ? "equipped" : "unlocked")"
                                                         aria-pressed="@(isEquipped ? "true" : "false")">
                                                     <span class="capy-item-visual">
                                                         <img src="@item.ImagePath" alt="" />
                                                     </span>
                                                     <span class="capy-item-details">
-                                                        <strong>@item.Name</strong>
+                                                        <strong>@displayName</strong>
                                                         <span class="capy-item-requirement">Included in your collection</span>
                                                         <span class="capy-item-status">@(isEquipped ? "Equipped" : "Unlocked")</span>
                                                     </span>
@@ -267,15 +275,15 @@
                                             else
                                             {
                                                 <div class="capy-item-tile capy-item-locked"
-                                                     title="@item.Name — Locked"
+                                                     title="@displayName — Locked"
                                                      role="img"
-                                                     aria-label="@item.Name, locked. Secret unlock requirement.">
+                                                     aria-label="@displayName, locked. Secret unlock requirement.">
                                                     <span class="capy-item-visual">
                                                         <img src="@item.ImagePath" alt="" />
                                                         <span class="capy-lock-icon" aria-hidden="true">🔒</span>
                                                     </span>
                                                     <span class="capy-item-details">
-                                                        <strong>@item.Name</strong>
+                                                        <strong>@displayName</strong>
                                                         <span class="capy-item-requirement">Secret unlock</span>
                                                         <span class="capy-item-status">Locked</span>
                                                     </span>
@@ -343,12 +351,12 @@
                 <section class="ct-card capy-loadout-card" aria-labelledby="capyLoadoutTitle">
                     <h2 id="capyLoadoutTitle">Current loadout</h2>
                     <dl class="capy-loadout-list">
-                        <div><dt>Hat</dt><dd data-capy-loadout="@CapyCategories.HatHair">@(Model.CapyAppearance.HatHair?.Name ?? "None")</dd></div>
-                        <div><dt>Outfit</dt><dd data-capy-loadout="@CapyCategories.Clothes">@(Model.CapyAppearance.Clothes?.Name ?? "None")</dd></div>
-                        <div><dt>Neck accessory</dt><dd data-capy-loadout="@CapyCategories.NeckAccessory">@(Model.CapyAppearance.NeckAccessory?.Name ?? "None")</dd></div>
-                        <div><dt>Face accessory</dt><dd data-capy-loadout="@CapyCategories.FaceAccessory">@(Model.CapyAppearance.FaceAccessory?.Name ?? "None")</dd></div>
-                        <div><dt>Background</dt><dd data-capy-loadout="@CapyCategories.Background">@(Model.CapyAppearance.Background?.Name ?? "None")</dd></div>
-                        <div><dt>Colour</dt><dd data-capy-loadout="@CapyCategories.Expression">@(Model.CapyAppearance.Expression?.Name ?? "None")</dd></div>
+                        <div><dt>Hat</dt><dd data-capy-loadout="@CapyCategories.HatHair">@getCosmeticDisplayName(Model.CapyAppearance.HatHair)</dd></div>
+                        <div><dt>Outfit</dt><dd data-capy-loadout="@CapyCategories.Clothes">@getCosmeticDisplayName(Model.CapyAppearance.Clothes)</dd></div>
+                        <div><dt>Neck accessory</dt><dd data-capy-loadout="@CapyCategories.NeckAccessory">@getCosmeticDisplayName(Model.CapyAppearance.NeckAccessory)</dd></div>
+                        <div><dt>Face accessory</dt><dd data-capy-loadout="@CapyCategories.FaceAccessory">@getCosmeticDisplayName(Model.CapyAppearance.FaceAccessory)</dd></div>
+                        <div><dt>Background</dt><dd data-capy-loadout="@CapyCategories.Background">@getCosmeticDisplayName(Model.CapyAppearance.Background)</dd></div>
+                        <div><dt>Expression</dt><dd data-capy-loadout="@CapyCategories.Expression">@getCosmeticDisplayName(Model.CapyAppearance.Expression)</dd></div>
                         <div><dt>Title</dt><dd>Not available</dd></div>
                     </dl>
                 </section>

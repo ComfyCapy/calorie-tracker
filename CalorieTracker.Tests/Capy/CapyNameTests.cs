@@ -149,6 +149,8 @@ public class CapyNameTests
         var dashboard = await client.GetStringAsync("/");
 
         Assert.Contains("capy-customisation-hero", customisation);
+        Assert.DoesNotContain("capy-customisation-hero-art", customisation);
+        Assert.DoesNotContain("/images/brand/dashboard-hero-capy.png", customisation);
         Assert.Contains("capy-category-tabs", customisation);
         Assert.Contains("capy-collection-card", customisation);
         Assert.Contains("capy-item-grid", customisation);
@@ -159,6 +161,20 @@ public class CapyNameTests
         Assert.Contains("data-category-filter=\"face-accessories\"", customisation);
         Assert.Contains("data-category-filter=\"neck-accessories\"", customisation);
         Assert.Contains("data-category-filter=\"titles\"", customisation);
+        Assert.Contains("data-category-filter=\"colours\"", customisation);
+        Assert.Matches(
+            "data-category-filter=\\\"colours\\\"[^>]*>\\s*Expressions\\s*</button>",
+            customisation);
+        Assert.Contains("id=\"capy-category-title-colours\">Expressions</h3>", customisation);
+        Assert.Contains("<dt>Expression</dt>", customisation);
+        Assert.DoesNotContain("Colours", customisation);
+        Assert.DoesNotContain("<dt>Colour</dt>", customisation);
+        Assert.Contains("<strong>Aviators</strong>", customisation);
+        Assert.Contains("<strong>Green Scarf</strong>", customisation);
+        Assert.Contains("<strong>Green Bow Tie</strong>", customisation);
+        Assert.DoesNotContain("Cool Sunglasses", customisation);
+        Assert.DoesNotContain("Green &amp; Red Scarf", customisation);
+        Assert.DoesNotContain("Red &amp; White Tie", customisation);
         Assert.Contains("data-capy-loadout=\"FaceAccessory\"", customisation);
         Assert.Contains("data-capy-loadout=\"NeckAccessory\"", customisation);
         Assert.Contains("name=\"__RequestVerificationToken\"", customisation);
@@ -173,6 +189,38 @@ public class CapyNameTests
         Assert.DoesNotContain(name, customisation);
         Assert.Contains("&lt;b&gt;Capy&lt;/b&gt;", dashboard);
         Assert.DoesNotContain(name, dashboard);
+    }
+
+    [Theory]
+    [InlineData(5, "Green Scarf")]
+    [InlineData(6, "Green Bow Tie")]
+    public async Task CustomisationUsesPresentationNamesForEquippedCosmetics(
+        int neckAccessoryId,
+        string expectedNeckAccessoryName)
+    {
+        const string userId = "render-cosmetic-name-user";
+        using var factory = new IntegrationTestFactory();
+        await SeedAppearanceAsync(
+            factory,
+            userId,
+            "Display Name Capy",
+            faceAccessoryId: 4,
+            neckAccessoryId: neckAccessoryId);
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
+        client.DefaultRequestHeaders.Add("X-Test-User", userId);
+
+        var customisation = await client.GetStringAsync("/Customisation");
+
+        Assert.Contains(
+            "data-capy-loadout=\"FaceAccessory\">Aviators</dd>",
+            customisation);
+        Assert.Contains(
+            $"data-capy-loadout=\"NeckAccessory\">{expectedNeckAccessoryName}</dd>",
+            customisation);
     }
 
     private static CustomisationModel CreateModel(
@@ -210,7 +258,9 @@ public class CapyNameTests
     private static async Task SeedAppearanceAsync(
         IntegrationTestFactory factory,
         string userId,
-        string name)
+        string name,
+        int? faceAccessoryId = null,
+        int? neckAccessoryId = null)
     {
         using var scope = factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -226,7 +276,9 @@ public class CapyNameTests
         context.UserCapyAppearances.Add(new UserCapyAppearance
         {
             UserId = userId,
-            Name = name
+            Name = name,
+            FaceAccessoryId = faceAccessoryId,
+            NeckAccessoryId = neckAccessoryId
         });
         await context.SaveChangesAsync();
     }

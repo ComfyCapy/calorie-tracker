@@ -23,8 +23,10 @@ public class FoodSearchDiscoverabilityTests
         Assert.Contains("Search all foods", html);
         Assert.Contains("Add Custom Food", html);
         Assert.Contains("class=\"foods-page\"", html);
-        Assert.Contains("foods-hero", html);
-        Assert.Contains("/images/brand/dashboard-hero-capy.png", html);
+        Assert.Contains(
+            "class=\"ct-scenic-header secondary-page-hero foods-hero\"",
+            html);
+        Assert.DoesNotContain("dashboard-hero-capy.png", html);
         Assert.Contains("href=\"/SavedMeals\"", html);
         Assert.DoesNotContain("Search the wider food catalogue.", html);
         Assert.Contains("searchTerm=banana", html);
