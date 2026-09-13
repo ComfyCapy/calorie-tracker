@@ -64,6 +64,14 @@ public sealed class AccountDeletionTests
             .AnyAsync(item => item.UserId == DeletedUserId));
         Assert.False(await context.UserCapyAppearances
             .AnyAsync(appearance => appearance.UserId == DeletedUserId));
+        Assert.False(await context.UserDailyActivities
+            .AnyAsync(activity => activity.UserId == DeletedUserId));
+        Assert.False(await context.UserAchievements
+            .AnyAsync(achievement => achievement.UserId == DeletedUserId));
+        Assert.False(await context.UserXpEvents
+            .AnyAsync(xpEvent => xpEvent.UserId == DeletedUserId));
+        Assert.False(await context.UserProgressionStates
+            .AnyAsync(state => state.UserId == DeletedUserId));
 
         Assert.True(await context.Users
             .AnyAsync(user => user.Id == SurvivingUserId));
@@ -86,6 +94,14 @@ public sealed class AccountDeletionTests
         Assert.True(await context.UserCapyAppearances
             .AnyAsync(appearance =>
                 appearance.UserId == SurvivingUserId));
+        Assert.True(await context.UserDailyActivities
+            .AnyAsync(activity => activity.UserId == SurvivingUserId));
+        Assert.True(await context.UserAchievements
+            .AnyAsync(achievement => achievement.UserId == SurvivingUserId));
+        Assert.True(await context.UserXpEvents
+            .AnyAsync(xpEvent => xpEvent.UserId == SurvivingUserId));
+        Assert.True(await context.UserProgressionStates
+            .AnyAsync(state => state.UserId == SurvivingUserId));
     }
 
     [Fact]
@@ -138,6 +154,8 @@ public sealed class AccountDeletionTests
             .AnyAsync(food => food.UserId == DeletedUserId));
         Assert.True(await verificationContext.FoodPortions
             .AnyAsync(portion => portion.Food!.UserId == DeletedUserId));
+        Assert.True(await verificationContext.UserXpEvents
+            .AnyAsync(xpEvent => xpEvent.UserId == DeletedUserId));
     }
 
     private static HttpClient CreateClient(
@@ -226,6 +244,52 @@ public sealed class AccountDeletionTests
                 UserId = userId,
                 ExpressionId = 1,
                 BackgroundId = 13
+            },
+            new UserDailyActivity
+            {
+                UserId = userId,
+                LocalDate = new DateOnly(2026, 9, 13),
+                RecordedAtUtc = new DateTime(
+                    2026,
+                    9,
+                    13,
+                    5,
+                    0,
+                    0,
+                    DateTimeKind.Utc),
+                TimeZoneId = "Europe/London"
+            },
+            new UserAchievement
+            {
+                UserId = userId,
+                AchievementKey = "diary.first-entry",
+                UnlockedAtUtc = new DateTime(
+                    2026,
+                    9,
+                    13,
+                    5,
+                    0,
+                    0,
+                    DateTimeKind.Utc)
+            },
+            new UserXpEvent
+            {
+                UserId = userId,
+                EventKey = "achievement:diary.first-entry",
+                Amount = 25,
+                AwardedAtUtc = new DateTime(
+                    2026,
+                    9,
+                    13,
+                    5,
+                    0,
+                    0,
+                    DateTimeKind.Utc)
+            },
+            new UserProgressionState
+            {
+                UserId = userId,
+                AchievementBackfillVersion = 0
             });
         await context.SaveChangesAsync();
     }
