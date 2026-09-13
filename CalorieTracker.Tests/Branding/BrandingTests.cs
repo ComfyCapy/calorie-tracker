@@ -101,6 +101,7 @@ public class BrandingTests
         Assert.Contains("href=\"/SavedMeals\"", html);
         Assert.Contains("href=\"/Profile\"", html);
         Assert.Contains("href=\"/Customisation\"", html);
+        Assert.Contains("href=\"/Progress\"", html);
         Assert.DoesNotContain("id=\"navbarSupportedContent\"", html);
     }
 

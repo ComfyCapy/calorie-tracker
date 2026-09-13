@@ -1,0 +1,168 @@
+@page
+@model CalorieTracker.Pages.ProgressModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Progress";
+    var level = Model.Summary.Level;
+    var activity = Model.Summary.Activity;
+    var progressPercentage = level.ProgressPercentage.ToString(
+        "0.##",
+        CultureInfo.InvariantCulture);
+    var unlockedCount = Model.Achievements.Count(item => item.IsUnlocked);
+}
+
+<div class="progress-page">
+    @await Html.PartialAsync(
+        "_ScenicPageHeader",
+        new CalorieTracker.Models.ScenicPageHeaderModel(
+            Title: "Progress",
+            Subtitle: "Little steps add up.",
+            Eyebrow: "Your journey",
+            CssClass: "secondary-page-hero progress-hero"))
+
+    @if (!string.IsNullOrWhiteSpace(Model.ReconciliationMessage))
+    {
+        <div class="alert alert-success progress-backfill-message" role="status">
+            @Model.ReconciliationMessage
+        </div>
+    }
+
+    <div class="progress-summary-grid">
+        <section class="ct-card progress-level-card"
+                 aria-labelledby="progress-level-heading">
+            <div class="progress-card-heading">
+                <div>
+                    <p class="ct-eyebrow">Your level</p>
+                    <h2 id="progress-level-heading">Level @level.CurrentLevel</h2>
+                </div>
+                <span class="progress-total-xp">@Model.Summary.TotalXp XP</span>
+            </div>
+
+            @if (level.IsFinalLevel)
+            {
+                <div class="progress-level-complete">
+                    <span class="progress-level-symbol" aria-hidden="true">✓</span>
+                    <div>
+                        <strong>Highest level reached</strong>
+                        <span>You’ve filled every level at your own pace.</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="progress-level-copy">
+                    <strong>@progressPercentage% to your next level</strong>
+                    <span>@level.XpRemainingToNextLevel XP to go</span>
+                </div>
+
+                <div class="progress-level-track"
+                     role="progressbar"
+                     aria-label="Progress toward the next level"
+                     aria-valuenow="@progressPercentage"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuetext="@progressPercentage% to the next level">
+                    <span style="width: @progressPercentage%"></span>
+                </div>
+            }
+        </section>
+
+        <section class="ct-card progress-activity-card"
+                 aria-labelledby="progress-activity-heading">
+            <div class="progress-card-heading">
+                <div>
+                    <p class="ct-eyebrow">Your rhythm</p>
+                    <h2 id="progress-activity-heading">Activity</h2>
+                </div>
+                <span class="progress-activity-symbol" aria-hidden="true">☀</span>
+            </div>
+
+            @if (activity.DistinctActiveDayCount == 0)
+            {
+                <p class="progress-activity-empty">
+                    No activity yet. Your active days will appear here when they happen.
+                </p>
+            }
+
+            <dl class="progress-activity-stats">
+                <div>
+                    <dt>Current streak</dt>
+                    <dd>
+                        @if (activity.CurrentStreak == 0)
+                        {
+                            <span>No active streak right now.</span>
+                        }
+                        else
+                        {
+                            <strong>@activity.CurrentStreak</strong>
+                            <span>@(activity.CurrentStreak == 1 ? "day" : "days")</span>
+                        }
+                    </dd>
+                </div>
+                <div>
+                    <dt>Longest streak</dt>
+                    <dd>
+                        <strong>@activity.LongestStreak</strong>
+                        <span>@(activity.LongestStreak == 1 ? "day" : "days")</span>
+                    </dd>
+                </div>
+                <div>
+                    <dt>Active days</dt>
+                    <dd>
+                        <strong>@activity.DistinctActiveDayCount</strong>
+                        <span>total</span>
+                    </dd>
+                </div>
+            </dl>
+        </section>
+    </div>
+
+    <section class="progress-achievements"
+             aria-labelledby="progress-achievements-heading">
+        <div class="progress-section-heading">
+            <div>
+                <p class="ct-eyebrow">Small milestones</p>
+                <h2 id="progress-achievements-heading">Achievements</h2>
+                <p>Things you’ve discovered while making Comfy Capy yours.</p>
+            </div>
+            <span class="progress-achievement-count">
+                @unlockedCount of @Model.Achievements.Count unlocked
+            </span>
+        </div>
+
+        <div class="progress-achievement-grid">
+            @foreach (var achievement in Model.Achievements)
+            {
+                <article class="progress-achievement-card @(achievement.IsUnlocked ? "is-unlocked" : "is-locked")"
+                         data-achievement-key="@achievement.Key"
+                         data-achievement-state="@(achievement.IsUnlocked ? "unlocked" : "locked")">
+                    <div class="progress-achievement-topline">
+                        <span class="progress-achievement-symbol" aria-hidden="true">
+                            @achievement.Symbol
+                        </span>
+                        <span class="progress-achievement-state">
+                            @(achievement.IsUnlocked ? "Unlocked" : "Locked")
+                        </span>
+                    </div>
+
+                    <div class="progress-achievement-copy">
+                        <h3>@achievement.DisplayName</h3>
+                        <p>@achievement.Description</p>
+                    </div>
+
+                    <footer class="progress-achievement-footer">
+                        <span class="progress-achievement-xp">+@achievement.XpReward XP</span>
+
+                        @if (achievement.UnlockedAtUtc.HasValue)
+                        {
+                            <time datetime="@achievement.UnlockedAtUtc.Value.ToString("O", CultureInfo.InvariantCulture)">
+                                Unlocked @achievement.UnlockedAtUtc.Value.ToString("d MMM yyyy", CultureInfo.InvariantCulture)
+                            </time>
+                        }
+                    </footer>
+                </article>
+            }
+        </div>
+    </section>
+</div>
