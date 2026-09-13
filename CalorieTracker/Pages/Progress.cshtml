@@ -3,7 +3,7 @@
 @using System.Globalization
 
 @{
-    ViewData["Title"] = "Progress";
+    ViewData["Title"] = "Achievements";
     var level = Model.Summary.Level;
     var activity = Model.Summary.Activity;
     var progressPercentage = level.ProgressPercentage.ToString(
@@ -16,7 +16,7 @@
     @await Html.PartialAsync(
         "_ScenicPageHeader",
         new CalorieTracker.Models.ScenicPageHeaderModel(
-            Title: "Progress",
+            Title: "Achievements",
             Subtitle: "Little steps add up.",
             Eyebrow: "Your journey",
             CssClass: "secondary-page-hero progress-hero"))
@@ -119,6 +119,7 @@
     </div>
 
     <section class="progress-achievements"
+             data-achievements-section
              aria-labelledby="progress-achievements-heading">
         <div class="progress-section-heading">
             <div>
@@ -126,12 +127,22 @@
                 <h2 id="progress-achievements-heading">Achievements</h2>
                 <p>Things you’ve discovered while making Comfy Capy yours.</p>
             </div>
-            <span class="progress-achievement-count">
-                @unlockedCount of @Model.Achievements.Count unlocked
-            </span>
+            <div class="progress-achievement-controls">
+                <span class="progress-achievement-count">
+                    @unlockedCount of @Model.Achievements.Count unlocked
+                </span>
+                <button type="button"
+                        class="progress-hide-unlocked"
+                        data-hide-unlocked
+                        aria-pressed="false"
+                        aria-controls="progress-achievement-grid"
+                        hidden>
+                    Hide unlocked
+                </button>
+            </div>
         </div>
 
-        <div class="progress-achievement-grid">
+        <div id="progress-achievement-grid" class="progress-achievement-grid">
             @foreach (var achievement in Model.Achievements)
             {
                 <article class="progress-achievement-card @(achievement.IsUnlocked ? "is-unlocked" : "is-locked")"
@@ -164,5 +175,17 @@
                 </article>
             }
         </div>
+        <p class="progress-achievements-empty"
+           data-achievements-empty
+           role="status"
+           hidden>
+            All achievements are unlocked.
+        </p>
     </section>
 </div>
+
+@section Scripts {
+    <script type="module"
+            src="~/js/progress-achievements.mjs"
+            asp-append-version="true"></script>
+}

@@ -3380,6 +3380,38 @@ a.calorie-year-day:focus-visible {
     font-size: 0.82rem;
 }
 
+.progress-achievement-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ct-space-2);
+}
+
+.progress-hide-unlocked {
+    min-height: 2.2rem;
+    padding: 0.42rem 0.7rem;
+    border: 1px solid var(--ct-border-strong);
+    border-radius: var(--ct-radius-pill);
+    background: var(--ct-surface-raised);
+    color: var(--ct-text-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.progress-hide-unlocked:hover,
+.progress-hide-unlocked[aria-pressed="true"] {
+    border-color: rgba(var(--bs-primary-rgb), 0.32);
+    background: var(--ct-primary-soft);
+    color: var(--ct-primary-strong);
+}
+
+.progress-hide-unlocked:focus-visible,
+.app-nav-link--danger:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
 .progress-achievement-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -3466,6 +3498,16 @@ a.calorie-year-day:focus-visible {
     color: var(--ct-text-muted);
     font-size: 0.73rem;
     text-align: right;
+}
+
+.progress-achievements-empty {
+    margin: 0;
+    padding: var(--ct-space-4);
+    border: 1px dashed var(--ct-border-strong);
+    border-radius: var(--ct-radius-md);
+    background: var(--ct-surface);
+    color: var(--ct-text-muted);
+    text-align: center;
 }
 
 @media (max-width: 767.98px) {
@@ -4113,6 +4155,31 @@ summary:focus-visible {
     font-size: 0.86rem;
 }
 
+.app-nav-actions {
+    padding-top: var(--ct-space-3);
+    border-top: 1px solid var(--ct-border);
+}
+
+.app-nav-actions form {
+    margin: 0;
+}
+
+.app-nav-link--danger {
+    width: 100%;
+    border-color: transparent;
+    color: var(--ct-danger);
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.app-nav-link--danger:hover {
+    border-color: color-mix(in srgb, var(--ct-danger) 24%, transparent);
+    color: var(--ct-danger);
+    background: color-mix(in srgb, var(--ct-danger) 10%, transparent);
+}
+
 .app-nav-icon {
     width: 1.25rem;
     height: 1.25rem;
@@ -4186,6 +4253,15 @@ summary:focus-visible {
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.account-nav-level {
+    display: block;
+    margin-top: 0.12rem;
+    color: var(--ct-text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
 }
 
 .app-sidebar .navbar-capy {

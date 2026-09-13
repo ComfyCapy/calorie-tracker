@@ -3,12 +3,13 @@
 @using CalorieTracker.Data
 @using CalorieTracker.Models
 
-@inject SignInManager<ApplicationUser> SignInManager
+@model int?
+
 @inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext DbContext
 
 <ul class="navbar-nav account-nav">
-    @if (SignInManager.IsSignedIn(User))
+    @if (User.Identity?.IsAuthenticated == true)
     {
         var currentUser = await UserManager.GetUserAsync(User);
         var greetingName = string.IsNullOrWhiteSpace(currentUser?.FirstName)
@@ -49,10 +50,14 @@
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                         aria-label="Open account menu">
-                    <span class="account-nav-copy">
-                        <span class="account-nav-greeting">Hello</span>
-                        <span class="account-nav-name">@greetingName!</span>
-                    </span>
+                        <span class="account-nav-copy">
+                            <span class="account-nav-greeting">Hello</span>
+                            <span class="account-nav-name">@greetingName!</span>
+                            @if (Model.HasValue)
+                            {
+                                <span class="account-nav-level">Level @Model.Value</span>
+                            }
+                        </span>
                 </button>
 
                 <ul class="dropdown-menu dropdown-menu-end account-nav-menu">
@@ -75,10 +80,12 @@
                     <li class="account-nav-logout">
                         <form asp-area="Identity"
                               asp-page="/Account/Logout"
-                              asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+                              asp-route-returnUrl="@Url.Page("/Index", new { area = "" })"
+                              method="post">
+                            @Html.AntiForgeryToken()
                             <button type="submit"
                                     class="dropdown-item">
-                                Logout
+                                Log out
                             </button>
                         </form>
                     </li>

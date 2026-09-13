@@ -1,7 +1,10 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using CalorieTracker.Data;
 using CalorieTracker.Tests.TestSupport;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CalorieTracker.Tests.Branding;
 
@@ -102,7 +105,41 @@ public class BrandingTests
         Assert.Contains("href=\"/Profile\"", html);
         Assert.Contains("href=\"/Customisation\"", html);
         Assert.Contains("href=\"/Progress\"", html);
+        Assert.Contains(">Achievements</span>", html);
+        Assert.DoesNotContain(">Progress</span>", html);
+        Assert.Contains("class=\"account-nav-level\">Level 1</span>", html);
+        Assert.Contains("class=\"app-nav-link app-nav-link--danger\"", html);
+        Assert.Contains(">Log out</span>", html);
+        Assert.Matches(
+            "<form(?=[^>]*action=\"[^\"]*/Identity/Account/Logout[^\"]*\")" +
+            "(?=[^>]*method=\"post\")[^>]*>",
+            html);
+        Assert.Contains("name=\"__RequestVerificationToken\"", html);
         Assert.DoesNotContain("id=\"navbarSupportedContent\"", html);
+    }
+
+    [Fact]
+    public async Task SidebarProgressionFailure_DoesNotBreakAuthenticatedNavigation()
+    {
+        using var factory = new IntegrationTestFactory();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            await context.Database.ExecuteSqlRawAsync(
+                "DROP TABLE \"UserXpEvents\"");
+        }
+
+        using var client = CreateClient(factory);
+        client.DefaultRequestHeaders.Add("X-Test-User", "sidebar-user");
+
+        var response = await client.GetAsync("/About");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.DoesNotContain("account-nav-level", html);
+        Assert.Contains(">Achievements</span>", html);
     }
 
     [Fact]

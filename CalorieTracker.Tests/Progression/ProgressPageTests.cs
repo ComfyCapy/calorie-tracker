@@ -39,7 +39,8 @@ public sealed class ProgressPageTests
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("<h1 class=\"ct-page-title\">Progress</h1>", html);
+        Assert.Contains("<title>Achievements", html);
+        Assert.Contains("<h1 class=\"ct-page-title\">Achievements</h1>", html);
         Assert.Contains("Little steps add up.", html);
         Assert.Matches(
             "<a(?=[^>]*href=\"/Progress\")" +
@@ -82,6 +83,7 @@ public sealed class ProgressPageTests
             $"data-achievement-key=\"{AchievementDefinitions.DiaryFirstEntryKey}\"",
             html);
         Assert.Contains("data-achievement-state=\"unlocked\"", html);
+        Assert.Contains("data-hide-unlocked", html);
 
         using var scope = factory.Services.CreateScope();
         var context = scope.ServiceProvider
@@ -314,6 +316,49 @@ public sealed class ProgressPageTests
         Assert.Contains("data-achievement-state=\"locked\"", html);
         Assert.DoesNotContain("data-bs-toggle=\"collapse\"", html);
         Assert.DoesNotContain("<details", html);
+    }
+
+    [Fact]
+    public async Task Achievements_HideUnlockedControlIsAccessibleAndProgressive()
+    {
+        using var factory = new IntegrationTestFactory();
+        await AddUserAsync(factory);
+        await AddCurrentProgressionStateAsync(factory);
+        using var client = Client(factory, UserId);
+
+        var html = await client.GetStringAsync("/Progress");
+
+        Assert.Contains("data-achievements-section", html);
+        Assert.Contains(
+            "id=\"progress-achievement-grid\"",
+            html);
+        Assert.Contains("data-hide-unlocked", html);
+        Assert.Contains("aria-pressed=\"false\"", html);
+        Assert.Contains(
+            "aria-controls=\"progress-achievement-grid\"",
+            html);
+        Assert.Contains("hidden", html);
+        Assert.Contains(
+            "data-achievements-empty",
+            html);
+        Assert.Contains("All achievements are unlocked.", html);
+        Assert.Matches(
+            "src=\"/js/progress-achievements\\.[^\"]+\\.mjs\"",
+            html);
+    }
+
+    [Fact]
+    public async Task Sidebar_ShowsAuthoritativeProgressionLevel()
+    {
+        using var factory = new IntegrationTestFactory();
+        await AddUserAsync(factory);
+        await AddCurrentProgressionStateAsync(factory);
+        await AddXpAsync(factory, 75);
+        using var client = Client(factory, UserId);
+
+        var html = await client.GetStringAsync("/About");
+
+        Assert.Contains("class=\"account-nav-level\">Level 2</span>", html);
     }
 
     private static HttpClient Client(
