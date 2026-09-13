@@ -25,6 +25,10 @@ namespace CalorieTracker.Data
         public DbSet<CapyItem> CapyItems { get; set; }
         public DbSet<UserCapyItem> UserCapyItems { get; set; }
         public DbSet<UserCapyAppearance> UserCapyAppearances { get; set; }
+        public DbSet<UserDailyActivity> UserDailyActivities { get; set; }
+        public DbSet<UserAchievement> UserAchievements { get; set; }
+        public DbSet<UserXpEvent> UserXpEvents { get; set; }
+        public DbSet<UserProgressionState> UserProgressionStates { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -52,6 +56,87 @@ namespace CalorieTracker.Data
             builder.Entity<DailyMaintenanceSnapshot>()
                 .Property(snapshot => snapshot.MaintenanceCalories)
                 .Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
+
+            builder.Entity<UserDailyActivity>()
+                .HasKey(activity => new
+                {
+                    activity.UserId,
+                    activity.LocalDate
+                });
+
+            builder.Entity<UserDailyActivity>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(activity => activity.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserDailyActivity>()
+                .Property(activity => activity.TimeZoneId)
+                .IsRequired()
+                .HasMaxLength(UserDailyActivity.MaxTimeZoneIdLength);
+
+            builder.Entity<UserAchievement>()
+                .HasKey(achievement => new
+                {
+                    achievement.UserId,
+                    achievement.AchievementKey
+                });
+
+            builder.Entity<UserAchievement>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(achievement => achievement.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserAchievement>()
+                .Property(achievement => achievement.AchievementKey)
+                .IsRequired()
+                .HasMaxLength(UserAchievement.MaxAchievementKeyLength);
+
+            builder.Entity<UserXpEvent>()
+                .HasKey(xpEvent => new
+                {
+                    xpEvent.UserId,
+                    xpEvent.EventKey
+                });
+
+            builder.Entity<UserXpEvent>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(xpEvent => xpEvent.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserXpEvent>()
+                .Property(xpEvent => xpEvent.EventKey)
+                .IsRequired()
+                .HasMaxLength(UserXpEvent.MaxEventKeyLength);
+
+            builder.Entity<UserXpEvent>()
+                .ToTable(
+                    "UserXpEvents",
+                    table => table.HasCheckConstraint(
+                        "CK_UserXpEvents_Amount_Positive",
+                        "\"Amount\" > 0"));
+
+            builder.Entity<UserProgressionState>()
+                .HasKey(state => state.UserId);
+
+            builder.Entity<UserProgressionState>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(state => state.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserProgressionState>()
+                .Property(state => state.AchievementBackfillVersion)
+                .HasDefaultValue(0);
+
+            builder.Entity<UserProgressionState>()
+                .ToTable(
+                    "UserProgressionStates",
+                    table => table.HasCheckConstraint(
+                        "CK_UserProgressionStates_BackfillVersion_NonNegative",
+                        "\"AchievementBackfillVersion\" >= 0"));
 
             // Restrict physical deletes for food/portion references so historical diary
             // foreign keys remain resolvable; the UI soft-deletes instead.
