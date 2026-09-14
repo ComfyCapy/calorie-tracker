@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using CalorieTracker.Security;
+using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace CalorieTracker.Controllers
@@ -275,7 +276,7 @@ namespace CalorieTracker.Controllers
 
             var food = resolution.Food!;
 
-            await _context.SaveChangesAsync();
+            food = await SaveExternalFoodAsync(food);
 
             return Ok(new
             {
@@ -339,7 +340,7 @@ namespace CalorieTracker.Controllers
 
             food.IsFavourite = true;
 
-            await _context.SaveChangesAsync();
+            await SaveExternalFoodAsync(food, markAsFavourite: true);
 
             return Ok(new
             {
@@ -403,6 +404,54 @@ namespace CalorieTracker.Controllers
                 isFavourite = false
             });
         }
+
+        private async Task<Food> SaveExternalFoodAsync(
+            Food food,
+            bool markAsFavourite = false)
+        {
+            var isNewFood = _context.Entry(food).State == EntityState.Added;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return food;
+            }
+            catch (DbUpdateException exception)
+                when (isNewFood && IsExternalFoodDuplicate(exception))
+            {
+                var userId = food.UserId!;
+                var source = food.Source!;
+                var externalId = food.ExternalId!;
+
+                // The request-scoped context contains the failed insert graph.
+                // Clear it before loading the row committed by the winner.
+                _context.ChangeTracker.Clear();
+
+                var winner = await _context.Foods.SingleAsync(candidate =>
+                    candidate.UserId == userId &&
+                    candidate.Source == source &&
+                    candidate.ExternalId == externalId);
+
+                if (markAsFavourite && !winner.IsFavourite)
+                {
+                    winner.IsFavourite = true;
+                    await _context.SaveChangesAsync();
+                }
+
+                return winner;
+            }
+        }
+
+        private static bool IsExternalFoodDuplicate(
+            DbUpdateException exception) =>
+            exception.InnerException is SqliteException
+            {
+                SqliteErrorCode: 19,
+                SqliteExtendedErrorCode: 2067
+            } sqliteException &&
+            sqliteException.Message.Contains(
+                "UNIQUE constraint failed: Foods.UserId, Foods.Source, Foods.ExternalId",
+                StringComparison.Ordinal);
 
     }
 }

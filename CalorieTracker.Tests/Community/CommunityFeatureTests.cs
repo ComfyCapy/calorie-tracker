@@ -64,6 +64,83 @@ public sealed class CommunityFeatureTests
         Assert.Equal(beta, (await auth.AuthorizeAsync(Actor(id, "Admin", "Beta"), AccessRoles.BetaAccess)).Succeeded);
     }
 
+    [Fact]
+    public async Task PoliciesAndAdminUsers_UseNormalizedPreservedRoleNames()
+    {
+        using var factory = new IntegrationTestFactory();
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var adminRole = await db.Roles.SingleAsync(role =>
+                role.NormalizedName == AccessRoles.NormalizedAdmin);
+            var betaRole = await db.Roles.SingleAsync(role =>
+                role.NormalizedName == AccessRoles.NormalizedBeta);
+            adminRole.Name = "ADMIN";
+            betaRole.Name = "bEtA";
+            await db.SaveChangesAsync();
+
+            foreach (var (id, role) in new[]
+                     {
+                         ("preserved-standard", AccessRoles.Standard),
+                         ("preserved-beta", AccessRoles.Beta),
+                         ("preserved-admin", AccessRoles.Admin)
+                     })
+            {
+                var user = new ApplicationUser
+                {
+                    Id = id,
+                    UserName = id,
+                    Email = $"{id}@example.test",
+                    EmailConfirmed = true,
+                    FirstName = id
+                };
+                Assert.True((await users.CreateAsync(user, "Password1!")).Succeeded);
+                Assert.True((await users.AddToRoleAsync(user, role)).Succeeded);
+            }
+
+            var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+            Assert.False((await auth.AuthorizeAsync(
+                Actor("preserved-standard", "Admin", "Beta"),
+                AccessRoles.BetaAccess)).Succeeded);
+            Assert.False((await auth.AuthorizeAsync(
+                Actor("preserved-beta"),
+                AccessRoles.Admin)).Succeeded);
+            Assert.True((await auth.AuthorizeAsync(
+                Actor("preserved-beta"),
+                AccessRoles.BetaAccess)).Succeeded);
+            Assert.True((await auth.AuthorizeAsync(
+                Actor("preserved-admin"),
+                AccessRoles.Admin)).Succeeded);
+            Assert.True((await auth.AuthorizeAsync(
+                Actor("preserved-admin"),
+                AccessRoles.BetaAccess)).Succeeded);
+        }
+
+        using var client = Client(factory, "preserved-admin");
+        var adminHtml = await client.GetStringAsync(
+            "/Admin/Users?Query=preserved-admin");
+        Assert.DoesNotContain("Grant Beta access", adminHtml);
+        Assert.DoesNotContain("Remove Beta access", adminHtml);
+        var betaHtml = await client.GetStringAsync(
+            "/Admin/Users?Query=preserved-beta");
+        Assert.Contains("Remove Beta access", betaHtml);
+
+        using var revokeScope = factory.Services.CreateScope();
+        var revokeUsers = revokeScope.ServiceProvider
+            .GetRequiredService<UserManager<ApplicationUser>>();
+        var preservedAdmin = await revokeUsers.FindByIdAsync("preserved-admin");
+        Assert.NotNull(preservedAdmin);
+        Assert.True((await revokeUsers.RemoveFromRoleAsync(
+            preservedAdmin,
+            AccessRoles.Admin)).Succeeded);
+        var revokeAuth = revokeScope.ServiceProvider
+            .GetRequiredService<IAuthorizationService>();
+        Assert.False((await revokeAuth.AuthorizeAsync(
+            Actor("preserved-admin", "Admin"),
+            AccessRoles.Admin)).Succeeded);
+    }
+
     [Theory]
     [InlineData("/Admin")]
     [InlineData("/Admin/Users")]

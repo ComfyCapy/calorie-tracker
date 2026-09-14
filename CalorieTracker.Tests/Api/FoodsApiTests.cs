@@ -2,12 +2,14 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CalorieTracker.Controllers;
+using CalorieTracker.Data;
 using CalorieTracker.Models;
 using CalorieTracker.Services;
 using CalorieTracker.Tests.TestSupport;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace CalorieTracker.Tests.Api;
@@ -420,6 +422,105 @@ public class FoodsApiTests
         Assert.False(resolution.UsedCachedFallback);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ConcurrentExternalFoodInsert_ReusesWinnerForSelectAndFavourite(
+        bool favourite)
+    {
+        var path = Path.Combine(
+            Path.GetTempPath(),
+            $"external-food-race-{Guid.NewGuid():N}.db");
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlite($"Data Source={path};Default Timeout=30;Pooling=False")
+            .Options;
+
+        try
+        {
+            await using (var setup = new ApplicationDbContext(options))
+            {
+                await setup.Database.MigrateAsync();
+                setup.Users.Add(new ApplicationUser
+                {
+                    Id = "race-user",
+                    UserName = "race-user",
+                    NormalizedUserName = "RACE-USER",
+                    Email = "race-user@example.test",
+                    NormalizedEmail = "RACE-USER@EXAMPLE.TEST",
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    FirstName = "Race"
+                });
+                await setup.SaveChangesAsync();
+            }
+
+            var provider = new CoordinatedFoodCatalogueProvider();
+            var catalogue = new FoodCatalogue([provider]);
+            await using var firstContext = new ApplicationDbContext(options);
+            await using var secondContext = new ApplicationDbContext(options);
+            var first = CreateController(firstContext, catalogue, "race-user");
+            var second = CreateController(secondContext, catalogue, "race-user");
+
+            Task<IActionResult> Run(FoodsApiController controller) => favourite
+                ? controller.Favourite(provider.ExternalId, provider.Id)
+                : controller.Select(provider.ExternalId, provider.Id);
+
+            var results = await Task.WhenAll(Run(first), Run(second));
+
+            Assert.All(results, result => Assert.IsType<OkObjectResult>(result));
+            await using var verify = new ApplicationDbContext(options);
+            var food = await verify.Foods.AsNoTracking().SingleAsync();
+            Assert.Equal("race-user", food.UserId);
+            Assert.Equal(provider.Source, food.Source);
+            Assert.Equal(provider.ExternalId, food.ExternalId);
+            Assert.Equal("Authoritative race food", food.Name);
+            Assert.Equal(321, food.Calories);
+            Assert.Equal(favourite, food.IsFavourite);
+
+            if (!favourite)
+            {
+                var ids = results
+                    .Cast<OkObjectResult>()
+                    .Select(result => JsonSerializer.SerializeToDocument(result.Value))
+                    .Select(json => json.RootElement.GetProperty("foodId").GetInt32())
+                    .ToArray();
+                Assert.All(ids, id => Assert.Equal(food.Id, id));
+            }
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            foreach (var candidate in new[] { path, path + "-wal", path + "-shm" })
+            {
+                if (File.Exists(candidate)) File.Delete(candidate);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Select_UnrelatedDatabaseFailureIsNotTreatedAsDuplicateRace()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        await database.Context.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TRIGGER "RejectExternalFood"
+            BEFORE INSERT ON "Foods"
+            BEGIN
+                SELECT RAISE(FAIL, 'forced unrelated database failure');
+            END;
+            """);
+        var service = new FakeFoodSearchService
+        {
+            GetHandler = _ => Task.FromResult<FoodSearchResult?>(
+                TestData.UsdaResult())
+        };
+        var controller = CreateController(database, service, "user-1");
+
+        await Assert.ThrowsAsync<DbUpdateException>(() =>
+            controller.Select("123"));
+        Assert.Empty(database.Context.Foods);
+    }
+
     [Fact]
     public async Task ProtectedApi_AnonymousRequestReturnsUnauthorized()
     {
@@ -586,14 +687,81 @@ public class FoodsApiTests
         FoodCatalogue catalogue,
         string userId)
     {
-        var resolver = new ExternalFoodResolver(database.Context, catalogue);
+        return CreateController(database.Context, catalogue, userId);
+    }
+
+    private static FoodsApiController CreateController(
+        ApplicationDbContext context,
+        FoodCatalogue catalogue,
+        string userId)
+    {
+        var resolver = new ExternalFoodResolver(context, catalogue);
         var controller = new FoodsApiController(
             catalogue,
-            database.Context,
+            context,
             PageModelTestContext.CreateUserManager(),
             resolver);
         PageModelTestContext.Attach(controller, userId);
         return controller;
+    }
+
+    private sealed class CoordinatedFoodCatalogueProvider
+        : IFoodCatalogueProvider
+    {
+        private readonly TaskCompletionSource _bothRequestsReady = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _resolveCalls;
+
+        public string Id => FoodCatalogueProviders.Cofid;
+        public string Source => FoodSources.Cofid;
+        public string ExternalId => "race-food";
+        public string UnavailableTitle => "Race provider unavailable.";
+
+        public bool TryNormalizeExternalId(
+            string? externalId,
+            out string normalizedId)
+        {
+            if (string.Equals(
+                    externalId,
+                    ExternalId,
+                    StringComparison.Ordinal))
+            {
+                normalizedId = ExternalId;
+                return true;
+            }
+
+            normalizedId = string.Empty;
+            return false;
+        }
+
+        public Task<FoodSearchPage> SearchAsync(
+            string searchTerm,
+            int pageNumber,
+            int pageSize) =>
+            throw new NotSupportedException();
+
+        public async Task<FoodSearchResult?> ResolveAsync(string externalId)
+        {
+            if (Interlocked.Increment(ref _resolveCalls) == 2)
+            {
+                _bothRequestsReady.TrySetResult();
+            }
+
+            await _bothRequestsReady.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            return new FoodSearchResult
+            {
+                ExternalId = ExternalId,
+                Provider = Id,
+                Source = Source,
+                Name = "Authoritative race food",
+                Calories = 321,
+                Protein = 12,
+                Carbohydrates = 34,
+                Fat = 5,
+                ServingSize = 100,
+                ServingUnit = "g"
+            };
+        }
     }
 
     private static Food CachedFood(

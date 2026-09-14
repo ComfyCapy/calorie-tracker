@@ -12,11 +12,14 @@ public static class AccessRoles
     public const string Beta = "Beta";
     public const string Admin = "Admin";
     public const string BetaAccess = "BetaAccess";
+    public const string NormalizedStandard = "STANDARD";
+    public const string NormalizedBeta = "BETA";
+    public const string NormalizedAdmin = "ADMIN";
 
     public static IdentityRole[] SeedRoles() => [
-        new(Standard) { Id = "role-standard", NormalizedName = "STANDARD", ConcurrencyStamp = "role-standard" },
-        new(Beta) { Id = "role-beta", NormalizedName = "BETA", ConcurrencyStamp = "role-beta" },
-        new(Admin) { Id = "role-admin", NormalizedName = "ADMIN", ConcurrencyStamp = "role-admin" }
+        new(Standard) { Id = "role-standard", NormalizedName = NormalizedStandard, ConcurrencyStamp = "role-standard" },
+        new(Beta) { Id = "role-beta", NormalizedName = NormalizedBeta, ConcurrencyStamp = "role-beta" },
+        new(Admin) { Id = "role-admin", NormalizedName = NormalizedAdmin, ConcurrencyStamp = "role-admin" }
     ];
 
     public static async Task AssignStandardAsync(UserManager<ApplicationUser> users, ApplicationUser user)
@@ -54,7 +57,8 @@ public sealed class AccessRoleHandler(ApplicationDbContext db)
         if (await (from membership in db.UserRoles
                    join role in db.Roles on membership.RoleId equals role.Id
                    where membership.UserId == userId &&
-                       (role.Name == AccessRoles.Admin || (requirement.AllowBeta && role.Name == AccessRoles.Beta))
+                       (role.NormalizedName == AccessRoles.NormalizedAdmin ||
+                        (requirement.AllowBeta && role.NormalizedName == AccessRoles.NormalizedBeta))
                    select membership).AnyAsync())
             context.Succeed(requirement);
     }

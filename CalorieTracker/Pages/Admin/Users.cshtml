@@ -12,14 +12,16 @@
 <p class="text-muted">Showing up to 30 matches. Refine your search to find an account. Admins already have Beta access.</p>
 @foreach (var account in Model.Accounts)
 {
+    var isAdmin = account.Roles.Contains(AccessRoles.Admin, StringComparer.OrdinalIgnoreCase);
+    var isBeta = account.Roles.Contains(AccessRoles.Beta, StringComparer.OrdinalIgnoreCase);
     <article class="ct-card p-3 mb-3" style="overflow-wrap:anywhere">
         <h2 class="h5">@account.User.UserName</h2>
         <p>@account.User.Email · @string.Join(", ", account.Roles)</p>
-        @if (!account.Roles.Contains(AccessRoles.Admin))
+        @if (!isAdmin)
         {
-            <form method="post" asp-page-handler="@(account.Roles.Contains(AccessRoles.Beta) ? "RemoveBeta" : "GrantBeta")">
+            <form method="post" asp-page-handler="@(isBeta ? "RemoveBeta" : "GrantBeta")">
                 <input type="hidden" name="id" value="@account.User.Id" />
-                <button class="btn btn-outline-primary">@(account.Roles.Contains(AccessRoles.Beta) ? "Remove Beta access" : "Grant Beta access")</button>
+                <button class="btn btn-outline-primary">@(isBeta ? "Remove Beta access" : "Grant Beta access")</button>
             </form>
         }
     </article>
