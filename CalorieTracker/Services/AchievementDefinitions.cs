@@ -5,7 +5,8 @@ namespace CalorieTracker.Services;
 public sealed record AchievementDefinition(
     string Key,
     string DisplayName,
-    string Description,
+    string Lore,
+    string HowToGet,
     int XpReward);
 
 public static class AchievementDefinitions
@@ -30,51 +31,61 @@ public static class AchievementDefinitions
                 DiaryFirstEntryKey,
                 "First Steps",
                 "The first log is often the hardest.",
+                "Log your first food in the Diary.",
                 25),
             new(
                 ProfileCompletedKey,
                 "Getting Comfy",
                 "Your space is starting to feel like home.",
+                "Complete your profile.",
                 25),
             new(
                 FoodsFirstCustomKey,
                 "Made It Mine",
                 "A food saved your way.",
+                "Create your first custom food.",
                 30),
             new(
                 SavedMealsFirstKey,
                 "Meal Prep-ish",
                 "Future you will appreciate this.",
+                "Create your first saved meal.",
                 30),
             new(
                 CustomisationFirstEquipKey,
                 "Looking Good",
                 "A little personal touch.",
+                "Equip your first customisation.",
                 20),
             new(
                 ActivityDistinctThreeKey,
                 "Hello Again",
                 "Three different days, nice and easy.",
+                "Use Comfy Capy on 3 different days.",
                 20),
             new(
                 ActivityDistinctSevenKey,
                 "Getting Settled",
                 "Seven days spent making the app yours.",
+                "Use Comfy Capy on 7 different days.",
                 40),
             new(
                 ActivityStreakSevenKey,
                 "Comfy Week",
                 "Seven local calendar days in a row.",
+                "Use Comfy Capy for 7 days in a row.",
                 50),
             new(
                 DiaryDistinctDaysThirtyKey,
                 "Regular",
                 "A month's worth of Diary days.",
+                "Log food in the Diary on 30 different days.",
                 100),
             new(
                 DiaryAllMealTypesKey,
                 "Full Plate",
                 "Breakfast, lunch, dinner and something in between.",
+                "Log food in the Diary for Breakfast, Lunch, Dinner, and Snack.",
                 50)
         ]);
 }

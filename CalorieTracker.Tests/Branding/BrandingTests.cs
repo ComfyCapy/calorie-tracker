@@ -107,8 +107,14 @@ public class BrandingTests
         Assert.Contains("href=\"/Progress\"", html);
         Assert.Contains(">Achievements</span>", html);
         Assert.DoesNotContain(">Progress</span>", html);
+        Assert.DoesNotContain("app-nav-label", html);
+        Assert.DoesNotContain("account-nav-greeting", html);
+        Assert.DoesNotContain(">there!</span>", html);
+        Assert.Contains("class=\"account-nav-name\">there</span>", html);
         Assert.Contains("class=\"account-nav-level\">Level 1</span>", html);
-        Assert.Contains("class=\"app-nav-link app-nav-link--danger\"", html);
+        Assert.Contains(
+            "class=\"app-nav-link app-nav-link--supporting app-nav-link--danger\"",
+            html);
         Assert.Contains(">Log out</span>", html);
         Assert.Matches(
             "<form(?=[^>]*action=\"[^\"]*/Identity/Account/Logout[^\"]*\")" +
@@ -116,6 +122,20 @@ public class BrandingTests
             html);
         Assert.Contains("name=\"__RequestVerificationToken\"", html);
         Assert.DoesNotContain("id=\"navbarSupportedContent\"", html);
+
+        var utilityIndex = html.IndexOf(
+            "class=\"app-nav-utility\"",
+            StringComparison.Ordinal);
+        var logoutIndex = html.IndexOf(
+            "class=\"app-nav-link app-nav-link--supporting app-nav-link--danger\"",
+            StringComparison.Ordinal);
+        var accountIndex = html.IndexOf(
+            "class=\"app-sidebar-account\"",
+            StringComparison.Ordinal);
+
+        Assert.True(utilityIndex >= 0);
+        Assert.True(logoutIndex > utilityIndex);
+        Assert.True(accountIndex > logoutIndex);
     }
 
     [Fact]
@@ -207,6 +227,8 @@ public class BrandingTests
         Assert.Contains("Already have an account?", html);
         Assert.Contains("href=\"/Identity/Account/Login\">Log in</a>", html);
         Assert.Contains("id=\"registerForm\"", html);
+        Assert.Contains("data-submit-once", html);
+        Assert.Contains("data-submitting-text=\"Creating account…\"", html);
     }
 
     [Fact]
@@ -244,6 +266,10 @@ public class BrandingTests
             "/Identity/Account/ResendEmailConfirmation");
         Assert.Contains(
             "Enter your email and we'll send a fresh confirmation link.",
+            resendHtml);
+        Assert.Contains("data-submit-once", resendHtml);
+        Assert.Contains(
+            "data-submitting-text=\"Sending confirmation email…\"",
             resendHtml);
 
         var notFoundHtml = await client.GetStringAsync("/StatusCode/404");

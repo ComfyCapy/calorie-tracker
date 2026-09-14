@@ -55,6 +55,13 @@
         ?? "Approachable calorie and nutrition tracking with a customisable Comfy Capy.";
     var canonicalUrl = ViewData["CanonicalUrl"]?.ToString();
     var robots = ViewData["Robots"]?.ToString() ?? "noindex,follow";
+    var isPublicIndexable = string.Equals(
+        robots,
+        "index,follow",
+        StringComparison.OrdinalIgnoreCase);
+    var socialTitle = string.IsNullOrWhiteSpace(pageTitle)
+        ? "Comfy Capy Calories"
+        : $"{pageTitle} · Comfy Capy Calories";
 }
 
 <!DOCTYPE html>
@@ -72,9 +79,22 @@
     {
         <link rel="canonical" href="@canonicalUrl" />
     }
+    @if (isPublicIndexable)
+    {
+        <meta property="og:title" content="@socialTitle" />
+        <meta property="og:description" content="@metaDescription" />
+        <meta property="og:type" content="website" />
+        @if (!string.IsNullOrWhiteSpace(canonicalUrl))
+        {
+            <meta property="og:url" content="@canonicalUrl" />
+        }
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="@socialTitle" />
+        <meta name="twitter:description" content="@metaDescription" />
+    }
     <meta name="theme-color" content="#7b61a8" />
-    <link rel="icon" type="image/png" href="~/images/capy/expressions/Capy-Base.png" />
-    <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" />
+    <link rel="icon" type="image/png" href="~/images/capy/expressions/Capy-Base.png" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" asp-append-version="true" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet"
@@ -129,7 +149,7 @@
             })();
     </script>
 
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CalorieTracker.styles.css" asp-append-version="true" />
 </head>
@@ -221,7 +241,8 @@
                                      src="~/images/capy/expressions/Capy-Base.png"
                                      width="32"
                                      height="32"
-                                     alt="" />
+                                     alt=""
+                                     asp-append-version="true" />
                                 <span>Comfy Capy Calories</span>
                             </span>
 
@@ -300,10 +321,11 @@
         </div>
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/js/mobile-navigation.js" asp-append-version="true"></script>
     <script src="~/js/development-banner.js" asp-append-version="true"></script>
+    <script type="module" src="~/js/submit-once.mjs" asp-append-version="true"></script>
 
     <form id="themeAntiForgeryForm" method="post" style="display: none;">
         @Html.AntiForgeryToken()

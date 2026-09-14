@@ -3477,10 +3477,30 @@ a.calorie-year-day:focus-visible {
     font-size: 1.08rem;
 }
 
-.progress-achievement-copy p {
+.progress-achievement-lore {
     margin: var(--ct-space-2) 0 0;
     color: var(--ct-text-muted);
     font-size: 0.88rem;
+}
+
+.progress-achievement-how-to {
+    margin-top: var(--ct-space-3);
+}
+
+.progress-achievement-how-to-label {
+    display: block;
+    color: var(--ct-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.progress-achievement-how-to p {
+    margin: 0.2rem 0 0;
+    color: var(--ct-text);
+    font-size: 0.82rem;
+    line-height: 1.35;
 }
 
 .progress-achievement-footer {
@@ -4093,22 +4113,17 @@ summary:focus-visible {
     min-height: 0;
     flex: 1 1 auto;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: var(--ct-space-5);
 }
 
-.app-nav-supporting {
+.app-nav-utility {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ct-space-2);
+    margin-top: auto;
     padding-top: var(--ct-space-4);
     border-top: 1px solid var(--ct-border);
-}
-
-.app-nav-label {
-    margin: 0 var(--ct-space-3) var(--ct-space-2);
-    color: var(--ct-text-muted);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
 }
 
 .app-nav-list {
@@ -4155,11 +4170,6 @@ summary:focus-visible {
     font-size: 0.86rem;
 }
 
-.app-nav-actions {
-    padding-top: var(--ct-space-3);
-    border-top: 1px solid var(--ct-border);
-}
-
 .app-nav-actions form {
     margin: 0;
 }
@@ -4170,7 +4180,7 @@ summary:focus-visible {
     color: var(--ct-danger);
     background: transparent;
     cursor: pointer;
-    font: inherit;
+    font-family: inherit;
     text-align: left;
 }
 
@@ -5860,5 +5870,139 @@ summary:focus-visible {
 
     .profile-target-highlight strong {
         font-size: 2.25rem;
+    }
+}
+
+/* =========================
+   FAILURE PAGES
+   ========================= */
+
+.failure-shell-body {
+    min-width: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top right, rgba(123, 97, 168, 0.14), transparent 28rem),
+        var(--ct-canvas);
+    color: var(--ct-text);
+}
+
+.failure-shell {
+    display: grid;
+    min-height: 100vh;
+    grid-template-rows: auto 1fr auto;
+}
+
+.failure-shell-width {
+    width: min(calc(100% - 2rem), 42rem);
+    margin-inline: auto;
+}
+
+.failure-shell-header,
+.failure-shell-footer {
+    background: var(--ct-surface);
+}
+
+.failure-shell-header {
+    border-bottom: 1px solid var(--ct-border);
+}
+
+.failure-shell-header .failure-shell-width {
+    padding-block: var(--ct-space-3);
+}
+
+.failure-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ct-space-3);
+    color: var(--ct-text);
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.failure-brand img {
+    width: 3rem;
+    height: 3rem;
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius-md);
+    background: var(--ct-surface-soft);
+}
+
+.failure-brand:hover {
+    color: var(--ct-primary);
+}
+
+.failure-brand:focus-visible {
+    border-radius: var(--ct-radius-sm);
+    outline: 3px solid var(--ct-focus);
+    outline-offset: 3px;
+}
+
+.failure-shell-main {
+    display: grid;
+    align-items: center;
+    padding-block: clamp(2rem, 8vw, 5rem);
+}
+
+.failure-card {
+    width: 100%;
+    padding: clamp(1.5rem, 5vw, 2.5rem);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius-xl);
+    background: var(--ct-surface-raised);
+    box-shadow: var(--ct-shadow-md);
+}
+
+.failure-eyebrow {
+    margin-bottom: var(--ct-space-2);
+    color: var(--ct-primary);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.failure-card h1 {
+    margin-bottom: var(--ct-space-3);
+    font-size: clamp(1.75rem, 7vw, 2.5rem);
+}
+
+.failure-card .lead {
+    color: var(--ct-text);
+}
+
+.failure-request-id {
+    overflow-wrap: anywhere;
+    color: var(--ct-text-muted);
+    font-size: 0.9rem;
+}
+
+.failure-actions {
+    margin-top: var(--ct-space-5);
+}
+
+.failure-actions .btn {
+    min-height: 2.75rem;
+    padding-inline: var(--ct-space-5);
+}
+
+.failure-shell-footer {
+    padding-block: var(--ct-space-4);
+    border-top: 1px solid var(--ct-border);
+    color: var(--ct-text-muted);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 350px) {
+    .failure-shell-width {
+        width: min(calc(100% - 1rem), 42rem);
+    }
+
+    .failure-card {
+        padding: var(--ct-space-4);
+    }
+
+    .failure-actions .btn {
+        width: 100%;
     }
 }

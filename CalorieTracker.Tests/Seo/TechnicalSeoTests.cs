@@ -23,8 +23,10 @@ public class TechnicalSeoTests
         Assert.Contains("Disallow: /api", robots);
         Assert.Contains("Disallow: /Diary", robots);
         Assert.Contains("Disallow: /Foods", robots);
+        Assert.Contains("Disallow: /SavedMeals", robots);
         Assert.Contains("Disallow: /Profile", robots);
         Assert.Contains("Disallow: /Customisation", robots);
+        Assert.Contains("Disallow: /Progress", robots);
         Assert.Contains("Disallow: /Identity/Account/Manage", robots);
         Assert.Contains(
             "Sitemap: https://calories.comfycapy.com/sitemap.xml",
@@ -109,6 +111,18 @@ public class TechnicalSeoTests
         Assert.Equal(expectedDescription, ReadMetaContent(html, "description"));
         Assert.Equal("index,follow", ReadMetaContent(html, "robots"));
         Assert.Equal(expectedCanonical, ReadCanonical(html));
+        Assert.Equal(expectedTitle, ReadMetaProperty(html, "og:title"));
+        Assert.Equal(
+            expectedDescription,
+            ReadMetaProperty(html, "og:description"));
+        Assert.Equal("website", ReadMetaProperty(html, "og:type"));
+        Assert.Equal(expectedCanonical, ReadMetaProperty(html, "og:url"));
+        Assert.Equal("summary", ReadMetaContent(html, "twitter:card"));
+        Assert.Equal(expectedTitle, ReadMetaContent(html, "twitter:title"));
+        Assert.Equal(
+            expectedDescription,
+            ReadMetaContent(html, "twitter:description"));
+        Assert.DoesNotContain("property=\"og:image\"", html);
     }
 
     [Theory]
@@ -128,6 +142,34 @@ public class TechnicalSeoTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("noindex,follow", ReadMetaContent(html, "robots"));
+        Assert.DoesNotContain("property=\"og:title\"", html);
+        Assert.DoesNotContain("name=\"twitter:card\"", html);
+    }
+
+    [Fact]
+    public async Task SharedLocalAssets_UseContentVersioning()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = factory.CreateClient();
+
+        var publicHtml = await client.GetStringAsync("/About");
+        var failureHtml = await client.GetStringAsync("/Error");
+
+        Assert.Matches(
+            "href=\"/lib/bootstrap/dist/css/bootstrap\\.min\\.[^/\"]+\\.css\"",
+            publicHtml);
+        Assert.Matches(
+            "src=\"/lib/jquery/dist/jquery\\.min\\.[^/\"]+\\.js\"",
+            publicHtml);
+        Assert.Matches(
+            "src=\"/lib/bootstrap/dist/js/bootstrap\\.bundle\\.min\\.[^/\"]+\\.js\"",
+            publicHtml);
+        Assert.Matches(
+            "src=\"/js/submit-once\\.[^/\"]+\\.mjs\"",
+            publicHtml);
+        Assert.Matches(
+            "href=\"/lib/bootstrap/dist/css/bootstrap\\.min\\.[^/\"]+\\.css\"",
+            failureHtml);
     }
 
     [Theory]
@@ -175,6 +217,16 @@ public class TechnicalSeoTests
         var match = Regex.Match(
             html,
             "<link rel=\\\"canonical\\\" href=\\\"([^\\\"]+)\\\"",
+            RegexOptions.IgnoreCase);
+        Assert.True(match.Success);
+        return WebUtility.HtmlDecode(match.Groups[1].Value);
+    }
+
+    private static string ReadMetaProperty(string html, string property)
+    {
+        var match = Regex.Match(
+            html,
+            $"<meta property=\\\"{Regex.Escape(property)}\\\" content=\\\"([^\\\"]*)\\\"",
             RegexOptions.IgnoreCase);
         Assert.True(match.Success);
         return WebUtility.HtmlDecode(match.Groups[1].Value);

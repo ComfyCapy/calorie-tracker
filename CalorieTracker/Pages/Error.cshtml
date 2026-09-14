@@ -1,18 +1,32 @@
 ﻿@page
 @model ErrorModel
 @{
+    Layout = "_FailureLayout";
     ViewData["Title"] = "Error";
+    ViewData["MetaDescription"] =
+        "Comfy Capy Calories could not complete this request.";
+    var recoveryLabel = User.Identity?.IsAuthenticated == true
+        ? "Go to Dashboard"
+        : "Return home";
 }
 
-<h1>Something went wrong</h1>
-<p class="lead">Comfy Capy Calories could not finish that request.</p>
+<section class="failure-card" aria-labelledby="errorTitle">
+    <p class="failure-eyebrow">We hit a snag</p>
+    <h1 id="errorTitle">Something went wrong</h1>
+    <p class="lead">Comfy Capy Calories could not finish that request.</p>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+    <p>Please try again. If the problem continues, keep the request ID below to help us investigate.</p>
 
-<p>Please try again. If the problem continues, keep the request ID above to help us investigate.</p>
-<a asp-area="" asp-page="/Index" class="btn btn-primary">Return home</a>
+    @if (Model.ShowRequestId)
+    {
+        <p class="failure-request-id">
+            <strong>Request ID:</strong> <code>@Model.RequestId</code>
+        </p>
+    }
+
+    <div class="failure-actions">
+        <a asp-area="" asp-page="/Index" class="btn btn-primary">
+            @recoveryLabel
+        </a>
+    </div>
+</section>

@@ -8,14 +8,16 @@
 <p class="text-body-secondary">Enter your email and we'll send a fresh confirmation link.</p>
 <div class="row">
     <div class="col-12 account-form-shell">
-        <form method="post">
+        <form method="post" data-submit-once>
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">
                 <input asp-for="Input.Email" class="form-control" autocomplete="email" aria-required="true" placeholder=" " />
                 <label asp-for="Input.Email" class="form-label"></label>
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Send confirmation email</button>
+            <button type="submit"
+                    class="w-100 btn btn-lg btn-primary"
+                    data-submitting-text="Sending confirmation email…">Send confirmation email</button>
         </form>
     </div>
 </div>

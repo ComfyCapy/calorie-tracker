@@ -1,0 +1,74 @@
+@{
+    var pageTitle = ViewData["Title"]?.ToString();
+    var metaDescription = ViewData["MetaDescription"]?.ToString()
+        ?? "A Comfy Capy Calories request could not be completed.";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "Comfy Capy Calories" : $"{pageTitle} · Comfy Capy Calories")</title>
+    <meta name="application-name" content="Comfy Capy Calories" />
+    <meta name="description" content="@metaDescription" />
+    <meta name="robots" content="noindex,follow" />
+    <meta name="theme-color" content="#7b61a8" />
+    <link rel="icon" type="image/png" href="~/images/capy/expressions/Capy-Base.png" asp-append-version="true" />
+    <link rel="apple-touch-icon" href="~/images/capy/expressions/Capy-Base.png" asp-append-version="true" />
+    <script>
+        (() => {
+            let preference = "system";
+
+            try {
+                const stored = localStorage.getItem("theme")?.toLowerCase();
+                if (["light", "dark", "system"].includes(stored)) {
+                    preference = stored;
+                }
+            }
+            catch { }
+
+            const theme = preference === "system"
+                ? (window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
+                    ? "dark"
+                    : "light")
+                : preference;
+
+            document.documentElement.setAttribute("data-bs-theme", theme);
+        })();
+    </script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="failure-shell-body">
+    <div class="failure-shell">
+        <header class="failure-shell-header">
+            <div class="failure-shell-width">
+                <a asp-area=""
+                   asp-page="/Index"
+                   class="failure-brand"
+                   aria-label="Comfy Capy Calories home">
+                    <img src="~/images/capy/expressions/Capy-Base.png"
+                         width="48"
+                         height="48"
+                         alt=""
+                         asp-append-version="true" />
+                    <span>Comfy Capy Calories</span>
+                </a>
+            </div>
+        </header>
+
+        <main class="failure-shell-main">
+            <div class="failure-shell-width">
+                @RenderBody()
+            </div>
+        </main>
+
+        <footer class="failure-shell-footer">
+            <div class="failure-shell-width">
+                &copy; 2026 · Comfy Capy Calories
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

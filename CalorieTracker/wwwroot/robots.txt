@@ -4,8 +4,10 @@ Allow: /
 Disallow: /api
 Disallow: /Diary
 Disallow: /Foods
+Disallow: /SavedMeals
 Disallow: /Profile
 Disallow: /Customisation
+Disallow: /Progress
 Disallow: /Identity/Account/Manage
 
 Sitemap: https://calories.comfycapy.com/sitemap.xml

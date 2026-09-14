@@ -268,9 +268,14 @@ public sealed class ProgressPageTests
             Assert.True(index > previousIndex, $"Unexpected order for {definition.Key}.");
             previousIndex = index;
             Assert.Contains(definition.DisplayName, html);
-            Assert.Contains(definition.Description, html);
+            Assert.Contains(definition.Lore, html);
+            Assert.Contains(definition.HowToGet, html);
             Assert.Contains($"+{definition.XpReward} XP", html);
         }
+
+        Assert.Equal(
+            AchievementDefinitions.All.Count,
+            Regex.Matches(html, "progress-achievement-how-to-label").Count);
 
         Assert.Equal(
             AchievementDefinitions.All.Count,

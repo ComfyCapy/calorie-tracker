@@ -19,8 +19,11 @@ public class FeedbackTests
         using var client = CreateClient(factory);
 
         var response = await client.GetAsync("/Feedback");
+        var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("data-submit-once", html);
+        Assert.Contains("data-submitting-text=\"Sending feedback…\"", html);
     }
 
     [Fact]

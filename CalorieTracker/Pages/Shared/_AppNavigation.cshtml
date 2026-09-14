@@ -4,7 +4,6 @@
 
 <nav class="app-navigation" aria-label="Application navigation">
     <div>
-        <p class="app-nav-label">Your space</p>
         <ul class="app-nav-list">
             <li>
                 <a class="app-nav-link"
@@ -91,8 +90,7 @@
         </ul>
     </div>
 
-    <div class="app-nav-supporting">
-        <p class="app-nav-label">Support</p>
+    <div class="app-nav-utility">
         <ul class="app-nav-list">
             <li>
                 <a class="app-nav-link app-nav-link--supporting"
@@ -143,21 +141,21 @@
                 </a>
             </li>
         </ul>
-    </div>
 
-    <div class="app-nav-actions">
-        <form asp-area="Identity"
-              asp-page="/Account/Logout"
-              asp-route-returnUrl="@Url.Page("/Index", new { area = "" })"
-              method="post">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="app-nav-link app-nav-link--danger">
-                <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M12 3.5v8" />
-                    <path d="M7.75 5.75a8 8 0 1 0 8.5 0" />
-                </svg>
-                <span>Log out</span>
-            </button>
-        </form>
+        <div class="app-nav-actions">
+            <form asp-area="Identity"
+                  asp-page="/Account/Logout"
+                  asp-route-returnUrl="@Url.Page("/Index", new { area = "" })"
+                  method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="app-nav-link app-nav-link--supporting app-nav-link--danger">
+                    <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 3.5v8" />
+                        <path d="M7.75 5.75a8 8 0 1 0 8.5 0" />
+                    </svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
     </div>
 </nav>

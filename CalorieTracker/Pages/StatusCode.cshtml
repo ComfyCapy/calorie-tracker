@@ -2,11 +2,34 @@
 @model CalorieTracker.Pages.StatusCodeModel
 
 @{
+    Layout = "_FailureLayout";
     ViewData["Title"] = Model.Title;
+    ViewData["MetaDescription"] = Model.Code == StatusCodes.Status404NotFound
+        ? "The requested Comfy Capy Calories page could not be found."
+        : "Comfy Capy Calories could not complete this request.";
+    var recoveryLabel = User.Identity?.IsAuthenticated == true
+        ? "Go to Dashboard"
+        : "Return home";
 }
 
-<h1>@Model.Title</h1>
+<section class="failure-card" aria-labelledby="statusTitle">
+    <p class="failure-eyebrow">
+        @(Model.Code == StatusCodes.Status404NotFound
+            ? "404 · Page not found"
+            : $"Status {Model.Code}")
+    </p>
+    <h1 id="statusTitle">@Model.Title</h1>
 
-<p>@Model.Message</p>
+    <p class="lead">@Model.Message</p>
 
-<a asp-page="/Index" class="btn btn-primary">Return home</a>
+    @if (!string.IsNullOrWhiteSpace(Model.Guidance))
+    {
+        <p>@Model.Guidance</p>
+    }
+
+    <div class="failure-actions">
+        <a asp-area="" asp-page="/Index" class="btn btn-primary">
+            @recoveryLabel
+        </a>
+    </div>
+</section>

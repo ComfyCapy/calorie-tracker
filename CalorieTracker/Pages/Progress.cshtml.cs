@@ -97,7 +97,8 @@ public sealed class ProgressModel : PageModel
                 return new ProgressAchievementCard(
                     definition.Key,
                     definition.DisplayName,
-                    definition.Description,
+                    definition.Lore,
+                    definition.HowToGet,
                     definition.XpReward,
                     ProgressAchievementVisuals.SymbolFor(definition.Key),
                     unlocked != null,

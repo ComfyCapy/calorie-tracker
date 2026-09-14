@@ -27,7 +27,7 @@
     </div>
 }
 
-<form method="post" class="form-shell">
+<form method="post" class="form-shell" data-submit-once>
     <div asp-validation-summary="ModelOnly"
          class="alert alert-danger validation-summary"
          role="alert"></div>
@@ -55,7 +55,9 @@
               class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">
+    <button type="submit"
+            class="btn btn-primary"
+            data-submitting-text="Sending feedback…">
         Send feedback
     </button>
 </form>

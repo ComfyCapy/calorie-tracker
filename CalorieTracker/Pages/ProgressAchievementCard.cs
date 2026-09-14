@@ -5,7 +5,8 @@ namespace CalorieTracker.Pages;
 public sealed record ProgressAchievementCard(
     string Key,
     string DisplayName,
-    string Description,
+    string Lore,
+    string HowToGet,
     int XpReward,
     string Symbol,
     bool IsUnlocked,
