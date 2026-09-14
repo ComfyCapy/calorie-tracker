@@ -13,6 +13,12 @@ const diaryDate =
 const diaryMeal =
     rootElement?.dataset.diaryMeal || ''
 
+const diaryDateInputId =
+    rootElement?.dataset.diaryDateInputId || ''
+
+const diaryMealInputId =
+    rootElement?.dataset.diaryMealInputId || ''
+
 const initialSearchTerm =
     rootElement?.dataset.initialSearchTerm || ''
 
@@ -33,6 +39,8 @@ if (rootElement) {
                 returnToDiary={returnToDiary}
                 diaryDate={diaryDate}
                 diaryMeal={diaryMeal}
+                diaryDateInputId={diaryDateInputId}
+                diaryMealInputId={diaryMealInputId}
                 initialSearchTerm={initialSearchTerm}
                 initialProvider={initialProvider}
                 embedded={embedded}

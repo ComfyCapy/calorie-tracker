@@ -2,6 +2,7 @@ using System.Net;
 using CalorieTracker.Data;
 using CalorieTracker.Models;
 using CalorieTracker.Tests.TestSupport;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CalorieTracker.Tests.Foods;
@@ -9,7 +10,7 @@ namespace CalorieTracker.Tests.Foods;
 public class FoodSearchDiscoverabilityTests
 {
     [Fact]
-    public async Task MyFoods_OffersDistinctWiderSearchAndDoesNotMountEmbeddedSearch()
+    public async Task MyFoods_UsesCompactSourceSearchWithoutDuplicateActions()
     {
         using var factory = new IntegrationTestFactory();
         using var client = CreateAuthenticatedClient(factory);
@@ -19,21 +20,69 @@ public class FoodSearchDiscoverabilityTests
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Search your foods", html);
-        Assert.Contains("Search all foods", html);
+        Assert.Contains("placeholder=\"Search foods...\"", html);
+        Assert.Contains("aria-label=\"Search foods\"", html);
+        Assert.Contains("<option value=\"database\">Database</option>", html);
+        Assert.Contains("<option value=\"community\">Community</option>", html);
+        Assert.Matches(
+            "<option[^>]*value=\"mine\"[^>]*selected[^>]*>My Foods</option>",
+            html);
+        Assert.Matches(">\\s*Search\\s*</button>", html);
         Assert.Contains("Add Custom Food", html);
+        Assert.DoesNotContain("Search your foods", html);
+        Assert.DoesNotContain("Search Foods", html);
+        Assert.DoesNotContain("Choose Database, Community, or My Foods.", html);
+        Assert.DoesNotContain("Search all foods", html);
+        Assert.DoesNotContain("Quick actions", html);
+        Assert.DoesNotContain("A calmer collection", html);
         Assert.Contains("class=\"foods-page\"", html);
         Assert.Contains(
             "class=\"ct-scenic-header secondary-page-hero foods-hero\"",
             html);
         Assert.DoesNotContain("dashboard-hero-capy.png", html);
-        Assert.Contains("href=\"/SavedMeals\"", html);
         Assert.DoesNotContain("Search the wider food catalogue.", html);
-        Assert.Contains("searchTerm=banana", html);
+        Assert.Contains("value=\"banana\"", html);
         Assert.Contains("diaryDate=2026-09-07", html);
         Assert.Contains("diaryMeal=Lunch", html);
         Assert.DoesNotContain("id=\"react-food-search\"", html);
         Assert.DoesNotContain("data-embedded=", html);
+    }
+
+    [Fact]
+    public async Task MyFoods_SearchResultsRemainOwnedByCurrentUser()
+    {
+        const string userId = "owned-food-user";
+        using var factory = new IntegrationTestFactory();
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            context.Users.AddRange(
+                new ApplicationUser
+                {
+                    Id = userId,
+                    UserName = userId,
+                    Email = $"{userId}@example.test"
+                },
+                new ApplicationUser
+                {
+                    Id = "other-user",
+                    UserName = "other-user",
+                    Email = "other-user@example.test"
+                });
+            context.Foods.AddRange(
+                TestData.Food(userId, name: "My private apple"),
+                TestData.Food("other-user", name: "Other private apple"));
+            await context.SaveChangesAsync();
+        }
+
+        using var client = CreateAuthenticatedClient(factory, userId);
+        var html = await client.GetStringAsync(
+            "/Foods?source=mine&searchTerm=apple");
+
+        Assert.Contains("My private apple", html);
+        Assert.DoesNotContain("Other private apple", html);
     }
 
     [Fact]
@@ -95,6 +144,8 @@ public class FoodSearchDiscoverabilityTests
         Assert.Contains("provider: nextProvider", source);
         Assert.Contains("?provider=${encodeURIComponent(foodProvider)}", source);
         Assert.Contains("foodSearchProvider', foodProvider", source);
+        Assert.Contains("foodSearchSource', 'database'", source);
+        Assert.Contains("currentDiaryContext", source);
         Assert.DoesNotContain("food-search-provider-badge", source);
         Assert.DoesNotContain("{food.source}", source);
     }
@@ -157,23 +208,83 @@ public class FoodSearchDiscoverabilityTests
     }
 
     [Fact]
-    public async Task DiaryCreate_SearchAllFoodsLinkUsesDedicatedSearchPage()
+    public async Task DiaryCreate_OffersThreeSourcesAndEmbedsDatabaseSearch()
     {
         using var factory = new IntegrationTestFactory();
         using var client = CreateAuthenticatedClient(factory);
 
         var response = await client.GetAsync(
-            "/Diary/Create?date=2026-09-07&meal=Lunch&returnToFoodSearch=true&foodSearchProvider=usda&foodSearchTerm=apple");
+            "/Diary/Create?date=2026-09-07&meal=Lunch");
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Search all foods", html);
-        Assert.Contains("/Foods/Search", html);
-        Assert.Contains("provider=usda", html);
-        Assert.Contains("value=\"usda\"", html);
-        Assert.DoesNotContain("/Foods/Index", html[..html.IndexOf(
-            "Search all foods",
-            StringComparison.Ordinal)]);
+        Assert.Contains("aria-label=\"Food source\"", html);
+        Assert.Matches(">\\s*My Foods\\s*</a>", html);
+        Assert.Matches(">\\s*Database\\s*</a>", html);
+        Assert.Matches(">\\s*Community\\s*</a>", html);
+        Assert.Contains("aria-current=\"page\"", html);
+        Assert.Contains("placeholder=\"Search your foods...\"", html);
+        Assert.DoesNotContain("id=\"react-food-search\"", html);
+        var decodedHtml = WebUtility.HtmlDecode(html);
+        foreach (var source in new[] { "mine", "database", "community" })
+        {
+            Assert.Contains(
+                $"/Diary/Create?foodSource={source}&date=2026-09-07&meal=Lunch",
+                decodedHtml);
+        }
+
+        var database = await client.GetStringAsync(
+            "/Diary/Create?foodSource=database&foodSearchProvider=usda&foodSearchTerm=apple&date=2026-09-07&meal=Lunch");
+
+        Assert.Contains("id=\"react-food-search\"", database);
+        Assert.Contains("data-embedded=\"true\"", database);
+        Assert.Contains("data-initial-provider=\"usda\"", database);
+        Assert.Contains("data-initial-search-term=\"apple\"", database);
+        Assert.Contains("data-diary-date=\"2026-09-07\"", database);
+        Assert.Contains("data-diary-meal=\"Lunch\"", database);
+        Assert.Contains("data-diary-date-input-id=\"DiaryEntry_Date\"", database);
+        Assert.Contains("data-diary-meal-input-id=\"DiaryEntry_MealType\"", database);
+        Assert.DoesNotContain("/Foods/Search", database);
+        Assert.Contains(
+            "/Diary/Create?foodSource=community&date=2026-09-07&meal=Lunch",
+            WebUtility.HtmlDecode(database));
+
+        var sourceScript = File.ReadAllText(ProjectFile(
+            "CalorieTracker",
+            "wwwroot",
+            "js",
+            "diary-food-source.js"));
+        Assert.Contains("searchParams.set(\"date\", context.date)", sourceScript);
+        Assert.Contains("searchParams.set(\"meal\", context.meal)", sourceScript);
+        Assert.Contains("diary-community-search", sourceScript);
+    }
+
+    [Fact]
+    public async Task DiaryFoodSources_RequireAuthentication()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+
+        var response = await client.GetAsync(
+            "/Diary/Create?foodSource=community");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DiaryCreate_RejectsUnknownFoodSource()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = CreateAuthenticatedClient(factory);
+
+        var response = await client.GetAsync(
+            "/Diary/Create?foodSource=forged");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

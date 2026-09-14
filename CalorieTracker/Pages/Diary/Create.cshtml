@@ -4,6 +4,10 @@
     ViewData["Title"] = "Add Diary Entry";
 }
 
+<link rel="stylesheet"
+      href="~/react-food-search/assets/food-search.css"
+      asp-append-version="true" />
+
 @using System.Text.Json
 
 @{
@@ -38,12 +42,20 @@
 
 <h1>Add Diary Entry</h1>
 
+@if (Model.FoodSource == "community")
+{
+    <form id="diary-community-search" method="get"></form>
+}
+
 <form method="post" class="form-shell">
     <div asp-validation-summary="All" class="alert alert-danger validation-summary" role="alert"></div>
     <input type="hidden" asp-for="ReturnToFoodSearch" />
     <input type="hidden" asp-for="FoodSearchTerm" />
     <input type="hidden" asp-for="FoodSearchProvider" />
+    <input type="hidden" asp-for="FoodSearchSource" />
     <input type="hidden" asp-for="ReturnToFoodsIndex" />
+    <input type="hidden" asp-for="FoodSource" />
+    <input type="hidden" asp-for="CommunityPage" />
 
     <fieldset class="form-section">
         <legend>When</legend>
@@ -87,79 +99,176 @@
     </fieldset>
     <fieldset class="form-section">
         <legend>Food</legend>
-    <div class="mb-3 mt-3">
-        <label class="form-label" for="foodSearch">
-            Food
-        </label>
+        <nav class="diary-food-source-selector" aria-label="Food source">
+            @foreach (var source in new[]
+            {
+                (Value: "mine", Label: "My Foods"),
+                (Value: "database", Label: "Database"),
+                (Value: "community", Label: "Community")
+            })
+            {
+                <a asp-page="./Create"
+                   asp-route-foodSource="@source.Value"
+                   asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+                   asp-route-meal="@Model.DiaryEntry.MealType"
+                   class="@(Model.FoodSource == source.Value ? "is-active" : null)"
+                   aria-current="@(Model.FoodSource == source.Value ? "page" : null)"
+                   data-diary-food-source-link>
+                    @source.Label
+                </a>
+            }
+        </nav>
 
-        <input type="hidden"
-               asp-for="DiaryEntry.FoodId"
-               id="foodId" />
+        @if (Model.FoodSource == "mine")
+        {
+            <div class="mb-3 mt-3">
+                <label class="form-label" for="foodSearch">Food</label>
 
-        <div class="position-relative">
-            <input type="text"
-                   id="foodSearch"
-                   class="form-control"
-                   placeholder="Search your foods..."
-                   autocomplete="off"
-                   role="combobox"
-                   aria-autocomplete="list"
-                   aria-controls="foodResults"
-                   aria-expanded="false"
-                   aria-required="true"
-                   aria-describedby="foodSearchStatus foodSearchError" />
+                <input type="hidden"
+                       asp-for="DiaryEntry.FoodId"
+                       id="foodId" />
 
-            <div id="foodResults"
-                 class="list-group position-absolute w-100 shadow-sm"
-                 role="listbox"
-                 aria-label="Food suggestions"
-                 style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                <div class="position-relative">
+                    <input type="text"
+                           id="foodSearch"
+                           class="form-control"
+                           placeholder="Search your foods..."
+                           autocomplete="off"
+                           role="combobox"
+                           aria-autocomplete="list"
+                           aria-controls="foodResults"
+                           aria-expanded="false"
+                           aria-required="true"
+                           aria-describedby="foodSearchStatus foodSearchError" />
+
+                    <div id="foodResults"
+                         class="list-group position-absolute w-100 shadow-sm"
+                         role="listbox"
+                         aria-label="Food suggestions"
+                         style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                    </div>
+
+                    <div id="foodSearchStatus"
+                         class="visually-hidden"
+                         role="status"
+                         aria-live="polite"
+                         aria-atomic="true">
+                    </div>
+                </div>
             </div>
 
-            <div id="foodSearchStatus"
-                 class="visually-hidden"
-                 role="status"
-                 aria-live="polite"
-                 aria-atomic="true">
+            <span id="foodSearchError"
+                  asp-validation-for="DiaryEntry.FoodId"
+                  class="text-danger"></span>
+
+            <div id="selectedFoodDisplay"
+                 class="mt-2 text-muted"
+                 style="display: none;">
+                Selected:
+                <strong id="selectedFoodName" class="text-body"></strong>
             </div>
-        </div>
 
-    </div>
+            <div class="mt-2">
+                <a asp-page="/Foods/Create"
+                   asp-route-returnToDiary="true"
+                   asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+                   asp-route-diaryMeal="@Model.DiaryEntry.MealType">
+                    Add Custom Food
+                </a>
+            </div>
+        }
+        else if (Model.FoodSource == "database")
+        {
+            <div id="react-food-search"
+                 data-return-to-diary="true"
+                 data-diary-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+                 data-diary-meal="@Model.DiaryEntry.MealType"
+                 data-diary-date-input-id="DiaryEntry_Date"
+                 data-diary-meal-input-id="DiaryEntry_MealType"
+                 data-initial-search-term="@Model.FoodSearchTerm"
+                 data-initial-provider="@Model.FoodSearchProvider"
+                 data-embedded="true">
+            </div>
+        }
+        else
+        {
+            <div class="diary-community-search">
+                <input type="hidden"
+                       name="foodSource"
+                       value="community"
+                       form="diary-community-search" />
+                <input type="hidden"
+                       name="date"
+                       value="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+                       form="diary-community-search"
+                       data-diary-context-date />
+                <input type="hidden"
+                       name="meal"
+                       value="@Model.DiaryEntry.MealType"
+                       form="diary-community-search"
+                       data-diary-context-meal />
+                <label for="communityFoodSearch" class="visually-hidden">Search Community foods</label>
+                <input type="search"
+                       id="communityFoodSearch"
+                       name="foodSearchTerm"
+                       value="@Model.FoodSearchTerm"
+                       maxlength="100"
+                       class="form-control"
+                       placeholder="Search Community foods..."
+                       form="diary-community-search" />
+                <button type="submit"
+                        class="btn btn-primary"
+                        form="diary-community-search">Search</button>
+            </div>
 
-    <span id="foodSearchError"
-          asp-validation-for="DiaryEntry.FoodId"
-          class="text-danger">
-    </span>
+            <div class="diary-community-results" aria-live="polite">
+                @if (Model.CommunityFoods.Count == 0)
+                {
+                    <p class="text-muted mb-0" role="status">No approved Community foods match this search.</p>
+                }
+                @foreach (var result in Model.CommunityFoods)
+                {
+                    var food = result.Food;
+                    <article class="diary-community-result">
+                        <div>
+                            <h2>@food.Name</h2>
+                            <p>@food.Calories kcal · Protein @food.Protein.ToString("0.##")g · Carbohydrates @food.Carbohydrates.ToString("0.##")g · Fat @food.Fat.ToString("0.##")g</p>
+                            <small>Per @food.ServingSize.ToString("0.##") @food.DisplayServingUnit · Score @result.Score</small>
+                        </div>
+                        <button type="submit"
+                                class="btn btn-primary btn-sm"
+                                name="communityFoodId"
+                                value="@food.Id"
+                                formaction="@Url.Page("./Create", "SelectCommunity")"
+                                formnovalidate>
+                            Add to Diary
+                        </button>
+                    </article>
+                }
+            </div>
 
-    <div id="selectedFoodDisplay"
-         class="mt-2 text-muted"
-         style="display: none;">
-        Selected:
-        <strong id="selectedFoodName"
-                class="text-body">
-        </strong>
-    </div>
-
-    <div class="mt-2">
-        <small class="text-muted">
-            Can't find it?
-            <a asp-page="/Foods/Search"
-               asp-route-returnToDiary="true"
-               asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
-               asp-route-diaryMeal="@Model.DiaryEntry.MealType"
-               asp-route-searchTerm="@Model.FoodSearchTerm"
-               asp-route-provider="@Model.FoodSearchProvider">
-                Search all foods
-            </a>
-            or
-            <a asp-page="/Foods/Create"
-               asp-route-returnToDiary="true"
-               asp-route-diaryDate="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
-               asp-route-diaryMeal="@Model.DiaryEntry.MealType">
-                create a custom food
-            </a>
-        </small>
-    </div>
+            @if (Model.CommunityPage > 1 || Model.CommunityHasNext)
+            {
+                <nav aria-label="Community food pages" class="diary-community-pagination">
+                    @if (Model.CommunityPage > 1)
+                    {
+                        <a asp-route-foodSource="community"
+                           asp-route-foodSearchTerm="@Model.FoodSearchTerm"
+                           asp-route-communityPage="@(Model.CommunityPage - 1)"
+                           asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+                           asp-route-meal="@Model.DiaryEntry.MealType">Previous</a>
+                    }
+                    @if (Model.CommunityHasNext)
+                    {
+                        <a asp-route-foodSource="community"
+                           asp-route-foodSearchTerm="@Model.FoodSearchTerm"
+                           asp-route-communityPage="@(Model.CommunityPage + 1)"
+                           asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+                           asp-route-meal="@Model.DiaryEntry.MealType">Next</a>
+                    }
+                </nav>
+            }
+        }
 
     </fieldset>
     <fieldset id="measurementFields" class="form-section" hidden>
@@ -323,12 +432,35 @@
 
     </fieldset>
     <div class="mb-3 mt-3">
-        <button type="submit"
-                class="btn btn-primary">
-            Add to Diary
-        </button>
+        @if (Model.FoodSource == "mine")
+        {
+            <button type="submit" class="btn btn-primary">Add to Diary</button>
+        }
 
-        @if (Model.ReturnToFoodSearch && Model.ReturnToFoodsIndex)
+        @if (Model.ReturnToFoodSearch && Model.FoodSearchSource == "community")
+        {
+            <a asp-page="./Create"
+               asp-route-foodSource="community"
+               asp-route-foodSearchTerm="@Model.FoodSearchTerm"
+               asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+               asp-route-meal="@Model.DiaryEntry.MealType"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        }
+        else if (Model.ReturnToFoodSearch && Model.FoodSearchSource == "database")
+        {
+            <a asp-page="./Create"
+               asp-route-foodSource="database"
+               asp-route-foodSearchTerm="@Model.FoodSearchTerm"
+               asp-route-foodSearchProvider="@Model.FoodSearchProvider"
+               asp-route-date="@Model.DiaryEntry.Date.ToString("yyyy-MM-dd")"
+               asp-route-meal="@Model.DiaryEntry.MealType"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        }
+        else if (Model.ReturnToFoodSearch && Model.ReturnToFoodsIndex)
         {
             <a asp-page="/Foods/Index"
                asp-route-searchTerm="@Model.FoodSearchTerm"
@@ -361,11 +493,21 @@
 </form>
 
 @section Scripts {
-    <script>
-        const foods = @Html.Raw(foodsJson);
-        const selectedPortionId = "@Model.SelectedPortionId";
-        const selectedApproximationPortionId = "@Model.ApproximationPortionId";
-    </script>
-    <script src="~/js/diary-food.js" asp-append-version="true"></script>
+    <script src="~/js/diary-food-source.js" asp-append-version="true"></script>
+    @if (Model.FoodSource == "mine")
+    {
+        <script>
+            const foods = @Html.Raw(foodsJson);
+            const selectedPortionId = "@Model.SelectedPortionId";
+            const selectedApproximationPortionId = "@Model.ApproximationPortionId";
+        </script>
+        <script src="~/js/diary-food.js" asp-append-version="true"></script>
+    }
+    else if (Model.FoodSource == "database")
+    {
+        <script type="module"
+                src="~/react-food-search/assets/food-search.js"
+                asp-append-version="true"></script>
+    }
     <partial name="_ValidationScriptsPartial" />
 }

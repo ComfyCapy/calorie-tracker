@@ -20,57 +20,42 @@
         Favourite this food to find it faster in My Foods.
     </span>
 
-    <section class="foods-search-panel" aria-labelledby="foods-search-heading">
-        <div class="foods-search-copy">
-            <h2 id="foods-search-heading">Search Foods</h2>
-            <p>Choose Database, Community, or My Foods.</p>
-        </div>
-
+    <section class="foods-search-panel" aria-label="Search foods">
         <form method="get" class="foods-search-form">
             <input type="hidden" asp-for="ReturnToDiary" />
             <input type="hidden" asp-for="DiaryDate" />
             <input type="hidden" asp-for="DiaryMeal" />
 
-            <label for="foodSearchTerm" class="visually-hidden">Search foods</label>
-            <input type="search"
-                   id="foodSearchTerm"
-                   name="searchTerm"
-                   value="@Model.SearchTerm"
-                   class="form-control"
-                   maxlength="100"
-                   placeholder="Search foods..." />
+            <div class="foods-search-controls">
+                <label for="foodSearchTerm" class="visually-hidden">Search foods</label>
+                <input type="search"
+                       id="foodSearchTerm"
+                       name="searchTerm"
+                       value="@Model.SearchTerm"
+                       class="form-control"
+                       maxlength="100"
+                       placeholder="Search foods..." />
 
-            <label for="foodSource" class="visually-hidden">Food source</label>
-            <select asp-for="Source" id="foodSource" class="form-select" style="width:auto;max-width:100%">
-                <option value="database">Database</option>
-                <option value="community">Community</option>
-                <option value="mine">My Foods</option>
-            </select>
+                <label for="foodSource" class="visually-hidden">Food source</label>
+                <select asp-for="Source" id="foodSource" class="form-select">
+                    <option value="database">Database</option>
+                    <option value="community">Community</option>
+                    <option value="mine">My Foods</option>
+                </select>
+            </div>
 
-            <button type="submit" class="btn btn-primary">
-                @(Model.Source == "mine" ? "Search your foods" : "Search")
-            </button>
+            <div class="foods-search-actions" aria-label="Food search actions">
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a asp-page="./Create"
+                   asp-route-returnToDiary="@Model.ReturnToDiary"
+                   asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
+                   asp-route-diaryMeal="@Model.DiaryMeal"
+                   class="btn btn-outline-primary">
+                    <span aria-hidden="true">＋</span>
+                    Add Custom Food
+                </a>
+            </div>
         </form>
-
-        <div class="foods-primary-actions" aria-label="Food collection actions">
-            <a asp-page="./Create"
-               asp-route-returnToDiary="@Model.ReturnToDiary"
-               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-               asp-route-diaryMeal="@Model.DiaryMeal"
-               class="btn btn-primary">
-                <span aria-hidden="true">＋</span>
-                Add Custom Food
-            </a>
-
-            <a asp-page="./Search"
-               asp-route-returnToDiary="@Model.ReturnToDiary"
-               asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-               asp-route-diaryMeal="@Model.DiaryMeal"
-               asp-route-searchTerm="@Model.SearchTerm"
-               class="btn btn-outline-primary">
-                Search all foods
-            </a>
-        </div>
     </section>
 
     @if (Model.Source == "community")
@@ -130,7 +115,6 @@
     }
     else
     {
-    <div class="foods-layout">
         <div class="foods-collection" aria-label="Your food collection">
             @if (string.IsNullOrWhiteSpace(Model.SearchTerm) && Model.FavouriteFoods.Count == 0
                 && Model.CustomFoods.Count == 0 && Model.RecentFoods.Count == 0)
@@ -547,41 +531,5 @@
             }
         </div>
 
-        <aside class="foods-utility" aria-label="Food shortcuts and tips">
-            <section class="ct-card foods-utility-card">
-                <h2>Quick actions</h2>
-                <nav class="foods-quick-actions" aria-label="Food quick actions">
-                    <a asp-page="./Search"
-                       asp-route-returnToDiary="@Model.ReturnToDiary"
-                       asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                       asp-route-diaryMeal="@Model.DiaryMeal"
-                       asp-route-searchTerm="@Model.SearchTerm">
-                        <span aria-hidden="true">⌕</span>
-                        <strong>Search all foods</strong>
-                    </a>
-                    <a asp-page="./Create"
-                       asp-route-returnToDiary="@Model.ReturnToDiary"
-                       asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")"
-                       asp-route-diaryMeal="@Model.DiaryMeal">
-                        <span aria-hidden="true">＋</span>
-                        <strong>Add Custom Food</strong>
-                    </a>
-                    <a asp-page="/SavedMeals/Index">
-                        <span aria-hidden="true">♡</span>
-                        <strong>View Saved Meals</strong>
-                    </a>
-                </nav>
-            </section>
-
-            <section class="ct-card foods-tip-card">
-                <h2>A calmer collection</h2>
-                <ul>
-                    <li><span aria-hidden="true">★</span> Favourite foods you log often.</li>
-                    <li><span aria-hidden="true">＋</span> Create foods for your own recipes and portions.</li>
-                    <li><span aria-hidden="true">↻</span> Recent foods stay close for faster logging.</li>
-                </ul>
-            </section>
-        </aside>
-    </div>
     }
 </div>

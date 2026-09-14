@@ -18,19 +18,22 @@ namespace CalorieTracker.Pages.Diary
         private readonly DailyMaintenanceSnapshotService _snapshotService;
         private readonly IUserLocalTimeProvider _userLocalTimeProvider;
         private readonly ProgressionAchievementHooks _progressionHooks;
+        private readonly CommunityFoodService? _community;
 
         public CreateModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             DailyMaintenanceSnapshotService snapshotService,
             IUserLocalTimeProvider userLocalTimeProvider,
-            ProgressionAchievementHooks progressionHooks)
+            ProgressionAchievementHooks progressionHooks,
+            CommunityFoodService? community = null)
         {
             _context = context;
             _userManager = userManager;
             _snapshotService = snapshotService;
             _userLocalTimeProvider = userLocalTimeProvider;
             _progressionHooks = progressionHooks;
+            _community = community;
         }
 
         [BindProperty]
@@ -64,12 +67,41 @@ namespace CalorieTracker.Pages.Diary
         [BindProperty(SupportsGet = true)]
         public bool ReturnToFoodsIndex { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string? FoodSource { get; set; } = "mine";
+
+        [BindProperty(SupportsGet = true)]
+        public string? FoodSearchSource { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int CommunityPage { get; set; } = 1;
+
+        public List<CommunityFoodSearchResult> CommunityFoods { get; private set; } = [];
+
+        public bool CommunityHasNext { get; private set; }
+
 
         public async Task<IActionResult> OnGetAsync(
             DateTime? date,
             string? meal,
-            int? foodId)
+            int? foodId,
+            CancellationToken cancellationToken = default)
         {
+            FoodSource = string.IsNullOrWhiteSpace(FoodSource)
+                ? "mine"
+                : FoodSource.Trim().ToLowerInvariant();
+
+            if (FoodSource is not ("mine" or "database" or "community"))
+            {
+                return BadRequest();
+            }
+
+            FoodSearchTerm ??= string.Empty;
+            if (FoodSearchTerm.Length > 100)
+            {
+                return BadRequest();
+            }
+
             if (!string.IsNullOrWhiteSpace(FoodSearchProvider))
             {
                 FoodSearchProvider = FoodSearchProvider
@@ -83,7 +115,12 @@ namespace CalorieTracker.Pages.Diary
                 }
             }
 
-            if (!ModelState.IsValid)
+            if (ValidationRules.HasBindingError(ModelState, nameof(date)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(meal)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(foodId)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(FoodSource)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(FoodSearchTerm)) ||
+                ValidationRules.HasBindingError(ModelState, nameof(CommunityPage)))
             {
                 return BadRequest();
             }
@@ -121,6 +158,24 @@ namespace CalorieTracker.Pages.Diary
 
             await LoadFoodOptionsAsync(userId);
 
+            if (FoodSource == "community")
+            {
+                if (_community == null)
+                {
+                    throw new InvalidOperationException(
+                        "Community food search is not configured.");
+                }
+
+                CommunityPage = Math.Clamp(CommunityPage, 1, 100000);
+                CommunityFoods = await _community
+                    .Search(FoodSearchTerm, User)
+                    .Skip((CommunityPage - 1) * 20)
+                    .Take(21)
+                    .ToListAsync(cancellationToken);
+                CommunityHasNext = CommunityFoods.Count > 20;
+                CommunityFoods = CommunityFoods.Take(20).ToList();
+            }
+
             if (foodId.HasValue &&
                 FoodOptions.All(food => food.Id != foodId.Value))
             {
@@ -148,6 +203,49 @@ namespace CalorieTracker.Pages.Diary
             }
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostSelectCommunityAsync(
+            int communityFoodId,
+            CancellationToken cancellationToken = default)
+        {
+            if (ValidationRules.HasBindingError(
+                    ModelState,
+                    nameof(communityFoodId)) ||
+                communityFoodId <= 0 ||
+                DiaryEntry.Date.Date < ValidationRules.MinimumDiaryDate ||
+                DiaryEntry.Date.Date > ValidationRules.MaximumDiaryDate ||
+                !ValidationRules.MealTypes.Contains(DiaryEntry.MealType) ||
+                FoodSearchTerm?.Length > 100)
+            {
+                return BadRequest();
+            }
+
+            if (_community == null)
+            {
+                throw new InvalidOperationException(
+                    "Community food selection is not configured.");
+            }
+
+            var food = await _community.SelectAsync(
+                User,
+                communityFoodId,
+                cancellationToken);
+
+            if (food == null)
+            {
+                return NotFound();
+            }
+
+            return RedirectToPage(new
+            {
+                foodId = food.Id,
+                date = DiaryEntry.Date.ToString("yyyy-MM-dd"),
+                meal = DiaryEntry.MealType,
+                returnToFoodSearch = true,
+                foodSearchSource = "community",
+                foodSearchTerm = FoodSearchTerm
+            });
         }
 
         public async Task<IActionResult> OnPostAsync(

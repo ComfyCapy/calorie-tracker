@@ -24,6 +24,8 @@ function App({
     returnToDiary,
     diaryDate,
     diaryMeal,
+    diaryDateInputId = '',
+    diaryMealInputId = '',
     initialSearchTerm = '',
     initialProvider = 'cofid',
     embedded = false,
@@ -49,6 +51,14 @@ function App({
     const [activeSearchTerm, setActiveSearchTerm] = useState(initialQuery)
     const [statusMessage, setStatusMessage] = useState('')
     const searchRequestSequence = useRef(0)
+
+    function currentDiaryContext(inputId, fallback) {
+        if (!embedded || !inputId) {
+            return fallback
+        }
+
+        return document.getElementById(inputId)?.value || fallback
+    }
 
     const loadSearchPage = useCallback(
         async (query, pageNumber, nextPageSize, nextProvider) => {
@@ -396,23 +406,29 @@ function App({
                 foodId: result.foodId.toString(),
             })
 
-            if (returnToDiary && diaryDate) {
-                params.set('date', diaryDate)
+            const currentDiaryDate = currentDiaryContext(
+                diaryDateInputId,
+                diaryDate,
+            )
+            const currentDiaryMeal = currentDiaryContext(
+                diaryMealInputId,
+                diaryMeal,
+            )
+
+            if (returnToDiary && currentDiaryDate) {
+                params.set('date', currentDiaryDate)
             }
 
-            if (returnToDiary && diaryMeal) {
-                params.set('meal', diaryMeal)
+            if (returnToDiary && currentDiaryMeal) {
+                params.set('meal', currentDiaryMeal)
             }
 
             params.set('returnToFoodSearch', 'true')
+            params.set('foodSearchSource', 'database')
             params.set('foodSearchProvider', foodProvider)
 
             if (activeSearchTerm) {
                 params.set('foodSearchTerm', activeSearchTerm)
-            }
-
-            if (embedded) {
-                params.set('returnToFoodsIndex', 'true')
             }
 
             window.location.assign(`/Diary/Create?${params.toString()}`)
@@ -430,21 +446,29 @@ function App({
             returnToFoodSearch: 'true',
         })
 
-        if (returnToDiary && diaryDate) {
-            params.set('date', diaryDate)
+        const currentDiaryDate = currentDiaryContext(
+            diaryDateInputId,
+            diaryDate,
+        )
+        const currentDiaryMeal = currentDiaryContext(
+            diaryMealInputId,
+            diaryMeal,
+        )
+
+        if (returnToDiary && currentDiaryDate) {
+            params.set('date', currentDiaryDate)
         }
-        if (returnToDiary && diaryMeal) {
-            params.set('meal', diaryMeal)
+        if (returnToDiary && currentDiaryMeal) {
+            params.set('meal', currentDiaryMeal)
         }
+        params.set('foodSearchSource', 'database')
         if (searchTerm.trim()) {
             params.set('foodSearchTerm', searchTerm.trim())
         }
-        if (embedded) {
-            params.set('returnToFoodsIndex', 'true')
-        }
-
         window.location.assign(`/Diary/Create?${params.toString()}`)
     }
+
+    const SearchContainer = embedded ? 'div' : 'form'
 
     return (
         <div
@@ -459,24 +483,25 @@ function App({
             </span>
 
             {!embedded && (
-                <>
-                    <section className="food-search-header">
-                        <h1>Search all foods</h1>
-                        <nav aria-label="Food source" className="d-flex flex-wrap gap-3">
-                            <span aria-current="page">Database</span>
-                            {['community', 'mine'].map(source => (
-                                <a key={source} href={`/Foods?${new URLSearchParams({
-                                    source, searchTerm, returnToDiary: String(returnToDiary),
-                                    diaryDate: diaryDate || '', diaryMeal: diaryMeal || '',
-                                })}`}>{source === 'community' ? 'Community' : 'My Foods'}</a>
-                            ))}
-                        </nav>
-                    </section>
+                <section className="food-search-header">
+                    <h1>Search all foods</h1>
+                    <nav aria-label="Food source" className="d-flex flex-wrap gap-3">
+                        <span aria-current="page">Database</span>
+                        {['community', 'mine'].map(source => (
+                            <a key={source} href={`/Foods?${new URLSearchParams({
+                                source, searchTerm, returnToDiary: String(returnToDiary),
+                                diaryDate: diaryDate || '', diaryMeal: diaryMeal || '',
+                            })}`}>{source === 'community' ? 'Community' : 'My Foods'}</a>
+                        ))}
+                    </nav>
+                </section>
+            )}
 
-                    <form
-                        className="food-search-form"
-                        onSubmit={handleSearch}
-                    >
+            <SearchContainer
+                className="food-search-form"
+                role={embedded ? 'search' : undefined}
+                onSubmit={embedded ? undefined : handleSearch}
+            >
                         <label
                             className="visually-hidden"
                             htmlFor="food-search-input"
@@ -489,6 +514,13 @@ function App({
                             type="search"
                             value={searchTerm}
                             onChange={handleSearchTermChange}
+                            onKeyDown={embedded
+                                ? (event) => {
+                                    if (event.key === 'Enter') {
+                                        void handleSearch(event)
+                                    }
+                                }
+                                : undefined}
                             placeholder="Try chicken, spaghetti, banana..."
                             aria-label="Search the wider food catalogue"
                             role="combobox"
@@ -525,18 +557,17 @@ function App({
 
                         <button
                             className="food-search-button"
-                            type="submit"
+                            type={embedded ? 'button' : 'submit'}
+                            onClick={embedded ? handleSearch : undefined}
                             disabled={isLoading}
                         >
                             {isLoading ? 'Searching...' : 'Search'}
                         </button>
-                    </form>
+            </SearchContainer>
 
-                    <p className="food-search-attribution">
-                        {providers[provider].attribution}
-                    </p>
-                </>
-            )}
+            <p className="food-search-attribution">
+                {providers[provider].attribution}
+            </p>
 
             <div
                 className="visually-hidden"

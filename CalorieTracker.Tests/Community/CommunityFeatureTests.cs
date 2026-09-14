@@ -395,6 +395,72 @@ public sealed class CommunityFeatureTests
     }
 
     [Fact]
+    public async Task DiaryCommunitySearch_IsApprovedOnly_AndSelectionUsesPrivateCopy()
+    {
+        using var factory = new IntegrationTestFactory(); await Seed(factory);
+        int approvedId, pendingId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var approved = TestData.Food("owner", name: "Approved diary soup");
+            var pending = TestData.Food("owner", name: "Pending diary soup");
+            db.AddRange(approved, pending); await db.SaveChangesAsync();
+            var service = scope.ServiceProvider.GetRequiredService<CommunityFoodService>();
+            approvedId = (await service.SubmitAsync(Actor("owner"), approved.Id))!.Id;
+            pendingId = (await service.SubmitAsync(Actor("owner"), pending.Id))!.Id;
+            await service.ReviewAsync(Actor("admin"), approvedId, true, null);
+        }
+
+        using var client = Client(factory, "other");
+        const string searchPage = "/Diary/Create?foodSource=community&foodSearchTerm=diary%20soup&date=2026-09-07&meal=Lunch";
+        var html = await client.GetStringAsync(searchPage);
+
+        Assert.Contains("Approved diary soup", html);
+        Assert.DoesNotContain("Pending diary soup", html);
+        Assert.Contains("placeholder=\"Search Community foods...\"", html);
+        Assert.Matches("<input[^>]*name=\"date\"[^>]*value=\"2026-09-07\"[^>]*>", html);
+        Assert.Matches("<input[^>]*name=\"meal\"[^>]*value=\"Lunch\"[^>]*>", html);
+
+        var handler = "/Diary/Create?handler=SelectCommunity";
+        var pendingResponse = await Post(client, searchPage, handler, new()
+        {
+            ["communityFoodId"] = pendingId.ToString(),
+            ["DiaryEntry.Date"] = "2026-09-07",
+            ["DiaryEntry.MealType"] = "Lunch",
+            ["FoodSearchTerm"] = "diary soup",
+            ["Food.UserId"] = "owner",
+            ["Food.Calories"] = "9999"
+        });
+        Assert.Equal(HttpStatusCode.NotFound, pendingResponse.StatusCode);
+
+        var approvedResponse = await Post(client, searchPage, handler, new()
+        {
+            ["communityFoodId"] = approvedId.ToString(),
+            ["DiaryEntry.Date"] = "2026-09-07",
+            ["DiaryEntry.MealType"] = "Lunch",
+            ["FoodSearchTerm"] = "diary soup",
+            ["Food.UserId"] = "owner",
+            ["Food.Calories"] = "9999"
+        });
+
+        Assert.Equal(HttpStatusCode.Redirect, approvedResponse.StatusCode);
+        var location = approvedResponse.Headers.Location!.OriginalString;
+        Assert.Contains("date=2026-09-07", location);
+        Assert.Contains("meal=Lunch", location);
+        Assert.Contains("foodSearchSource=community", location);
+
+        using var verify = factory.Services.CreateScope();
+        var privateCopy = await verify.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>()
+            .Foods.SingleAsync(food =>
+                food.UserId == "other" &&
+                food.Source == "Community" &&
+                food.ExternalId == approvedId.ToString());
+        Assert.Equal("Approved diary soup", privateCopy.Name);
+        Assert.Equal(200, privateCopy.Calories);
+    }
+
+    [Fact]
     public async Task AdminRename_ValidatesAuthorization_AndDoesNotMutatePrivateOrHistoricalCopies()
     {
         using var factory = new IntegrationTestFactory(); await Seed(factory);
