@@ -15,6 +15,8 @@ namespace CalorieTracker.Data
         }
 
         public DbSet<Food> Foods { get; set; }
+        public DbSet<CommunityFood> CommunityFoods { get; set; }
+        public DbSet<CommunityFoodVote> CommunityFoodVotes { get; set; }
         public DbSet<DiaryEntry> DiaryEntries { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<DailyMaintenanceSnapshot> DailyMaintenanceSnapshots { get; set; }
@@ -33,6 +35,33 @@ namespace CalorieTracker.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<Microsoft.AspNetCore.Identity.IdentityRole>()
+                .HasData(CalorieTracker.Security.AccessRoles.SeedRoles());
+            var community = builder.Entity<CommunityFood>();
+            community.HasOne<Food>().WithMany().HasForeignKey(x => x.SourceFoodId).OnDelete(DeleteBehavior.SetNull);
+            community.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.SubmitterId).OnDelete(DeleteBehavior.SetNull);
+            community.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.ReviewerId).OnDelete(DeleteBehavior.SetNull);
+            community.HasIndex(x => x.SourceFoodId).IsUnique().HasFilter("\"SourceFoodId\" IS NOT NULL");
+            community.HasIndex(x => new { x.Status, x.Name, x.Id });
+            community.Property(x => x.Status).IsConcurrencyToken();
+            var communityVote = builder.Entity<CommunityFoodVote>();
+            communityVote.HasKey(x => new { x.CommunityFoodId, x.UserId });
+            communityVote.HasOne(x => x.CommunityFood).WithMany(x => x.Votes)
+                .HasForeignKey(x => x.CommunityFoodId).OnDelete(DeleteBehavior.Cascade);
+            communityVote.HasOne(x => x.User).WithMany()
+                .HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            communityVote.ToTable("CommunityFoodVotes", table =>
+                table.HasCheckConstraint("CK_CommunityFoodVotes_Value", "\"Value\" IN (-1, 1)"));
+            community.ToTable("CommunityFoods", table =>
+            {
+                table.HasCheckConstraint("CK_CommunityFoods_Status", "\"Status\" IN (0, 1, 2)");
+                table.HasCheckConstraint("CK_CommunityFoods_Review", "(\"Status\" = 0 AND \"ReviewedUtc\" IS NULL) OR (\"Status\" IN (1, 2) AND \"ReviewedUtc\" IS NOT NULL)");
+                table.HasCheckConstraint("CK_CommunityFoods_Nutrition", "\"Calories\" >= 0 AND CAST(\"Protein\" AS REAL) >= 0 AND CAST(\"Carbohydrates\" AS REAL) >= 0 AND CAST(\"Fat\" AS REAL) >= 0 AND CAST(\"ServingSize\" AS REAL) > 0 AND CAST(\"CanonicalServingSize\" AS REAL) > 0");
+                table.HasCheckConstraint("CK_CommunityFoods_Name", "length(trim(\"Name\")) BETWEEN 1 AND 200");
+                table.HasCheckConstraint("CK_CommunityFoods_Basis", "\"ServingBasis\" IN (0, 1)");
+            });
+            foreach (var name in new[] { nameof(CommunityFood.Calories), nameof(CommunityFood.Protein), nameof(CommunityFood.Carbohydrates), nameof(CommunityFood.Fat), nameof(CommunityFood.ServingSize), nameof(CommunityFood.CanonicalServingSize), nameof(CommunityFood.ServingUnit), nameof(CommunityFood.ServingBasis), nameof(CommunityFood.PortionLabel), nameof(CommunityFood.SubmittedUtc) })
+                community.Property(name).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Throw);
 
             builder.Entity<UserProfile>()
                 .HasOne(profile => profile.User)

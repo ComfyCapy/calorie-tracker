@@ -1,0 +1,50 @@
+@page
+@model CalorieTracker.Pages.Admin.CommunityFoodsModel
+@using CalorieTracker.Models
+@{ ViewData["Title"] = "Community Food moderation"; }
+<h1>Community Food moderation</h1>
+<a asp-page="Index">Admin home</a>
+<form method="get" class="d-flex flex-wrap gap-2 my-3">
+    <label asp-for="Status" class="form-label">Show</label>
+    <select asp-for="Status" asp-items="Html.GetEnumSelectList<CommunityFoodStatus>()" class="form-select w-auto"></select>
+    <button class="btn btn-outline-primary">Filter</button>
+</form>
+@if (Model.Submissions.Count == 0) { <p>No submissions in this queue.</p> }
+@foreach (var item in Model.Submissions)
+{
+    <article class="ct-card p-3 mb-3" style="overflow-wrap:anywhere">
+        <h2 class="h4">@item.Name</h2>
+        <p>@item.Calories kcal · Protein @item.Protein.ToString("0.##")g · Carbohydrates @item.Carbohydrates.ToString("0.##")g · Fat @item.Fat.ToString("0.##")g</p>
+        <p>Per @item.ServingSize.ToString("0.##") @item.DisplayServingUnit</p>
+        <p class="text-muted">Submitted @item.SubmittedUtc.ToString("yyyy-MM-dd HH:mm") UTC · User @(item.SubmitterId ?? "deleted account")</p>
+        <form method="post" asp-page-handler="Rename" class="d-flex flex-wrap gap-2 align-items-end mb-3">
+            <input type="hidden" name="id" value="@item.Id" />
+            <div class="flex-grow-1">
+                <label for="name-@item.Id" class="form-label">Community catalogue name</label>
+                <input id="name-@item.Id" name="name" value="@item.Name" maxlength="200" required class="form-control" />
+            </div>
+            <button class="btn btn-outline-primary">Rename</button>
+        </form>
+        @if (item.Status == CommunityFoodStatus.Pending)
+        {
+            <form method="post">
+                <input type="hidden" name="id" value="@item.Id" />
+                <label for="note-@item.Id">Moderator note (optional, visible to the submitter)</label>
+                <textarea id="note-@item.Id" name="note" maxlength="500" class="form-control mb-2" rows="2"></textarea>
+                <div class="d-flex flex-wrap gap-2">
+                    <button asp-page-handler="Approve" class="btn btn-primary">Approve</button>
+                    <button asp-page-handler="Reject" class="btn btn-outline-danger">Reject</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <p>@item.Status · Reviewed @item.ReviewedUtc?.ToString("yyyy-MM-dd HH:mm") UTC · Admin @(item.ReviewerId ?? "deleted account")</p>
+            <p>@item.ModeratorNote</p>
+        }
+    </article>
+}
+<nav aria-label="Moderation pages" class="d-flex gap-3">
+    @if (Model.PageNumber > 1) { <a asp-route-status="@Model.Status" asp-route-pageNumber="@(Model.PageNumber - 1)">Previous</a> }
+    @if (Model.HasNext) { <a asp-route-status="@Model.Status" asp-route-pageNumber="@(Model.PageNumber + 1)">Next</a> }
+</nav>

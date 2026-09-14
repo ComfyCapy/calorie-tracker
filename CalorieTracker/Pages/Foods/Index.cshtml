@@ -22,8 +22,8 @@
 
     <section class="foods-search-panel" aria-labelledby="foods-search-heading">
         <div class="foods-search-copy">
-            <h2 id="foods-search-heading">Find something familiar</h2>
-            <p>Search your favourites, custom foods, and recent foods saved to your collection.</p>
+            <h2 id="foods-search-heading">Search Foods</h2>
+            <p>Choose Database, Community, or My Foods.</p>
         </div>
 
         <form method="get" class="foods-search-form">
@@ -31,16 +31,24 @@
             <input type="hidden" asp-for="DiaryDate" />
             <input type="hidden" asp-for="DiaryMeal" />
 
-            <label for="foodSearchTerm" class="visually-hidden">Search my foods</label>
+            <label for="foodSearchTerm" class="visually-hidden">Search foods</label>
             <input type="search"
                    id="foodSearchTerm"
                    name="searchTerm"
                    value="@Model.SearchTerm"
                    class="form-control"
-                   placeholder="Search my foods..." />
+                   maxlength="100"
+                   placeholder="Search foods..." />
+
+            <label for="foodSource" class="visually-hidden">Food source</label>
+            <select asp-for="Source" id="foodSource" class="form-select" style="width:auto;max-width:100%">
+                <option value="database">Database</option>
+                <option value="community">Community</option>
+                <option value="mine">My Foods</option>
+            </select>
 
             <button type="submit" class="btn btn-primary">
-                Search your foods
+                @(Model.Source == "mine" ? "Search your foods" : "Search")
             </button>
         </form>
 
@@ -65,6 +73,63 @@
         </div>
     </section>
 
+    @if (Model.Source == "community")
+    {
+        <section aria-labelledby="community-heading">
+            <h2 id="community-heading">Community Foods</h2>
+            <p class="text-muted">Foods shared by users and approved by an Admin. Check the serving and nutrition before logging.</p>
+            @if (Model.CommunityFoods.Count == 0) { <p role="status">No approved foods match this search yet.</p> }
+            @foreach (var result in Model.CommunityFoods)
+            {
+                var food = result.Food;
+                <article class="ct-card p-3 mb-3" style="overflow-wrap:anywhere">
+                    <h3 class="h5">@food.Name</h3>
+                    <p>@food.Calories kcal · Protein @food.Protein.ToString("0.##")g · Carbohydrates @food.Carbohydrates.ToString("0.##")g · Fat @food.Fat.ToString("0.##")g</p>
+                    <p>Per @food.ServingSize.ToString("0.##") @food.DisplayServingUnit</p>
+                    <div class="community-food-actions">
+                        <div class="community-vote" aria-label="Community score for @food.Name">
+                            <form method="post" asp-page-handler="VoteCommunity">
+                                <input type="hidden" name="id" value="@food.Id" />
+                                <input type="hidden" name="value" value="1" />
+                                <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                                <input type="hidden" asp-for="CommunityPage" />
+                                <input type="hidden" asp-for="ReturnToDiary" />
+                                <input type="hidden" asp-for="DiaryDate" />
+                                <input type="hidden" asp-for="DiaryMeal" />
+                                <button class="community-vote__button @(result.CurrentUserVote == 1 ? "is-active" : "")"
+                                        aria-label="Upvote @food.Name" aria-pressed="@(result.CurrentUserVote == 1 ? "true" : "false")">▲</button>
+                            </form>
+                            <span class="community-vote__score" aria-label="Score @result.Score">@result.Score</span>
+                            <form method="post" asp-page-handler="VoteCommunity">
+                                <input type="hidden" name="id" value="@food.Id" />
+                                <input type="hidden" name="value" value="-1" />
+                                <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                                <input type="hidden" asp-for="CommunityPage" />
+                                <input type="hidden" asp-for="ReturnToDiary" />
+                                <input type="hidden" asp-for="DiaryDate" />
+                                <input type="hidden" asp-for="DiaryMeal" />
+                                <button class="community-vote__button @(result.CurrentUserVote == -1 ? "is-active" : "")"
+                                        aria-label="Downvote @food.Name" aria-pressed="@(result.CurrentUserVote == -1 ? "true" : "false")">▼</button>
+                            </form>
+                        </div>
+                        <form method="post" asp-page-handler="SelectCommunity" data-submit-once>
+                            <input type="hidden" name="id" value="@food.Id" />
+                            <input type="hidden" asp-for="ReturnToDiary" />
+                            <input type="hidden" asp-for="DiaryDate" />
+                            <input type="hidden" asp-for="DiaryMeal" />
+                            <button class="btn btn-primary" data-submitting-text="Adding…">Add to Diary</button>
+                        </form>
+                    </div>
+                </article>
+            }
+            <nav aria-label="Community food pages" class="d-flex gap-3">
+                @if (Model.CommunityPage > 1) { <a asp-route-source="community" asp-route-searchTerm="@Model.SearchTerm" asp-route-communityPage="@(Model.CommunityPage - 1)" asp-route-returnToDiary="@Model.ReturnToDiary" asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")" asp-route-diaryMeal="@Model.DiaryMeal">Previous</a> }
+                @if (Model.CommunityHasNext) { <a asp-route-source="community" asp-route-searchTerm="@Model.SearchTerm" asp-route-communityPage="@(Model.CommunityPage + 1)" asp-route-returnToDiary="@Model.ReturnToDiary" asp-route-diaryDate="@Model.DiaryDate?.ToString("yyyy-MM-dd")" asp-route-diaryMeal="@Model.DiaryMeal">Next</a> }
+            </nav>
+        </section>
+    }
+    else
+    {
     <div class="foods-layout">
         <div class="foods-collection" aria-label="Your food collection">
             @if (string.IsNullOrWhiteSpace(Model.SearchTerm) && Model.FavouriteFoods.Count == 0
@@ -304,6 +369,7 @@
                                                     aria-label="Actions for @food.Name">⋮</button>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li><a asp-page="./Edit" asp-route-id="@food.Id" class="dropdown-item">Edit</a></li>
+                                                <li><a asp-page="./Submit" asp-route-id="@food.Id" class="dropdown-item">Submit to Community Foods</a></li>
                                                 @if (food.ServingBasis == CalorieTracker.Models.FoodServingBasis.Measured)
                                                 {
                                                     <li><a asp-page="./Portions" asp-route-id="@food.Id" class="dropdown-item">Manage portions</a></li>
@@ -517,4 +583,5 @@
             </section>
         </aside>
     </div>
+    }
 </div>

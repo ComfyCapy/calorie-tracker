@@ -23,6 +23,36 @@ public sealed class AccountDeletionTests
         using var factory = new IntegrationTestFactory();
         await SeedPopulatedUserAsync(factory, DeletedUserId, "delete");
         await SeedPopulatedUserAsync(factory, SurvivingUserId, "survive");
+        int communityFoodId;
+        using (var setupScope = factory.Services.CreateScope())
+        {
+            var setup = setupScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var source = await setup.Foods.FirstAsync(food => food.UserId == DeletedUserId);
+            var community = new CommunityFood
+            {
+                SourceFoodId = source.Id,
+                SubmitterId = DeletedUserId,
+                ReviewerId = SurvivingUserId,
+                SubmittedUtc = new DateTime(2026, 9, 13, 6, 0, 0, DateTimeKind.Utc),
+                ReviewedUtc = new DateTime(2026, 9, 13, 7, 0, 0, DateTimeKind.Utc),
+                Status = CommunityFoodStatus.Approved,
+                Name = source.Name,
+                Calories = source.Calories,
+                Protein = source.Protein,
+                Carbohydrates = source.Carbohydrates,
+                Fat = source.Fat,
+                ServingSize = source.ServingSize,
+                CanonicalServingSize = source.CanonicalServingSize,
+                ServingUnit = source.ServingUnit,
+                ServingBasis = source.ServingBasis
+            };
+            setup.CommunityFoods.Add(community);
+            setup.CommunityFoodVotes.AddRange(
+                new CommunityFoodVote { CommunityFood = community, UserId = DeletedUserId, Value = 1 },
+                new CommunityFoodVote { CommunityFood = community, UserId = SurvivingUserId, Value = -1 });
+            await setup.SaveChangesAsync();
+            communityFoodId = community.Id;
+        }
         using var client = CreateClient(factory, DeletedUserId);
 
         var getResponse = await client.GetAsync(
@@ -72,6 +102,12 @@ public sealed class AccountDeletionTests
             .AnyAsync(xpEvent => xpEvent.UserId == DeletedUserId));
         Assert.False(await context.UserProgressionStates
             .AnyAsync(state => state.UserId == DeletedUserId));
+        var retainedCommunityFood = await context.CommunityFoods.SingleAsync(food => food.Id == communityFoodId);
+        Assert.Null(retainedCommunityFood.SourceFoodId);
+        Assert.Null(retainedCommunityFood.SubmitterId);
+        Assert.Equal(SurvivingUserId, retainedCommunityFood.ReviewerId);
+        Assert.DoesNotContain(await context.CommunityFoodVotes.ToListAsync(), vote => vote.UserId == DeletedUserId);
+        Assert.Contains(await context.CommunityFoodVotes.ToListAsync(), vote => vote.UserId == SurvivingUserId);
 
         Assert.True(await context.Users
             .AnyAsync(user => user.Id == SurvivingUserId));

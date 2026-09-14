@@ -1,0 +1,26 @@
+@page "{id:int}"
+@model CalorieTracker.Pages.Foods.SubmitModel
+@{ ViewData["Title"] = "Submit to Community Foods"; }
+<h1>Submit to Community Foods</h1>
+<p>Share a copy of your food for an Admin to review. If approved, its name, nutrition and serving details will be available to everyone using Community Foods. Please leave personal information out of the food name.</p>
+<p>Your original food stays private. Later edits or deletion won't change the submitted copy. Approved copies stay in the catalogue even if you delete your account.</p>
+<section class="ct-card p-3 mb-3" style="overflow-wrap:anywhere">
+    <h2 class="h4">@Model.Food.Name</h2>
+    <p>@Model.Food.Calories kcal · Protein @Model.Food.Protein.ToString("0.##")g · Carbohydrates @Model.Food.Carbohydrates.ToString("0.##")g · Fat @Model.Food.Fat.ToString("0.##")g</p>
+    <p>Per @Model.Food.ServingSize.ToString("0.##") @Model.Food.DisplayServingUnit</p>
+    <p class="text-muted">Additional custom portions are private and aren't included. The serving shown above is shared.</p>
+</section>
+@if (Model.Submission is {} submission)
+{
+    <p role="status">Submission: @submission.Status</p>
+    <p>Submitted as <strong>@submission.Name</strong>. Each custom food can be submitted once.</p>
+    @if (!string.IsNullOrWhiteSpace(submission.ModeratorNote)) { <p>Moderator note: @submission.ModeratorNote</p> }
+}
+else
+{
+    <form method="post" data-submit-once>
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <button class="btn btn-primary" data-submitting-text="Submitting…">Submit to Community Foods</button>
+    </form>
+}
+<a asp-page="Index" class="d-inline-block mt-3">Back to My Foods</a>

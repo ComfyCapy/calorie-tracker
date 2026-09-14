@@ -14,13 +14,16 @@ namespace CalorieTracker.Pages.Foods
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly CommunityFoodService? _community;
 
         public IndexModel(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            CommunityFoodService? community = null)
         {
             _context = context;
             _userManager = userManager;
+            _community = community;
         }
 
         public List<Food> FavouriteFoods { get; set; } = [];
@@ -28,6 +31,10 @@ namespace CalorieTracker.Pages.Foods
         public List<Food> CustomFoods { get; set; } = [];
 
         public List<Food> RecentFoods { get; set; } = [];
+        [BindProperty(SupportsGet = true)] public string? Source { get; set; } = "mine";
+        [BindProperty(SupportsGet = true)] public int CommunityPage { get; set; } = 1;
+        public List<CommunityFoodSearchResult> CommunityFoods { get; private set; } = [];
+        public bool CommunityHasNext { get; private set; }
 
         [BindProperty(SupportsGet = true)]
         public bool ReturnToDiary { get; set; }
@@ -60,12 +67,23 @@ namespace CalorieTracker.Pages.Foods
             int customPage = 1,
             int recentPage = 1)
         {
+            Source ??= "mine";
             if (!HasValidDiaryContext())
             {
                 return BadRequest();
             }
 
             SearchTerm = searchTerm ?? string.Empty;
+            if (SearchTerm.Length > 100 || Source is not ("mine" or "community" or "database")) return BadRequest();
+            if (Source == "database") return RedirectToPage("Search", new { SearchTerm, ReturnToDiary, DiaryDate, DiaryMeal });
+            if (Source == "community")
+            {
+                CommunityPage = Math.Clamp(CommunityPage, 1, 100000);
+                CommunityFoods = await _community!.Search(SearchTerm, User).Skip((CommunityPage - 1) * 20).Take(21).ToListAsync();
+                CommunityHasNext = CommunityFoods.Count > 20;
+                CommunityFoods = CommunityFoods.Take(20).ToList();
+                return Page();
+            }
 
             FavouritesPage = Math.Max(1, favouritesPage);
             CustomPage = Math.Max(1, customPage);
@@ -194,6 +212,34 @@ namespace CalorieTracker.Pages.Foods
                 .ToList();
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostSelectCommunityAsync(int id, CancellationToken ct)
+        {
+            if (!HasValidDiaryContext()) return BadRequest();
+            var food = await _community!.SelectAsync(User, id, ct);
+            if (food == null) return NotFound();
+            return RedirectToPage("/Diary/Create", new { foodId = food.Id,
+                date = ReturnToDiary ? DiaryDate?.ToString("yyyy-MM-dd") : null,
+                meal = ReturnToDiary ? DiaryMeal : null });
+        }
+
+        public async Task<IActionResult> OnPostVoteCommunityAsync(
+            int id, int value, string? searchTerm, CancellationToken ct)
+        {
+            if (!HasValidDiaryContext() || searchTerm?.Length > 100) return BadRequest();
+            try
+            {
+                var score = await _community!.VoteAsync(User, id, value, ct);
+                if (score == null) return NotFound();
+                TempData["UiStatusMessage"] = "Community vote updated.";
+                return RedirectToPage(new { source = "community", searchTerm,
+                    communityPage = CommunityPage, ReturnToDiary, DiaryDate, DiaryMeal });
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest();
+            }
         }
 
         public async Task<IActionResult> OnPostFavouriteAsync(

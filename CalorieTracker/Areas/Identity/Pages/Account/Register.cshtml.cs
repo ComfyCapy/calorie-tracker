@@ -140,6 +140,7 @@ public class RegisterModel : PageModel
 
             if (result.Succeeded)
             {
+                await CalorieTracker.Security.AccessRoles.AssignStandardAsync(_userManager, user);
                 _logger.LogInformation("User created a new account with password.");
                 var userId = await _userManager.GetUserIdAsync(user);
 

@@ -462,6 +462,15 @@ function App({
                 <>
                     <section className="food-search-header">
                         <h1>Search all foods</h1>
+                        <nav aria-label="Food source" className="d-flex flex-wrap gap-3">
+                            <span aria-current="page">Database</span>
+                            {['community', 'mine'].map(source => (
+                                <a key={source} href={`/Foods?${new URLSearchParams({
+                                    source, searchTerm, returnToDiary: String(returnToDiary),
+                                    diaryDate: diaryDate || '', diaryMeal: diaryMeal || '',
+                                })}`}>{source === 'community' ? 'Community' : 'My Foods'}</a>
+                            ))}
+                        </nav>
                     </section>
 
                     <form

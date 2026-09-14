@@ -169,6 +169,7 @@ public class ExternalLoginModel : PageModel
                     _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                     var userId = await _userManager.GetUserIdAsync(user);
+                    await CalorieTracker.Security.AccessRoles.AssignStandardAsync(_userManager, user);
                     await _capyProvisioningService.ProvisionAsync(userId);
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);

@@ -2,6 +2,7 @@
     var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
 }
 
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService Authorization
 <nav class="app-navigation" aria-label="Application navigation">
     <div>
         <ul class="app-nav-list">
@@ -143,6 +144,18 @@
         </ul>
 
         <div class="app-nav-actions">
+            @if ((await Authorization.AuthorizeAsync(User, null, CalorieTracker.Security.AccessRoles.Admin)).Succeeded)
+            {
+                <a asp-page="/Admin/Index"
+                   class="app-nav-link app-nav-link--supporting app-nav-link--danger"
+                   aria-current="@(currentPage?.StartsWith("/Admin/", StringComparison.OrdinalIgnoreCase) == true ? "page" : null)">
+                    <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 3.5 19 6v5.25c0 4.25-2.8 7.55-7 9.25-4.2-1.7-7-5-7-9.25V6l7-2.5Z" />
+                        <path d="m9 12 2 2 4-4" />
+                    </svg>
+                    <span>Admin</span>
+                </a>
+            }
             <form asp-area="Identity"
                   asp-page="/Account/Logout"
                   asp-route-returnUrl="@Url.Page("/Index", new { area = "" })"

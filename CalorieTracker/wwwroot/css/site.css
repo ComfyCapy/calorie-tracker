@@ -219,7 +219,7 @@ body {
 
 .foods-search-form {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     min-width: 0;
     gap: var(--ct-space-2);
 }
@@ -241,6 +241,45 @@ body {
     display: inline-flex;
     align-items: center;
     gap: var(--ct-space-1);
+}
+
+.community-food-actions,
+.community-vote {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.community-vote {
+    gap: 0.2rem;
+    padding: 0.2rem;
+    border: 1px solid var(--ct-border);
+    border-radius: 999px;
+}
+
+.community-vote form { display: flex; }
+
+.community-vote__button {
+    width: 2.25rem;
+    min-height: 2.25rem;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+}
+
+.community-vote__button:hover,
+.community-vote__button:focus-visible,
+.community-vote__button.is-active {
+    color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 14%, transparent);
+}
+
+.community-vote__score {
+    min-width: 2ch;
+    text-align: center;
+    font-weight: 700;
 }
 
 .foods-layout {

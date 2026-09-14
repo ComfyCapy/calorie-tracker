@@ -1,0 +1,15 @@
+@page
+@model CalorieTracker.Pages.Admin.IndexModel
+@{ ViewData["Title"] = "Admin"; }
+<h1>Admin</h1>
+<p class="text-muted">A small space to look after the community.</p>
+<section class="ct-card p-3 mb-3">
+    <h2 class="h4">Community Foods</h2>
+    <p>@Model.Pending pending · @Model.Approved approved · @Model.Rejected rejected</p>
+    <a asp-page="CommunityFoods" class="btn btn-primary">Review submissions</a>
+</section>
+<section class="ct-card p-3">
+    <h2 class="h4">Users</h2>
+    <p>@Model.Users accounts</p>
+    <a asp-page="Users" class="btn btn-outline-primary">Manage Beta access</a>
+</section>

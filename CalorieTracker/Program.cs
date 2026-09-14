@@ -20,6 +20,7 @@ ProductionConfiguration.Validate(builder.Configuration, builder.Environment);
 
 builder.Services.AddRazorPages(options =>
 {
+    options.Conventions.AuthorizeFolder("/Admin", AccessRoles.Admin);
     options.Conventions.ConfigureFilter(
         new ServiceFilterAttribute(
             typeof(ProgressionActivityPageFilter)));
@@ -28,6 +29,15 @@ builder.Services.AddRazorPages(options =>
         "/Account/Manage");
 });
 builder.Services.AddControllers();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AccessRoles.Admin, policy => policy.RequireAuthenticatedUser()
+        .AddRequirements(new AccessRoleRequirement()));
+    options.AddPolicy(AccessRoles.BetaAccess, policy => policy.RequireAuthenticatedUser()
+        .AddRequirements(new AccessRoleRequirement(AllowBeta: true)));
+});
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, AccessRoleHandler>();
+builder.Services.AddScoped<CommunityFoodService>();
 ProductionConfiguration.ConfigureAntiforgery(
     builder.Services,
     builder.Environment);
@@ -229,6 +239,18 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
+
+// Deliberate operator-only command; never exposed over HTTP. Apply migrations first.
+if (args.Contains("--grant-admin", StringComparer.Ordinal))
+{
+    var position = Array.IndexOf(args, "--grant-admin");
+    if (position + 1 >= args.Length) throw new ArgumentException("Supply an existing confirmed user ID.");
+    using var roleScope = app.Services.CreateScope();
+    var users = roleScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    await AccessRoles.GrantAdminOperationallyAsync(users, args[position + 1]);
+    Console.WriteLine("Admin membership confirmed for the specified account. Web server was not started.");
+    return;
+}
 
 // Resolve the context once so a missing production connection string fails
 // during startup, before the application begins accepting requests.
