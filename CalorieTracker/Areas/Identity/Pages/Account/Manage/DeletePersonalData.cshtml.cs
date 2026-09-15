@@ -92,7 +92,13 @@ public class DeletePersonalDataModel : PageModel
 
         var userId = await _userManager.GetUserIdAsync(user);
 
-        // An operator must remove Admin membership first; self-service deletion cannot lock out administration.
+        // Elevated operational roles must be removed out of band; self-service deletion cannot lock out administration.
+        if (await _userManager.IsInRoleAsync(user, CalorieTracker.Security.AccessRoles.Owner))
+        {
+            ModelState.AddModelError(string.Empty, "An Owner must arrange removal of Owner access before deleting this account.");
+            return Page();
+        }
+
         if (await _userManager.IsInRoleAsync(user, CalorieTracker.Security.AccessRoles.Admin))
         {
             ModelState.AddModelError(string.Empty, "An administrator must arrange removal of Admin access before deleting this account.");

@@ -20,7 +20,7 @@ ProductionConfiguration.Validate(builder.Configuration, builder.Environment);
 
 builder.Services.AddRazorPages(options =>
 {
-    options.Conventions.AuthorizeFolder("/Admin", AccessRoles.Admin);
+    options.Conventions.AuthorizeFolder("/Admin", AccessRoles.AdminAccess);
     options.Conventions.ConfigureFilter(
         new ServiceFilterAttribute(
             typeof(ProgressionActivityPageFilter)));
@@ -31,10 +31,12 @@ builder.Services.AddRazorPages(options =>
 builder.Services.AddControllers();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(AccessRoles.Admin, policy => policy.RequireAuthenticatedUser()
-        .AddRequirements(new AccessRoleRequirement()));
+    options.AddPolicy(AccessRoles.OwnerAccess, policy => policy.RequireAuthenticatedUser()
+        .AddRequirements(new AccessRoleRequirement(AccessLevel.Owner)));
+    options.AddPolicy(AccessRoles.AdminAccess, policy => policy.RequireAuthenticatedUser()
+        .AddRequirements(new AccessRoleRequirement(AccessLevel.Admin)));
     options.AddPolicy(AccessRoles.BetaAccess, policy => policy.RequireAuthenticatedUser()
-        .AddRequirements(new AccessRoleRequirement(AllowBeta: true)));
+        .AddRequirements(new AccessRoleRequirement(AccessLevel.Beta)));
 });
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, AccessRoleHandler>();
 builder.Services.AddScoped<CommunityFoodService>();
@@ -240,15 +242,23 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 
-// Deliberate operator-only command; never exposed over HTTP. Apply migrations first.
-if (args.Contains("--grant-admin", StringComparer.Ordinal))
+// Deliberate operator-only commands; never exposed over HTTP. Apply migrations first.
+var grantAdminPosition = Array.IndexOf(args, "--grant-admin");
+var grantOwnerPosition = Array.IndexOf(args, "--grant-owner");
+if (grantAdminPosition >= 0 || grantOwnerPosition >= 0)
 {
-    var position = Array.IndexOf(args, "--grant-admin");
+    if (grantAdminPosition >= 0 && grantOwnerPosition >= 0)
+        throw new ArgumentException("Supply only one operational role grant.");
+    var position = Math.Max(grantAdminPosition, grantOwnerPosition);
     if (position + 1 >= args.Length) throw new ArgumentException("Supply an existing confirmed user ID.");
     using var roleScope = app.Services.CreateScope();
     var users = roleScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    await AccessRoles.GrantAdminOperationallyAsync(users, args[position + 1]);
-    Console.WriteLine("Admin membership confirmed for the specified account. Web server was not started.");
+    var role = grantOwnerPosition >= 0 ? AccessRoles.Owner : AccessRoles.Admin;
+    if (role == AccessRoles.Owner)
+        await AccessRoles.GrantOwnerOperationallyAsync(users, args[position + 1]);
+    else
+        await AccessRoles.GrantAdminOperationallyAsync(users, args[position + 1]);
+    Console.WriteLine($"{role} membership confirmed for the specified account. Web server was not started.");
     return;
 }
 

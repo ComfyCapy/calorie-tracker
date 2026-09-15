@@ -144,7 +144,7 @@
         </ul>
 
         <div class="app-nav-actions">
-            @if ((await Authorization.AuthorizeAsync(User, null, CalorieTracker.Security.AccessRoles.Admin)).Succeeded)
+            @if ((await Authorization.AuthorizeAsync(User, null, CalorieTracker.Security.AccessRoles.AdminAccess)).Succeeded)
             {
                 <a asp-page="/Admin/Index"
                    class="app-nav-link app-nav-link--supporting app-nav-link--danger"

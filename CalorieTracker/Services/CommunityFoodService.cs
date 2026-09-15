@@ -46,7 +46,7 @@ public sealed class CommunityFoodService(ApplicationDbContext db, IAuthorization
 
     public async Task<bool> ReviewAsync(ClaimsPrincipal actor, int id, bool approve, string? note, CancellationToken ct = default)
     {
-        if (!(await authorization.AuthorizeAsync(actor, AccessRoles.Admin)).Succeeded)
+        if (!(await authorization.AuthorizeAsync(actor, AccessRoles.AdminAccess)).Succeeded)
             throw new UnauthorizedAccessException();
         note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
         if (note?.Length > 500) throw new ArgumentException("Notes must be 500 characters or fewer.");
@@ -61,7 +61,7 @@ public sealed class CommunityFoodService(ApplicationDbContext db, IAuthorization
 
     public async Task<bool> RenameAsync(ClaimsPrincipal actor, int id, string? name, CancellationToken ct = default)
     {
-        if (!(await authorization.AuthorizeAsync(actor, AccessRoles.Admin)).Succeeded)
+        if (!(await authorization.AuthorizeAsync(actor, AccessRoles.AdminAccess)).Succeeded)
             throw new UnauthorizedAccessException();
         name = name?.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.Length > 200 || name.Any(char.IsControl))

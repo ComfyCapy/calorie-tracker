@@ -1,28 +1,41 @@
 @page
 @model CalorieTracker.Pages.Admin.UsersModel
 @using CalorieTracker.Security
-@{ ViewData["Title"] = "Manage Beta access"; }
-<h1>Manage Beta access</h1>
+@{ ViewData["Title"] = "Manage access"; }
+<h1>Manage access</h1>
 <a asp-page="Index">Admin home</a>
 <form method="get" class="my-3">
     <label asp-for="Query">Find by username or email</label>
     <input asp-for="Query" maxlength="100" class="form-control mb-2" type="search" />
     <button class="btn btn-primary">Find users</button>
 </form>
-<p class="text-muted">Showing up to 30 matches. Refine your search to find an account. Admins already have Beta access.</p>
+<p class="text-muted">Showing up to 30 matches. Refine your search to find an account. Admins and Owners already have Beta access.</p>
 @foreach (var account in Model.Accounts)
 {
+    var isOwner = account.Roles.Contains(AccessRoles.Owner, StringComparer.OrdinalIgnoreCase);
     var isAdmin = account.Roles.Contains(AccessRoles.Admin, StringComparer.OrdinalIgnoreCase);
     var isBeta = account.Roles.Contains(AccessRoles.Beta, StringComparer.OrdinalIgnoreCase);
     <article class="ct-card p-3 mb-3" style="overflow-wrap:anywhere">
         <h2 class="h5">@account.User.UserName</h2>
         <p>@account.User.Email · @string.Join(", ", account.Roles)</p>
-        @if (!isAdmin)
+        @if (!isOwner)
         {
-            <form method="post" asp-page-handler="@(isBeta ? "RemoveBeta" : "GrantBeta")">
-                <input type="hidden" name="id" value="@account.User.Id" />
-                <button class="btn btn-outline-primary">@(isBeta ? "Remove Beta access" : "Grant Beta access")</button>
-            </form>
+            <div class="d-flex flex-wrap gap-2">
+                @if (!isAdmin)
+                {
+                    <form method="post" asp-page-handler="@(isBeta ? "RemoveBeta" : "GrantBeta")">
+                        <input type="hidden" name="id" value="@account.User.Id" />
+                        <button class="btn btn-outline-primary">@(isBeta ? "Remove Beta access" : "Grant Beta access")</button>
+                    </form>
+                }
+                @if (Model.CanManageAdmin)
+                {
+                    <form method="post" asp-page-handler="@(isAdmin ? "RemoveAdmin" : "GrantAdmin")">
+                        <input type="hidden" name="id" value="@account.User.Id" />
+                        <button class="btn @(isAdmin ? "btn-outline-danger" : "btn-outline-primary")">@(isAdmin ? "Remove Admin access" : "Grant Admin access")</button>
+                    </form>
+                }
+            </div>
         }
     </article>
 }

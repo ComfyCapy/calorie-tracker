@@ -24,7 +24,14 @@ public sealed class CommunityFeatureTests
     {
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        foreach (var (id, role) in new[] { ("owner", AccessRoles.Standard), ("other", AccessRoles.Standard), ("beta", AccessRoles.Beta), ("admin", AccessRoles.Admin) })
+        foreach (var (id, role) in new[]
+                 {
+                     ("owner", AccessRoles.Standard),
+                     ("other", AccessRoles.Standard),
+                     ("beta", AccessRoles.Beta),
+                     ("admin", AccessRoles.Admin),
+                     ("site-owner", AccessRoles.Owner)
+                 })
         {
             var user = new ApplicationUser { Id = id, UserName = id, Email = id + "@example.test", EmailConfirmed = true, FirstName = id };
             Assert.True((await users.CreateAsync(user, "Password1!")).Succeeded);
@@ -51,17 +58,24 @@ public sealed class CommunityFeatureTests
     }
 
     [Theory]
-    [InlineData("owner", false, false)]
-    [InlineData("beta", false, true)]
-    [InlineData("admin", true, true)]
-    [InlineData("missing", false, false)]
-    public async Task Policies_UseCurrentIdentityMembership_NotForgedClaims(string id, bool admin, bool beta)
+    [InlineData("owner", false, false, false)]
+    [InlineData("beta", false, false, true)]
+    [InlineData("admin", false, true, true)]
+    [InlineData("site-owner", true, true, true)]
+    [InlineData("missing", false, false, false)]
+    public async Task Policies_UseCurrentIdentityMembership_NotForgedClaims(
+        string id,
+        bool owner,
+        bool admin,
+        bool beta)
     {
         using var factory = new IntegrationTestFactory(); await Seed(factory);
         using var scope = factory.Services.CreateScope();
         var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
-        Assert.Equal(admin, (await auth.AuthorizeAsync(Actor(id, "Admin", "Beta"), AccessRoles.Admin)).Succeeded);
-        Assert.Equal(beta, (await auth.AuthorizeAsync(Actor(id, "Admin", "Beta"), AccessRoles.BetaAccess)).Succeeded);
+        var actor = Actor(id, "Owner", "Admin", "Beta");
+        Assert.Equal(owner, (await auth.AuthorizeAsync(actor, AccessRoles.OwnerAccess)).Succeeded);
+        Assert.Equal(admin, (await auth.AuthorizeAsync(actor, AccessRoles.AdminAccess)).Succeeded);
+        Assert.Equal(beta, (await auth.AuthorizeAsync(actor, AccessRoles.BetaAccess)).Succeeded);
     }
 
     [Fact]
@@ -76,15 +90,19 @@ public sealed class CommunityFeatureTests
                 role.NormalizedName == AccessRoles.NormalizedAdmin);
             var betaRole = await db.Roles.SingleAsync(role =>
                 role.NormalizedName == AccessRoles.NormalizedBeta);
+            var ownerRole = await db.Roles.SingleAsync(role =>
+                role.NormalizedName == AccessRoles.NormalizedOwner);
             adminRole.Name = "ADMIN";
             betaRole.Name = "bEtA";
+            ownerRole.Name = "oWnEr";
             await db.SaveChangesAsync();
 
             foreach (var (id, role) in new[]
                      {
                          ("preserved-standard", AccessRoles.Standard),
                          ("preserved-beta", AccessRoles.Beta),
-                         ("preserved-admin", AccessRoles.Admin)
+                         ("preserved-admin", AccessRoles.Admin),
+                         ("preserved-owner", AccessRoles.Owner)
                      })
             {
                 var user = new ApplicationUser
@@ -105,15 +123,24 @@ public sealed class CommunityFeatureTests
                 AccessRoles.BetaAccess)).Succeeded);
             Assert.False((await auth.AuthorizeAsync(
                 Actor("preserved-beta"),
-                AccessRoles.Admin)).Succeeded);
+                AccessRoles.AdminAccess)).Succeeded);
             Assert.True((await auth.AuthorizeAsync(
                 Actor("preserved-beta"),
                 AccessRoles.BetaAccess)).Succeeded);
             Assert.True((await auth.AuthorizeAsync(
                 Actor("preserved-admin"),
-                AccessRoles.Admin)).Succeeded);
+                AccessRoles.AdminAccess)).Succeeded);
             Assert.True((await auth.AuthorizeAsync(
                 Actor("preserved-admin"),
+                AccessRoles.BetaAccess)).Succeeded);
+            Assert.True((await auth.AuthorizeAsync(
+                Actor("preserved-owner"),
+                AccessRoles.OwnerAccess)).Succeeded);
+            Assert.True((await auth.AuthorizeAsync(
+                Actor("preserved-owner"),
+                AccessRoles.AdminAccess)).Succeeded);
+            Assert.True((await auth.AuthorizeAsync(
+                Actor("preserved-owner"),
                 AccessRoles.BetaAccess)).Succeeded);
         }
 
@@ -125,6 +152,11 @@ public sealed class CommunityFeatureTests
         var betaHtml = await client.GetStringAsync(
             "/Admin/Users?Query=preserved-beta");
         Assert.Contains("Remove Beta access", betaHtml);
+        var ownerHtml = await client.GetStringAsync(
+            "/Admin/Users?Query=preserved-owner");
+        Assert.Contains("oWnEr", ownerHtml);
+        Assert.DoesNotContain("Grant Beta access", ownerHtml);
+        Assert.DoesNotContain("Remove Beta access", ownerHtml);
 
         using var revokeScope = factory.Services.CreateScope();
         var revokeUsers = revokeScope.ServiceProvider
@@ -138,7 +170,22 @@ public sealed class CommunityFeatureTests
             .GetRequiredService<IAuthorizationService>();
         Assert.False((await revokeAuth.AuthorizeAsync(
             Actor("preserved-admin", "Admin"),
-            AccessRoles.Admin)).Succeeded);
+            AccessRoles.AdminAccess)).Succeeded);
+
+        var preservedOwner = await revokeUsers.FindByIdAsync("preserved-owner");
+        Assert.NotNull(preservedOwner);
+        Assert.True((await revokeUsers.RemoveFromRoleAsync(
+            preservedOwner,
+            AccessRoles.Owner)).Succeeded);
+        Assert.False((await revokeAuth.AuthorizeAsync(
+            Actor("preserved-owner", "Owner", "Admin", "Beta"),
+            AccessRoles.OwnerAccess)).Succeeded);
+        Assert.False((await revokeAuth.AuthorizeAsync(
+            Actor("preserved-owner", "Owner", "Admin", "Beta"),
+            AccessRoles.AdminAccess)).Succeeded);
+        Assert.False((await revokeAuth.AuthorizeAsync(
+            Actor("preserved-owner", "Owner", "Admin", "Beta"),
+            AccessRoles.BetaAccess)).Succeeded);
     }
 
     [Theory]
@@ -156,6 +203,8 @@ public sealed class CommunityFeatureTests
         }
         using var admin = Client(factory, "admin");
         Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync(route)).StatusCode);
+        using var owner = Client(factory, "site-owner");
+        Assert.Equal(HttpStatusCode.OK, (await owner.GetAsync(route)).StatusCode);
         using var anonymous = Client(factory);
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync(route)).StatusCode);
     }
@@ -164,30 +213,30 @@ public sealed class CommunityFeatureTests
     public async Task Navigation_OnlyAdminSeesAdminLink_AndPagesStayNoindex()
     {
         using var factory = new IntegrationTestFactory(); await Seed(factory);
-        foreach (var id in new[] { "owner", "beta", "admin" })
+        foreach (var id in new[] { "owner", "beta", "admin", "site-owner" })
         {
             using var client = Client(factory, id);
             var html = await client.GetStringAsync("/Foods");
-            Assert.Equal(id == "admin", html.Contains("href=\"/Admin\""));
+            Assert.Equal(id is "admin" or "site-owner", html.Contains("href=\"/Admin\""));
             Assert.Contains("content=\"noindex,follow\"", html);
         }
     }
 
     [Fact]
-    public async Task Registration_SeedsExactlyThreeRoles_AndIgnoresPrivilegedPostedRole()
+    public async Task Registration_SeedsExactlyFourRoles_AndIgnoresPrivilegedPostedRole()
     {
         using var factory = new IntegrationTestFactory(); using var client = Client(factory);
         var response = await Post(client, "/Identity/Account/Register", "/Identity/Account/Register", new()
         {
             ["Input.Username"] = "new-user", ["Input.FirstName"] = "New", ["Input.Email"] = "new@example.test",
             ["Input.Password"] = "Password1!", ["Input.ConfirmPassword"] = "Password1!",
-            ["Input.Role"] = "Admin", ["Role"] = "Beta"
+            ["Input.Role"] = "Owner", ["Role"] = "Admin"
         });
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.Equal(new[] { "Admin", "Beta", "Standard" }, await db.Roles.OrderBy(x => x.Name).Select(x => x.Name).ToArrayAsync());
+        Assert.Equal(new[] { "Admin", "Beta", "Owner", "Standard" }, await db.Roles.OrderBy(x => x.Name).Select(x => x.Name).ToArrayAsync());
         var user = await users.FindByNameAsync("new-user");
         Assert.Equal(new[] { "Standard" }, await users.GetRolesAsync(user!));
     }
@@ -204,7 +253,7 @@ public sealed class CommunityFeatureTests
     }
 
     [Fact]
-    public async Task OperationalAdminGrant_RequiresConfirmedExistingAccount_AndIsIdempotent()
+    public async Task OperationalRoleGrants_RequireConfirmedExistingAccount_AndAreIdempotent()
     {
         using var factory = new IntegrationTestFactory();
         using var scope = factory.Services.CreateScope();
@@ -219,10 +268,17 @@ public sealed class CommunityFeatureTests
             AccessRoles.GrantAdminOperationallyAsync(users, "missing"));
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             AccessRoles.GrantAdminOperationallyAsync(users, unconfirmed.Id));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            AccessRoles.GrantOwnerOperationallyAsync(users, "missing"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            AccessRoles.GrantOwnerOperationallyAsync(users, unconfirmed.Id));
         unconfirmed.EmailConfirmed = true; Assert.True((await users.UpdateAsync(unconfirmed)).Succeeded);
         await AccessRoles.GrantAdminOperationallyAsync(users, unconfirmed.Id);
         await AccessRoles.GrantAdminOperationallyAsync(users, unconfirmed.Id);
+        await AccessRoles.GrantOwnerOperationallyAsync(users, unconfirmed.Id);
+        await AccessRoles.GrantOwnerOperationallyAsync(users, unconfirmed.Id);
         Assert.True(await users.IsInRoleAsync(unconfirmed, AccessRoles.Admin));
+        Assert.True(await users.IsInRoleAsync(unconfirmed, AccessRoles.Owner));
     }
 
     [Fact]
@@ -238,9 +294,118 @@ public sealed class CommunityFeatureTests
             using var scope = factory.Services.CreateScope();
             var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
             Assert.Equal(grant, (await auth.AuthorizeAsync(Actor("owner"), AccessRoles.BetaAccess)).Succeeded);
-            Assert.False((await auth.AuthorizeAsync(Actor("owner"), AccessRoles.Admin)).Succeeded);
+            Assert.False((await auth.AuthorizeAsync(Actor("owner"), AccessRoles.AdminAccess)).Succeeded);
         }
         Assert.Equal(HttpStatusCode.BadRequest, (await Post(client, "/Admin/Users", "/Admin/Users?handler=RemoveBeta", new() { ["id"] = "admin" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Post(client, "/Admin/Users", "/Admin/Users?handler=GrantBeta", new() { ["id"] = "site-owner" })).StatusCode);
+    }
+
+    [Fact]
+    public async Task Owner_CanManageBetaAndAdmin_WithoutPostedRoleEscalation()
+    {
+        using var factory = new IntegrationTestFactory(); await Seed(factory);
+        using var client = Client(factory, "site-owner");
+
+        Assert.Equal(HttpStatusCode.Redirect, (await Post(client, "/Admin/Users",
+            "/Admin/Users?handler=GrantBeta", new() { ["id"] = "other" })).StatusCode);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var target = await users.FindByIdAsync("other");
+            Assert.True(await users.IsInRoleAsync(target!, AccessRoles.Beta));
+        }
+
+        Assert.Equal(HttpStatusCode.Redirect, (await Post(client, "/Admin/Users",
+            "/Admin/Users?handler=RemoveBeta", new() { ["id"] = "other" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, (await Post(client, "/Admin/Users",
+            "/Admin/Users?handler=GrantAdmin", new()
+            {
+                ["id"] = "other",
+                ["Role"] = AccessRoles.Owner,
+                ["UserId"] = "site-owner"
+            })).StatusCode);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var target = await users.FindByIdAsync("other");
+            Assert.True(await users.IsInRoleAsync(target!, AccessRoles.Admin));
+            Assert.False(await users.IsInRoleAsync(target!, AccessRoles.Owner));
+            var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+            Assert.True((await auth.AuthorizeAsync(Actor("other"), AccessRoles.AdminAccess)).Succeeded);
+            Assert.False((await auth.AuthorizeAsync(Actor("other"), AccessRoles.OwnerAccess)).Succeeded);
+        }
+
+        Assert.Equal(HttpStatusCode.Redirect, (await Post(client, "/Admin/Users",
+            "/Admin/Users?handler=RemoveAdmin", new() { ["id"] = "other" })).StatusCode);
+        using var verify = factory.Services.CreateScope();
+        var verifyUsers = verify.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var verifiedTarget = await verifyUsers.FindByIdAsync("other");
+        Assert.False(await verifyUsers.IsInRoleAsync(verifiedTarget!, AccessRoles.Beta));
+        Assert.False(await verifyUsers.IsInRoleAsync(verifiedTarget!, AccessRoles.Admin));
+        Assert.True(await verifyUsers.IsInRoleAsync(verifiedTarget!, AccessRoles.Standard));
+    }
+
+    [Fact]
+    public async Task AdminAndForgedPosts_CannotManageAdminOrModifyOwner()
+    {
+        using var factory = new IntegrationTestFactory(); await Seed(factory);
+        using var admin = Client(factory, "admin");
+
+        Assert.Equal(HttpStatusCode.Redirect, (await Post(admin, "/Admin/Users",
+            "/Admin/Users?handler=GrantBeta", new() { ["id"] = "other" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, (await Post(admin, "/Admin/Users",
+            "/Admin/Users?handler=RemoveBeta", new() { ["id"] = "other" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Post(admin, "/Admin/Users",
+            "/Admin/Users?handler=GrantAdmin", new() { ["id"] = "other", ["Role"] = "Owner" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Post(admin, "/Admin/Users",
+            "/Admin/Users?handler=RemoveAdmin", new() { ["id"] = "admin" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Post(admin, "/Admin/Users",
+            "/Admin/Users?handler=GrantBeta", new() { ["id"] = "site-owner" })).StatusCode);
+
+        using var owner = Client(factory, "site-owner");
+        Assert.Equal(HttpStatusCode.BadRequest, (await Post(owner, "/Admin/Users",
+            "/Admin/Users?handler=GrantAdmin", new() { ["id"] = "site-owner" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Post(owner, "/Admin/Users",
+            "/Admin/Users?handler=GrantBeta", new() { ["id"] = "site-owner" })).StatusCode);
+
+        var noToken = await owner.PostAsync("/Admin/Users?handler=GrantAdmin",
+            new FormUrlEncodedContent(new Dictionary<string, string> { ["id"] = "other" }));
+        Assert.Equal(HttpStatusCode.BadRequest, noToken.StatusCode);
+
+        foreach (var handler in new[] { "GrantOwner", "RemoveOwner" })
+        {
+            var response = await Post(owner, "/Admin/Users", $"/Admin/Users?handler={handler}",
+                new() { ["id"] = "other", ["Role"] = AccessRoles.Owner });
+            Assert.Contains(response.StatusCode,
+                new[] { HttpStatusCode.BadRequest, HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed });
+        }
+
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var other = await users.FindByIdAsync("other");
+        var siteOwner = await users.FindByIdAsync("site-owner");
+        Assert.False(await users.IsInRoleAsync(other!, AccessRoles.Admin));
+        Assert.False(await users.IsInRoleAsync(other!, AccessRoles.Owner));
+        Assert.True(await users.IsInRoleAsync(siteOwner!, AccessRoles.Owner));
+        Assert.False(await users.IsInRoleAsync(siteOwner!, AccessRoles.Admin));
+        Assert.False(await users.IsInRoleAsync(siteOwner!, AccessRoles.Beta));
+    }
+
+    [Fact]
+    public async Task UsersUi_IdentifiesOwner_WithoutRoleMutationControls()
+    {
+        using var factory = new IntegrationTestFactory(); await Seed(factory);
+        foreach (var actor in new[] { "admin", "site-owner" })
+        {
+            using var client = Client(factory, actor);
+            var html = await client.GetStringAsync("/Admin/Users?Query=site-owner");
+            Assert.Contains("site-owner@example.test · Owner", html);
+            Assert.DoesNotContain("Grant Beta access", html);
+            Assert.DoesNotContain("Remove Beta access", html);
+            Assert.DoesNotContain("Grant Admin access", html);
+            Assert.DoesNotContain("Remove Admin access", html);
+        }
     }
 
     [Fact]
@@ -254,6 +419,19 @@ public sealed class CommunityFeatureTests
         Assert.Contains("must arrange removal of Admin access", await response.Content.ReadAsStringAsync());
         using var scope = factory.Services.CreateScope();
         Assert.NotNull(await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByIdAsync("admin"));
+    }
+
+    [Fact]
+    public async Task OwnerCannotSelfDeleteUntilOperationalPrivilegeIsRemoved()
+    {
+        using var factory = new IntegrationTestFactory(); await Seed(factory);
+        using var client = Client(factory, "site-owner");
+        var response = await Post(client, "/Identity/Account/Manage/DeletePersonalData",
+            "/Identity/Account/Manage/DeletePersonalData", new() { ["Input.Password"] = "Password1!" });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("must arrange removal of Owner access", await response.Content.ReadAsStringAsync());
+        using var scope = factory.Services.CreateScope();
+        Assert.NotNull(await scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().FindByIdAsync("site-owner"));
     }
 
     [Fact]

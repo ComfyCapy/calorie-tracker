@@ -14,7 +14,7 @@ public sealed class CommunityMigrationTests
     private const string PreviousProductionMigration = "20260913053152_AddProgression";
 
     [Fact]
-    public async Task Migration_UpgradesCurrentProductionSchema_BackfillsStandard_AndPreservesData()
+    public async Task Migration_UpgradesProgressionSchema_BackfillsStandard_AndPreservesData()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -31,7 +31,7 @@ public sealed class CommunityMigrationTests
         await context.Database.MigrateAsync();
         context.ChangeTracker.Clear();
 
-        Assert.Equal(new[] { AccessRoles.Admin, AccessRoles.Beta, AccessRoles.Standard },
+        Assert.Equal(new[] { AccessRoles.Admin, AccessRoles.Beta, AccessRoles.Owner, AccessRoles.Standard },
             await context.Roles.OrderBy(x => x.Name).Select(x => x.Name!).ToArrayAsync());
         Assert.True(await (from membership in context.UserRoles
                            join role in context.Roles on membership.RoleId equals role.Id
