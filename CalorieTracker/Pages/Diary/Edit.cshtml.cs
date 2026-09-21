@@ -201,201 +201,37 @@ namespace CalorieTracker.Pages.Diary
                     "Please select a valid food.");
             }
 
-            FoodPortion? selectedPortion = null;
+            // Only the original deleted portion is eligible, and only on its original food.
+            var availablePortions = selectedFood?.Portions
+                .Where(portion => !portion.IsDeleted ||
+                    (selectedFood.Id == existingEntry.FoodId && portion.Id == existingEntry.FoodPortionId))
+                .ToList() ?? [];
 
-            if (MeasurementMode == "Approximate")
-            {
-                if (!ApproximatePortions.TryGetMultiplier(
-                        ApproximationSize,
-                        out var multiplier))
-                {
-                    ModelState.AddModelError(
-                        nameof(ApproximationSize),
-                        "Please select a valid estimate.");
-                }
+            decimal PortionAmount(FoodPortion portion) =>
+                selectedFood!.Id == existingEntry.FoodId &&
+                portion.Id == existingEntry.FoodPortionId &&
+                existingEntry.PortionQuantity > 0
+                    ? existingEntry.Quantity / existingEntry.PortionQuantity.Value
+                    : portion.Amount;
 
-                decimal baseAmount = 0;
+            decimal EstimateAmount(FoodPortion? portion) =>
+                selectedFood!.Id == existingEntry.FoodId &&
+                (portion == null || portion.Id == existingEntry.FoodPortionId) &&
+                existingEntry.IsApproximate &&
+                ApproximatePortions.TryGetMultiplier(existingEntry.ApproximationLabel, out var originalMultiplier)
+                    ? existingEntry.Quantity / originalMultiplier
+                    : portion?.Amount ?? selectedFood.CanonicalServingSize;
 
-                if (selectedFood != null &&
-                    ApproximatePortions.TryGetMultiplier(
-                        ApproximationSize,
-                        out multiplier))
-                {
-                    var availablePortions = selectedFood.Portions
-                        .Where(portion =>
-                            !portion.IsDeleted ||
-                            (selectedFood.Id == existingEntry.FoodId &&
-                             portion.Id == existingEntry.FoodPortionId))
-                        .ToList();
-
-                    if (availablePortions.Count > 0)
-                    {
-                        selectedPortion = availablePortions.FirstOrDefault(portion =>
-                            portion.Id == ApproximationPortionId);
-
-                        if (selectedPortion == null)
-                        {
-                            ModelState.AddModelError(
-                                nameof(ApproximationPortionId),
-                                "Please select the serving your estimate is based on.");
-                        }
-                        else if (selectedFood.Id == existingEntry.FoodId &&
-                                 selectedPortion.Id == existingEntry.FoodPortionId &&
-                                 existingEntry.IsApproximate &&
-                                 ApproximatePortions.TryGetMultiplier(
-                                     existingEntry.ApproximationLabel,
-                                     out var originalMultiplier))
-                        {
-                            baseAmount = existingEntry.Quantity / originalMultiplier;
-                        }
-                        else
-                        {
-                            baseAmount = selectedPortion.Amount;
-                        }
-                    }
-                    else if (selectedFood.ServingBasis == FoodServingBasis.Portion &&
-                             selectedFood.CanonicalServingSize > 0)
-                    {
-                        baseAmount = selectedFood.Id == existingEntry.FoodId &&
-                                     existingEntry.IsApproximate &&
-                                     ApproximatePortions.TryGetMultiplier(
-                                         existingEntry.ApproximationLabel,
-                                         out var originalMultiplier)
-                            ? existingEntry.Quantity / originalMultiplier
-                            : selectedFood.CanonicalServingSize;
-                    }
-                    else
-                    {
-                        ModelState.AddModelError(
-                            nameof(MeasurementMode),
-                            "This food does not have a trustworthy serving to estimate from. Use an exact amount instead.");
-                    }
-
-                    if (baseAmount > 0)
-                    {
-                        try
-                        {
-                            DiaryEntry.Quantity = checked(baseAmount * multiplier);
-                        }
-                        catch (OverflowException)
-                        {
-                            ModelState.AddModelError(
-                                nameof(ApproximationSize),
-                                "The estimated quantity is too large.");
-                        }
-                    }
-                }
-
-                ModelState.Remove("DiaryEntry.Quantity");
-                ModelState.Remove(nameof(SelectedPortionId));
-                ModelState.Remove(nameof(PortionQuantity));
-            }
-            else if (MeasurementMode == "Portion")
-            {
-                if (SelectedPortionId == null)
-                {
-                    ModelState.AddModelError(
-                        nameof(SelectedPortionId),
-                        "Please select a portion.");
-                }
-
-                if (PortionQuantity == null ||
-                    PortionQuantity <= 0)
-                {
-                    ModelState.AddModelError(
-                        nameof(PortionQuantity),
-                        "Portion quantity must be greater than 0.");
-                }
-
-                if (SelectedPortionId != null &&
-                    PortionQuantity > 0 &&
-                    selectedFood != null)
-                {
-                    // The original deleted portion stays selectable for this entry; new choices must be active.
-                    var portion = selectedFood.Portions
-                        .FirstOrDefault(portion =>
-                            portion.Id == SelectedPortionId &&
-                            (!portion.IsDeleted ||
-                             (selectedFood.Id == existingEntry.FoodId &&
-                              portion.Id == existingEntry.FoodPortionId)));
-
-                    if (portion == null)
-                    {
-                        ModelState.AddModelError(
-                            nameof(SelectedPortionId),
-                            "The selected portion is not valid for this food.");
-                    }
-                    else
-                    {
-                        selectedPortion = portion;
-
-                        // Preserve the historical amount if the portion row was edited after logging.
-                        var canonicalAmount =
-                            selectedFood.Id == existingEntry.FoodId &&
-                            portion.Id == existingEntry.FoodPortionId &&
-                            existingEntry.PortionQuantity > 0
-                                ? existingEntry.Quantity /
-                                  existingEntry.PortionQuantity.Value
-                                : portion.Amount;
-
-                        try
-                        {
-                            DiaryEntry.Quantity = checked(
-                                canonicalAmount *
-                                PortionQuantity.Value);
-                        }
-                        catch (OverflowException)
-                        {
-                            ModelState.AddModelError(
-                                nameof(PortionQuantity),
-                                "The resulting quantity is too large.");
-                        }
-
-                        // Quantity is derived from the selected owned portion, not the posted quantity field.
-                        ModelState.Remove(
-                            "DiaryEntry.Quantity");
-                    }
-                }
-            }
-            else
-            {
-                decimal canonicalQuantity = 0;
-
-                // Exact mode owns quantity; discard stale portion fields from the same form post.
-                ModelState.Remove(
-                    nameof(SelectedPortionId));
-
-                ModelState.Remove(
-                    nameof(PortionQuantity));
-
-                if (DiaryEntry.Quantity <= 0)
-                {
-                    ModelState.AddModelError(
-                        "DiaryEntry.Quantity",
-                        "Quantity must be greater than 0.");
-                }
-                else if (selectedFood?.ServingBasis == FoodServingBasis.Portion)
-                {
-                    // Direct portion foods use unitless portion counts; no gram/ml conversion exists.
-                    canonicalQuantity = DiaryEntry.Quantity;
-                }
-                else if (selectedFood != null &&
-                    !MeasurementUnits.TryToCanonical(
-                        DiaryEntry.Quantity,
-                        selectedFood.ServingUnit,
-                        out canonicalQuantity,
-                        out _,
-                        out _))
-                {
-                    ModelState.AddModelError(
-                        "DiaryEntry.Quantity",
-                        "The quantity could not be converted.");
-                }
-                else if (selectedFood != null)
-                {
-                    DiaryEntry.Quantity = canonicalQuantity;
-                }
-            }
+            var measurement = DiaryMeasurementResolver.Resolve(
+                new(MeasurementMode, DiaryEntry.Quantity, SelectedPortionId,
+                    PortionQuantity, ApproximationPortionId, ApproximationSize),
+                selectedFood, availablePortions, PortionAmount, EstimateAmount);
+            DiaryEntry.Quantity = measurement.Quantity;
+            foreach (var field in measurement.DerivedFields)
+                ModelState.Remove(field);
+            foreach (var error in measurement.Errors)
+                ModelState.AddModelError(error.Field, error.Message);
+            var selectedPortion = measurement.Portion;
 
             if (!ModelState.IsValid)
             {

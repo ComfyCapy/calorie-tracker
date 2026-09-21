@@ -47,8 +47,6 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Manual local smoke review recommended: food create/edit validation and community submission; Capy equip/unequip, save/apply/delete outfits, preview and progression feedback. Automated persistence/ownership coverage passes; no browser verification was performed in this pass.
 - Next substantive package: characterize Diary create/edit measurement policy differences, especially historical snapshots, before extraction. Continue from these checkpoints rather than treating every audit recommendation as mandatory.
 
-## Deferred until verified
-
 ## Diary continuation: characterization checkpoint
 
 - Read Create/Edit handlers, existing Diary/snapshot/prepopulation/USDA tests, unit conversion and approximation helpers. Relevant baseline: 138 passed.
@@ -56,7 +54,19 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Confirmed deliberate policy differences: Create alone changes Portion to Exact when all portions are deleted; Edit permits only the original deleted food/portion. Edit reconstructs logged portion/estimate amounts and retains nutrition/labels, while exact conversion uses the current food unit even when the snapshot unit differs. Direct-portion foods bypass unit conversion. These behaviors must not be unified away.
 - Existing tests additionally cover replacement-food authoritative snapshots, prepopulation, ownership, USDA volume/gram authority and maintenance snapshots.
 - Next: extract shared validation/calculation only, with eligible portions and historical amount selection supplied by the PageModels; leave snapshots, binding state application, authorization and persistence at the page boundary.
+- Characterization commit: `271767b`; combined targeted suite at that checkpoint: 185 passed.
+
+## Diary continuation: shared measurement resolver
+
+- Added pure `DiaryMeasurementResolver` with submitted measurement input, result quantity/selection, exact field errors and mode-specific binding fields to clear. No database/MVC dependencies or entity mutation. Uses existing conversion/multiplier helpers.
+- Create retains no-portions fallback, new-entry metadata/snapshot capture, progression and persistence. Edit retains eligible historical food/portion rules, lazy historical amount selection, food-change snapshot replacement and label retention. Its two local amount functions run only after a valid selection; historical division is not newly caught or evaluated eagerly.
+- Reduced Create by 144 lines and Edit by 164 lines. No route, view, script, CSS, DI, model or migration changes.
+- Added six further PageModel cases for historical estimate label/direct-serving policy and retained binding errors, plus 17 direct resolver cases for precision/boundaries, legacy nonpositive amounts, lazy policy execution and overflow. Total new cases this run: 70.
+- Targeted Diary/Ownership/Measurement/Approximate suite: 208 passed. Node: 41 passed; ESLint passed. Release build: zero warnings/errors. Explicit EF model/seed compatibility checks: 2 passed; no model changes.
+- Diff reviewed, whitespace check passed. Full .NET suite is running before final handoff. No production access, push or deployment.
+
+## Deferred / manual review
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
-Diary measurement extraction remains a separate high-risk package: create/edit share calculations but historical snapshots make their policies non-identical. Profile input processing and React state decomposition also remain open. This pass deliberately completes three isolated boundaries rather than beginning an unvalidated broad rewrite. Existing progression, external-food authority, deployment, and ownership policies are preserved.
+Diary measurement extraction is now implemented with policy differences preserved. Profile input processing and React state decomposition remain open and were out of scope for this continuation. Existing progression, external-food authority, deployment, and ownership policies are preserved. A local browser smoke test of Create/Edit mode switching and historical entries remains recommended; automated prepopulation/rendering tests pass, but no manual browser check was performed.

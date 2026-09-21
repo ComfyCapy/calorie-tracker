@@ -226,6 +226,65 @@ public sealed class DiaryMeasurementContractTests
         Assert.Equal(1000, saved.CaloriesConsumed);
     }
 
+    [Theory]
+    [InlineData(true, "Small", 60)]
+    [InlineData(true, "invalid", 750)]
+    [InlineData(false, "Small", 750)]
+    public async Task EditEstimate_UsesHistoryOnlyForPreviouslyApproximateValidLabel(bool approximate, string label, int expected)
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        var (food, portion, original) = await Seed(db, true);
+        original!.Quantity = 30;
+        original.FoodPortionId = portion.Id;
+        original.PortionQuantity = 0.75m;
+        original.IsApproximate = approximate;
+        original.ApproximationLabel = label;
+        portion.Amount = 500;
+        await db.Context.SaveChangesAsync();
+        var (_, result) = await Submit(db, original, food.Id, 999, "Approximate", portion.Id, null, "Large");
+        Assert.IsType<RedirectToPageResult>(result);
+        db.Context.ChangeTracker.Clear();
+        Assert.Equal(expected, (await db.Context.DiaryEntries.SingleAsync()).Quantity);
+    }
+
+    [Fact]
+    public async Task EditDirectPortionEstimate_PreservesHistoricalBaseWithoutPortionRow()
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        var (food, portion, original) = await Seed(db, true);
+        portion.IsDeleted = true;
+        food.ServingBasis = FoodServingBasis.Portion;
+        food.CanonicalServingSize = 10;
+        original!.Quantity = 1.5m;
+        original.IsApproximate = true;
+        original.ApproximationLabel = "Small";
+        await db.Context.SaveChangesAsync();
+        var (_, result) = await Submit(db, original, food.Id, 999, "Approximate", null, null, "Large");
+        Assert.IsType<RedirectToPageResult>(result);
+        db.Context.ChangeTracker.Clear();
+        var saved = await db.Context.DiaryEntries.SingleAsync();
+        Assert.Equal(3, saved.Quantity);
+        Assert.Null(saved.FoodPortionId);
+        Assert.Null(saved.PortionQuantity);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RelevantBindingErrors_AreRetainedAndPreventPersistence(bool edit)
+    {
+        await using var db = await TestDatabase.CreateAsync();
+        var (food, _, original) = await Seed(db, edit);
+        var (page, result) = await Submit(db, original, food.Id, 10,
+            bindingErrors: ["DiaryEntry.Quantity", "ApproximationSize"]);
+        Assert.IsType<PageResult>(result);
+        Assert.Equal("Binding failure", Assert.Single(page.ModelState["DiaryEntry.Quantity"]!.Errors).ErrorMessage);
+        Assert.Equal("Binding failure", Assert.Single(page.ModelState["ApproximationSize"]!.Errors).ErrorMessage);
+        db.Context.ChangeTracker.Clear();
+        if (edit) Assert.Equal(100, (await db.Context.DiaryEntries.SingleAsync()).Quantity);
+        else Assert.Empty(await db.Context.DiaryEntries.ToListAsync());
+    }
+
     private static async Task<(Food Food, FoodPortion Portion, DiaryEntry? Original)> Seed(TestDatabase db, bool edit)
     {
         await db.AddUserAsync("owner");
