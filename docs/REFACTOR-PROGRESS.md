@@ -11,7 +11,7 @@
 
 Added `FoodValidator` and a result that carries normalized values and field errors without MVC dependencies or input mutation. Kept `ValidationRules.ValidateFood` as the small existing Razor adapter; Community Foods now uses the result directly. Partial normalization and accumulated binding errors remain unchanged.
 
-- Added 13 direct cases covering units, portions, invalid input, overflow, partial normalization and the MVC adapter.
+- Added 12 direct cases covering units, portions, invalid input, overflow, partial normalization and the MVC adapter.
 - Baseline: 713 .NET / 41 Node tests passed; ESLint passed.
 - Targeted Foods/API-food/Community/Ownership run: 193 passed.
 - Diff inspected and `git diff --check` passed. Checkpoint commit follows this log entry.
@@ -33,11 +33,19 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Added nine direct service cases, including a migrated-database round trip, cross-user rejection, unavailable/category-invalid slots, persistence and removal.
 - Updated three existing PageModel test factories for constructor injection; assertions remain unchanged.
 - Targeted Capy/ProgressionDomainHook/Database suite: 89 passed.
-- Diff inspected; whitespace check passed. Local checkpoint follows this entry.
+- Diff inspected; whitespace check passed. Commit: `ae31456`.
 
-## Next validation
+## Final validation and handoff
 
-Run full .NET/Node suites, Release build, lint, model compatibility tests and accumulated diff review before closing this pass.
+- Complete Release .NET suite: 736 passed, zero failed/skipped (23 added cases over baseline).
+- Complete Node suite: 41 passed; ESLint passed.
+- Release solution build: succeeded, zero warnings/errors.
+- EF `HasPendingModelChanges`: false; full migrated/model seed parity passed. No migration files or schema changed; no local application database was migrated.
+- Accumulated diff reviewed and `git diff 5fa9e0241249eab8235ba8ff364556dddf18f74d --check` passed.
+- Approximately 1,040 added / 656 deleted lines across 15 files, including tests and this log; much of the seed diff is unchanged content relocated.
+- Only pre-existing `docs/REFACTOR-AUDIT.md` remains untracked after checkpoints. No push, deployment, production access, UI changes, or new dependencies.
+- Manual local smoke review recommended: food create/edit validation and community submission; Capy equip/unequip, save/apply/delete outfits, preview and progression feedback. Automated persistence/ownership coverage passes; no browser verification was performed in this pass.
+- Next substantive package: characterize Diary create/edit measurement policy differences, especially historical snapshots, before extraction. Continue from these checkpoints rather than treating every audit recommendation as mandatory.
 
 ## Deferred until verified
 
