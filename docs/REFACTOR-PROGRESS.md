@@ -134,3 +134,10 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 
 - A10: added `.github/workflows/verify.yml` for push/PR checks using the existing .NET 10/Node 24 stack, lockfile install, Node tests/lint/build, generated-bundle drift guard, Release build and all .NET tests (including migration/model compatibility). Read-only repository permissions; no production credentials or deployment job.
 - Local Node tests/lint/build and bundle drift check pass. Workflow structure manually reviewed; optional local YAML parsers are not installed, and no dependency was added just for this check. Hosted runner execution remains unverified until the user pushes; this task does not push.
+- Checkpoint: `d8ed870`.
+
+## Static artifact hygiene
+
+- Repeated the authored reference scan: `macro-goals-preference.js` and its three data attributes are absent from application markup/scripts; only negative regression assertions reference them. Removed this 50-line dormant script. It remains recoverable from Git.
+- Kept `dashboard-hero-capy1.png`: no internal references, but its published URL may have external consumers and this task cannot inspect production traffic. Removing a public compatibility asset is not needed for maintainability closure.
+- Targeted macro/dashboard/stylesheet checks passed; no artwork was modified. Local checkpoint follows.
