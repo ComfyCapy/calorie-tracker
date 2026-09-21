@@ -1,0 +1,42 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: CalorieTracker/ClientApp/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: CalorieTracker/ClientApp
+        run: npm ci
+      - name: Test, lint and build the food-search island
+        working-directory: CalorieTracker/ClientApp
+        run: |
+          npm test
+          npm run lint
+          npm run build
+      - name: Check committed frontend output
+        run: |
+          git diff --exit-code -- CalorieTracker/wwwroot/react-food-search
+          test -z "$(git ls-files --others --exclude-standard CalorieTracker/wwwroot/react-food-search)"
+      - name: Release build
+        run: dotnet build CalorieTracker/CalorieTracker.slnx --configuration Release
+      - name: Test including migration and model compatibility
+        run: dotnet test CalorieTracker/CalorieTracker.slnx --no-build --configuration Release
+      - name: Check whitespace
+        run: git diff --check

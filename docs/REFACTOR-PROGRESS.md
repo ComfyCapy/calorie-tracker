@@ -128,3 +128,9 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Resume inspection: Profile binding `f9d4d3a`, Identity `7d03437`, React `5854ff0` and CSS `a0ad976` were committed; only Admin Users query change and its new test were uncommitted. No interrupted work was discarded.
 - B8 replaces up to 30 per-user role queries with one bounded membership/role join after the existing filtered/ordered 30-user query. Mutation handlers and authorization remain unchanged.
 - Strengthened the interrupted test with a command interceptor asserting exactly two list queries, plus filtering, limit, ordering, no-role users and exact Identity role-list parity. Community suite: 41 passed; focused enhanced query-count test passed. Diff/whitespace inspected; local checkpoint follows.
+- Checkpoint: `19346ae`.
+
+## CI verification gate
+
+- A10: added `.github/workflows/verify.yml` for push/PR checks using the existing .NET 10/Node 24 stack, lockfile install, Node tests/lint/build, generated-bundle drift guard, Release build and all .NET tests (including migration/model compatibility). Read-only repository permissions; no production credentials or deployment job.
+- Local Node tests/lint/build and bundle drift check pass. Workflow structure manually reviewed; optional local YAML parsers are not installed, and no dependency was added just for this check. Hosted runner execution remains unverified until the user pushes; this task does not push.
