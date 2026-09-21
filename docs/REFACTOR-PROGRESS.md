@@ -63,7 +63,8 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Reduced Create by 144 lines and Edit by 164 lines. No route, view, script, CSS, DI, model or migration changes.
 - Added six further PageModel cases for historical estimate label/direct-serving policy and retained binding errors, plus 17 direct resolver cases for precision/boundaries, legacy nonpositive amounts, lazy policy execution and overflow. Total new cases this run: 70.
 - Targeted Diary/Ownership/Measurement/Approximate suite: 208 passed. Node: 41 passed; ESLint passed. Release build: zero warnings/errors. Explicit EF model/seed compatibility checks: 2 passed; no model changes.
-- Diff reviewed, whitespace check passed. Full .NET suite is running before final handoff. No production access, push or deployment.
+- Extraction commit: `f50ca62`. Full .NET suite: 806 passed, zero failed/skipped. Diff reviewed and `git diff dcb7358 --check` passed. No production access, push or deployment.
+- Final state: tracked work committed locally; pre-existing `docs/REFACTOR-AUDIT.md` remains untracked and untouched. This run changes only two Diary PageModels, the resolver, two Diary test files and this progress log. No half-refactor remains.
 
 ## Deferred / manual review
 
