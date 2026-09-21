@@ -141,3 +141,37 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Repeated the authored reference scan: `macro-goals-preference.js` and its three data attributes are absent from application markup/scripts; only negative regression assertions reference them. Removed this 50-line dormant script. It remains recoverable from Git.
 - Kept `dashboard-hero-capy1.png`: no internal references, but its published URL may have external consumers and this task cannot inspect production traffic. Removing a public compatibility asset is not needed for maintainability closure.
 - Targeted macro/dashboard/stylesheet checks passed; no artwork was modified. Local checkpoint follows.
+- Checkpoint: `9ff449c`; targeted suite: 50 passed.
+
+## Final A/B disposition (supersedes earlier continuation suggestions)
+
+| Item | Final disposition | Evidence / remaining boundary |
+| --- | --- | --- |
+| A1 Diary measurement | Completed | Resolver and characterization protect Create/Edit historical differences; snapshots remain page policy. |
+| A2 cosmetic seeds | Completed | Exact 51-entry extraction, migrated seed parity and no-model-difference tests. |
+| A3 CSS | Completed, conservative scope | Three contiguous stylesheets, exact original declaration-stream hash and served load-order test. No speculative deduplication; further deletion has no demonstrated equivalence and is deliberately excluded. |
+| A4 Profile | Completed | Pure processing plus dedicated HTTP input, unchanged annotations/names, executable overposting and rendered-validation tests. |
+| A5 wardrobe | Completed | Focused equip/outfit service with ownership, unavailable-slot and persistence coverage. |
+| A6 React | Completed, narrowed after inspection | Results/actions/pagination separated, request/state machine retained. Splitting the shared request-sequence state into a hook now mostly relocates coupled state rather than simplifying it; no further module churn justified. |
+| A7 Diary browser state | Deliberately deferred | Current VM harness characterizes computation, not DOM focus/keyboard/blur ordering or all initialization/mode transitions. A safe state-machine rewrite requires a real DOM interaction harness first; inventing a broad fake DOM or adding a new browser-test dependency solely for closeout is disproportionate. Existing isolated IIFE and focused functions remain unchanged. This is an executable-coverage gap, not a request for visual redesign. |
+| A8 food validation | Completed | MVC-independent validator and small adapter; partial normalization/errors preserved. |
+| A9 onboarding | Completed, narrowed | Shared provisioning/token/email service; real external-cookie success/link-failure tests and password-path integration coverage. Role assignment stays explicit at the security-sensitive entry boundary, preserving its order relative to Identity outcomes. |
+| A10 CI | Completed locally | Read-only verification workflow, frontend drift guard, all existing suites. First hosted run cannot be verified without the user pushing; no deployment workflow added. |
+| B1 legacy USDA route | Deliberately deferred | Unknown bookmarked/external callers; production telemetry is unavailable and production access prohibited. Keep supported route, tests and policies intact. Retirement requires usage evidence and an explicit compatibility decision. |
+| B2 favourites | No longer justified as proposed | Audit names a nonexistent `UserFavouriteFood`; actual state is `Food.IsFavourite`. Internal-ID and provider/source-ID lookups plus external duplicate-insert recovery differ. Extracting a Boolean assignment adds indirection or risks hiding ownership/recovery semantics; current explicit operations retained. |
+| B3 progression split | No longer justified now | Coherent transaction/award boundary, extensive tests, no catalogue growth requiring decomposition in this campaign. |
+| B4 startup extraction | No longer justified now | Composition root remains explicit; new service registrations do not warrant hiding middleware/environment ordering in wrappers. |
+| B5 cancellation propagation | Deliberately deferred | Existing tokenless provider APIs and resolver map provider failures/timeouts into unavailable/cached fallback outcomes. Caller-cancellation propagation changes that observable failure contract; needs a separate reliability package with caller-cancel/timeout/fallback tests, not a claim of behavior-identical structural cleanup. No cancellation behavior was silently changed. |
+| B6 orphan assets | Completed for dormant script; image deferred | Macro preference script unreferenced and removed. Old public hero URL retained because external hotlinks cannot be ruled out without usage evidence. No artwork changed. |
+| B7 source-based tests | Superseded where touched | Executable external onboarding, Profile HTTP and React control/callback tests now provide behavior coverage. Existing source/packaging guards retained rather than removed merely to inflate refactor freedom; no blanket test rewrite justified. |
+| B8 Admin role queries | Completed | Two-query interception test plus role-order parity, bounded search and existing authorization/mutation coverage. |
+
+## Campaign closeout
+
+- The behavior-preserving campaign is closed with the explicit deferred follow-ups above; it is not a claim that every possible refactor was implemented. No incomplete source edits remain. No product decision is needed to use/review the current checkpoints; retiring public compatibility URLs would need a separate decision.
+- Final local full .NET run: 845 passed, zero failed/skipped, up 132 from the original 713 and up 9 from the 836 pre-binding baseline. Complete Node suite: 42 passed (originally 41). ESLint and Vite production build passed; rebuilt frontend output matches the committed bundle.
+- Release solution build: zero warnings/errors. Explicit model/seed compatibility tests: 2 passed; EF reports no pending model change. Historical migration files are unchanged. No application database reset/migration or production access occurred.
+- Admin checkpoint `19346ae`, CI checkpoint `d8ed870`, artifact cleanup `9ff449c`; earlier package hashes are recorded above. Accumulated diff reviewed against `5fa9e02`, including security entry ordering, registration-only startup changes, exact CSS order/content and unchanged migrations. Whitespace check passed.
+- Meaningful reductions: DbContext -415 lines, ValidationRules -126, Customisation PageModel -89, Diary Create/Edit -308 combined, Profile PageModel -249, App.jsx -141. New focused processors/services/input types and tests account for deliberate growth; 2,482 CSS lines were relocated, not rewritten. No new runtime dependency, framework, project, or architectural layer.
+- Manual follow-up: local metric/imperial/goal/target and Diary historical-mode smoke checks; actual configured external-provider handshake; React provider/autocomplete/favourite/pagination interaction; desktop/mobile light/dark layout. These do not block the tested local checkpoint. First CI hosted run needs review when the user chooses to push.
+- Repository handoff: tracked work committed locally; pre-existing untracked `docs/REFACTOR-AUDIT.md` preserved unchanged. Nothing pushed or deployed. Removed script can be recovered from Git. Recommended next action: review the local commit series and smoke-test the unchanged UI before choosing whether to merge/push; do not automatically restart the deferred packages.
