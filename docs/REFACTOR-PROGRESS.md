@@ -100,6 +100,13 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Replaced the bound EF entity with page-local `ProfileInput`, keeping the property name `UserProfile` and exact editable-field annotations/defaults. Explicit mapping omits IDs/navigation. GET estimates and persistence still use entities; no view or model/schema changes.
 - Updated direct PageModel test construction to map inputs explicitly. Existing assertions retained; the old direct-assignment overposting example is now backed by actual HTTP tests.
 - Targeted Profile/Theme/GoalTimeline/DailyMaintenance/ProgressionDomainHook suite: 151 passed. Diff reviewed; checkpoint follows. Continue directly to Identity executable onboarding coverage.
+- Binding checkpoint: `f9d4d3a`.
+
+## Identity onboarding continuation
+
+- Added executable external-confirmation tests using protected Identity external cookies, real Identity stores and the test email sender. Successful linking grants exactly Standard/starter cosmetics and emits a verifiable confirmation token; a failed login link produces no role/provisioning/email for the new account. Both cases passed before extraction.
+- Extracted shared starter provisioning/token generation/branded email into `AccountOnboardingService`. Entry pages retain Identity create/link outcomes, explicit Standard-role assignment, callback URL differences (password flow includes returnUrl), confirmation/sign-in/redirect decisions and failure ordering. No authentication architecture changes or real provider calls.
+- Identity/Community/Email/Capy targeted suite: 100 passed. Diff reviewed; local checkpoint follows. Continue to conservative React presentation decomposition; request/state handling will remain intact.
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
