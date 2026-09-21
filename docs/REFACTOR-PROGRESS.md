@@ -107,6 +107,13 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Added executable external-confirmation tests using protected Identity external cookies, real Identity stores and the test email sender. Successful linking grants exactly Standard/starter cosmetics and emits a verifiable confirmation token; a failed login link produces no role/provisioning/email for the new account. Both cases passed before extraction.
 - Extracted shared starter provisioning/token generation/branded email into `AccountOnboardingService`. Entry pages retain Identity create/link outcomes, explicit Standard-role assignment, callback URL differences (password flow includes returnUrl), confirmation/sign-in/redirect decisions and failure ordering. No authentication architecture changes or real provider calls.
 - Identity/Community/Email/Capy targeted suite: 100 passed. Diff reviewed; local checkpoint follows. Continue to conservative React presentation decomposition; request/state handling will remain intact.
+- Checkpoint: `7d03437`.
+
+## React presentation continuation
+
+- Extracted the unchanged results toolbar, tiles/actions and pagination into `FoodSearchResults`; App retains all state, API calls, latest-request behavior and navigation. No extra dependency or hook/state rewrite.
+- Added rendered accessibility/busy-state and callback-argument tests. Node: 42 passed; ESLint and Vite production build passed. Rebuilt checked-in island output. Foods discoverability suite: 10 passed before final extraction correction; rerun with full suite at handoff.
+- Diff reviewed; checkpoint follows. Continue to exact-order CSS splitting; no declaration deletion or visual redesign.
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
