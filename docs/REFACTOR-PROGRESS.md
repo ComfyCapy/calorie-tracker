@@ -15,7 +15,17 @@ Added `FoodValidator` and a result that carries normalized values and field erro
 - Baseline: 713 .NET / 41 Node tests passed; ESLint passed.
 - Targeted Foods/API-food/Community/Ownership run: 193 passed.
 - Diff inspected and `git diff --check` passed. Checkpoint commit follows this log entry.
-- Next: isolate cosmetic seeds, verifying zero EF model change.
+- Commit: `a8772c2`.
+
+## Completed: cosmetic seed isolation (A2)
+
+Moved the exact 51 seed entries to `Data/CapyItemCatalogue.cs`, returning fresh objects for model construction. `ApplicationDbContext` loses 415 lines of catalogue content; relationships and all migration files remain unchanged.
+
+- Added full seed parity test between `EnsureCreated` and the released migration chain.
+- Added `HasPendingModelChanges` regression check: false.
+- Targeted Database/Capy/Migration suite: 56 passed.
+- Diff inspected and whitespace check passed. Checkpoint commit follows this entry.
+- Next: extract wardrobe persistence and slot/ownership rules, retaining existing HTTP responses and optional progression hooks.
 
 ## Planned next packages
 
