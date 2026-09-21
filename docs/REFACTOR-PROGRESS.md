@@ -123,6 +123,8 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Added executable served/fingerprinted stylesheet-order and content-hash regression test. Updated dashboard CSS assertion to read all loaded parts. Targeted Theme/Dashboard/FoodSearchDiscoverability/ProgressionActivityPageFilter suite: 90 passed.
 - Visual deletion/deduplication is not attempted: remaining overrides are intentional until proven otherwise. Desktop/mobile light/dark smoke review recommended, but exact content/order proof permits continuing with independent audit items.
 
-CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
+## Interrupted Admin package recovered
 
-Diary measurement extraction is now implemented with policy differences preserved. Profile input processing and React state decomposition remain open and were out of scope for this continuation. Existing progression, external-food authority, deployment, and ownership policies are preserved. A local browser smoke test of Create/Edit mode switching and historical entries remains recommended; automated prepopulation/rendering tests pass, but no manual browser check was performed.
+- Resume inspection: Profile binding `f9d4d3a`, Identity `7d03437`, React `5854ff0` and CSS `a0ad976` were committed; only Admin Users query change and its new test were uncommitted. No interrupted work was discarded.
+- B8 replaces up to 30 per-user role queries with one bounded membership/role join after the existing filtered/ordered 30-user query. Mutation handlers and authorization remain unchanged.
+- Strengthened the interrupted test with a command interceptor asserting exactly two list queries, plus filtering, limit, ordering, no-role users and exact Identity role-list parity. Community suite: 41 passed; focused enhanced query-count test passed. Diff/whitespace inspected; local checkpoint follows.
