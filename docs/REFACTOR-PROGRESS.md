@@ -68,6 +68,13 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 
 ## Deferred / manual review
 
+## Profile continuation: characterization
+
+- Starting checkpoint `3d00189`; audit reread, existing tracked work clean and untracked audit preserved.
+- Added 23 PageModel cases for option/date/age errors, missing/converted imperial values, goal/weekly requirements, target mode, stale binding-error cleanup, calculated-target validation ordering and the strict 0.01 kg existing-goal tolerance.
+- Profile/Theme/GoalTimeline suite: 102 passed against unchanged application code.
+- Next: page-specific pure processing input/result while preserving existing Razor binding names/attributes. Binding-contract replacement is deliberately separate from conversion/validation extraction to avoid coupling binder changes to policy changes.
+
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
 Diary measurement extraction is now implemented with policy differences preserved. Profile input processing and React state decomposition remain open and were out of scope for this continuation. Existing progression, external-food authority, deployment, and ownership policies are preserved. A local browser smoke test of Create/Edit mode switching and historical entries remains recommended; automated prepopulation/rendering tests pass, but no manual browser check was performed.
