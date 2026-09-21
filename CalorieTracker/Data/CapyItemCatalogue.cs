@@ -31,7 +31,7 @@ internal static class CapyItemCatalogue
         new CapyItem { Id = 24, Name = "Sky Blue T-Shirt", Category = CapyCategories.Clothes, ImagePath = "/images/capy/clothes/TShirt-SkyBlue.png", IsActive = true, IsStarter = true },
         new CapyItem { Id = 25, Name = "White T-Shirt", Category = CapyCategories.Clothes, ImagePath = "/images/capy/clothes/TShirt-White.png", IsActive = true, IsStarter = true },
         new CapyItem { Id = 26, Name = "ZZZ T-Shirt", Category = CapyCategories.Clothes, ImagePath = "/images/capy/clothes/TShirt-ZZZ.png", IsActive = true, IsStarter = true },
-    
+
         // Hats / Hair
         new CapyItem
         {
@@ -113,7 +113,7 @@ internal static class CapyItemCatalogue
             IsActive = true,
             IsStarter = true
         },
-    
+
         // Face Accessories
         new CapyItem
         {
@@ -205,7 +205,7 @@ internal static class CapyItemCatalogue
             IsActive = true,
             IsStarter = true
         },
-    
+
         // Neck Accessories
         new CapyItem
         {
@@ -297,7 +297,7 @@ internal static class CapyItemCatalogue
             IsActive = true,
             IsStarter = true
         },
-    
+
         // Clothes
         new CapyItem
         {
@@ -309,7 +309,7 @@ internal static class CapyItemCatalogue
             IsActive = true,
             IsStarter = true
         },
-    
+
         // Backgrounds
         new CapyItem
         {
@@ -411,7 +411,7 @@ internal static class CapyItemCatalogue
             IsActive = true,
             IsStarter = true
         },
-    
+
         new CapyItem
         {
             Id = 14,
