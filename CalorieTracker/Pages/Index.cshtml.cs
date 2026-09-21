@@ -16,9 +16,14 @@ namespace CalorieTracker.Pages
         private readonly CalorieBalanceYearService _calorieBalanceYearService;
         private readonly MacroTargetCalculator _macroTargetCalculator;
         private readonly IUserLocalTimeProvider _userLocalTimeProvider;
+        private readonly ProgressionService? _progressionService;
         public UserProfile? UserProfile { get; set; }
         public UserCapyAppearance? CapyAppearance { get; set; }
         public CalorieBalanceYear? CalorieBalanceYear { get; set; }
+        public ProgressionSummary? ProgressionSummary { get; private set; }
+        public DateOnly ActivityWeekStart { get; private set; }
+        public IReadOnlySet<DateOnly> ActiveActivityDates { get; private set; } =
+            new HashSet<DateOnly>();
         [BindProperty(SupportsGet = true)]
         public int? Year { get; set; }
         public int SelectedYear { get; private set; }
@@ -55,7 +60,8 @@ namespace CalorieTracker.Pages
             GoalTimelineCalculator goalTimelineCalculator,
             CalorieBalanceYearService calorieBalanceYearService,
             MacroTargetCalculator macroTargetCalculator,
-            IUserLocalTimeProvider userLocalTimeProvider)
+            IUserLocalTimeProvider userLocalTimeProvider,
+            ProgressionService? progressionService = null)
         {
             _context = context;
             _userManager = userManager;
@@ -63,6 +69,7 @@ namespace CalorieTracker.Pages
             _calorieBalanceYearService = calorieBalanceYearService;
             _macroTargetCalculator = macroTargetCalculator;
             _userLocalTimeProvider = userLocalTimeProvider;
+            _progressionService = progressionService;
         }
         public async Task<IActionResult> OnGetAsync()
         {
@@ -78,6 +85,27 @@ namespace CalorieTracker.Pages
             if (userId == null)
             {
                 return Page();
+            }
+
+            ActivityWeekStart = CurrentDate.AddDays(
+                -(((int)CurrentDate.DayOfWeek + 6) % 7));
+
+            if (_progressionService != null)
+            {
+                ProgressionSummary = await _progressionService.GetSummaryAsync(
+                    userId,
+                    CurrentDate);
+
+                var activityWeekEnd = ActivityWeekStart.AddDays(7);
+                ActiveActivityDates = (await _context.UserDailyActivities
+                    .AsNoTracking()
+                    .Where(activity =>
+                        activity.UserId == userId &&
+                        activity.LocalDate >= ActivityWeekStart &&
+                        activity.LocalDate < activityWeekEnd)
+                    .Select(activity => activity.LocalDate)
+                    .ToArrayAsync())
+                    .ToHashSet();
             }
 
             if (ValidationRules.HasBindingError(ModelState, nameof(Year)))

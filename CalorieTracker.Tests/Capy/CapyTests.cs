@@ -130,6 +130,75 @@ public class CapyTests
     }
 
     [Fact]
+    public async Task StarterHats_CanBeEquippedSwitchedAndRemoved()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var provisioning = new CapyProvisioningService(database.Context);
+        await provisioning.ProvisionAsync("user-1");
+        var model = CreateModel(database, provisioning, "user-1");
+
+        Assert.True(await database.Context.UserCapyItems.AnyAsync(item =>
+            item.UserId == "user-1" && item.CapyItemId == 42));
+        Assert.True(await database.Context.UserCapyItems.AnyAsync(item =>
+            item.UserId == "user-1" && item.CapyItemId == 43));
+
+        Assert.IsType<JsonResult>(await model.OnPostEquipAsync(
+            42,
+            CapyCategories.HatHair));
+        Assert.Equal(
+            42,
+            (await database.Context.UserCapyAppearances.SingleAsync()).HatHairId);
+
+        Assert.IsType<JsonResult>(await model.OnPostEquipAsync(
+            43,
+            CapyCategories.HatHair));
+        Assert.Equal(
+            43,
+            (await database.Context.UserCapyAppearances.SingleAsync()).HatHairId);
+
+        Assert.IsType<JsonResult>(await model.OnPostEquipAsync(
+            null,
+            CapyCategories.HatHair));
+        Assert.Null(
+            (await database.Context.UserCapyAppearances.SingleAsync()).HatHairId);
+    }
+
+    [Fact]
+    public async Task StarterBackgrounds_UpdatePreviewPathAndPersistSelection()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await database.AddUserAsync("user-1");
+        var provisioning = new CapyProvisioningService(database.Context);
+        await provisioning.ProvisionAsync("user-1");
+        var model = CreateModel(database, provisioning, "user-1");
+
+        var peachResult = Assert.IsType<JsonResult>(await model.OnPostEquipAsync(
+            48,
+            CapyCategories.Background));
+        var peachPayload = System.Text.Json.JsonSerializer.Serialize(
+            peachResult.Value);
+        Assert.Contains("/images/capy/backgrounds/BG-Peach.png", peachPayload);
+
+        database.Context.ChangeTracker.Clear();
+        Assert.Equal(
+            48,
+            (await database.Context.UserCapyAppearances.SingleAsync()).BackgroundId);
+
+        var sageResult = Assert.IsType<JsonResult>(await model.OnPostEquipAsync(
+            49,
+            CapyCategories.Background));
+        var sagePayload = System.Text.Json.JsonSerializer.Serialize(
+            sageResult.Value);
+        Assert.Contains("/images/capy/backgrounds/BG-Sage.png", sagePayload);
+
+        database.Context.ChangeTracker.Clear();
+        Assert.Equal(
+            49,
+            (await database.Context.UserCapyAppearances.SingleAsync()).BackgroundId);
+    }
+
+    [Fact]
     public async Task EquipCosmetic_WithManipulatedCategory_ReturnsBadRequest()
     {
         await using var database = await TestDatabase.CreateAsync();

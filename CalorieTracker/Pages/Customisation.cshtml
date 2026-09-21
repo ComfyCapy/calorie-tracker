@@ -4,6 +4,7 @@
 
 @{
     ViewData["Title"] = "Customisation";
+    ViewData["UsesScenicHeader"] = true;
 
     var categories = new[]
     {
@@ -80,8 +81,11 @@
     var ownedItemIds = Model.OwnedItems
         .Select(item => item.Id)
         .ToHashSet();
-    var unlockedCount = Model.CatalogueItems.Count(item => ownedItemIds.Contains(item.Id));
+    var unlockedCount = Model.OwnedItems.Count;
     var ownsGoldCrown = ownedItemIds.Contains(14);
+    var displayedCategories = Model.SelectedCategory == "all"
+        ? categories
+        : categories.Where(category => category.Key == Model.SelectedCategory);
 
     string getCosmeticDisplayName(CalorieTracker.Models.CapyItem? item) =>
         item?.Id switch
@@ -98,6 +102,17 @@
      data-needs-provisioning="@(Model.NeedsProvisioning ? "true" : "false")">
     @Html.AntiForgeryToken()
 
+    @await Html.PartialAsync(
+        "_ScenicPageHeader",
+        new CalorieTracker.Models.ScenicPageHeaderModel(
+            Title: "Customisation",
+            Eyebrow: "CUSTOMISATION",
+            ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+            ArtworkAlt: "",
+            ArtworkIsDecorative: true,
+            CssClass: "secondary-page-hero",
+            UseFullBleedArtwork: true))
+
     <div id="capy-error" class="alert alert-danger" role="alert" hidden></div>
     <div id="capy-unlock-message"
          class="alert alert-success capy-unlock-message"
@@ -105,24 +120,20 @@
          hidden>
     </div>
 
-    <section class="capy-customisation-hero">
-        <div class="capy-customisation-hero-copy">
-            <p class="ct-eyebrow">Customisation</p>
-            <h1>@(Model.CapyAppearance?.DisplayName ?? "Your Comfy Capy")</h1>
-            <p class="capy-hero-role">Your calm little companion</p>
-
-            @if (Model.CapyAppearance != null)
-            {
-                <div class="capy-hero-collection">
-                    <span>Cosmetics unlocked</span>
-                    <strong>@unlockedCount</strong>
-                </div>
-            }
-
-            <p class="capy-hero-message">Small steps still move you forward.</p>
-        </div>
-
-    </section>
+    @if (Model.CapyAppearance != null)
+    {
+        <section class="ct-card capy-companion-summary" aria-label="Your Comfy Capy summary">
+            <div>
+                <p class="ct-eyebrow">Your companion</p>
+                <h2>@Model.CapyAppearance.DisplayName</h2>
+                <p>Small steps still move you forward.</p>
+            </div>
+            <div class="capy-companion-summary-count">
+                <span>Cosmetics unlocked</span>
+                <strong>@unlockedCount</strong>
+            </div>
+        </section>
+    }
 
     @if (Model.CapyAppearance == null)
     {
@@ -136,21 +147,23 @@
         <div class="capy-customisation-layout">
             <main class="capy-customisation-main">
                 <nav class="capy-category-tabs" aria-label="Cosmetic categories">
-                    <button type="button"
-                            class="capy-category-tab is-selected"
-                            data-category-filter="all"
-                            aria-pressed="true">
+                    <a class="capy-category-tab @(Model.SelectedCategory == "all" ? "is-selected" : "")"
+                       data-category-filter="all"
+                       asp-route-category="all"
+                       asp-route-inventory="@Model.SelectedInventoryFilter"
+                       aria-current="@(Model.SelectedCategory == "all" ? "page" : null)">
                         All items
-                    </button>
+                    </a>
 
                     @foreach (var category in categories)
                     {
-                        <button type="button"
-                                class="capy-category-tab"
-                                data-category-filter="@category.Key"
-                                aria-pressed="false">
+                        <a class="capy-category-tab @(Model.SelectedCategory == category.Key ? "is-selected" : "")"
+                           data-category-filter="@category.Key"
+                           asp-route-category="@category.Key"
+                           asp-route-inventory="@Model.SelectedInventoryFilter"
+                           aria-current="@(Model.SelectedCategory == category.Key ? "page" : null)">
                             @category.Name
-                        </button>
+                        </a>
                     }
                 </nav>
 
@@ -164,18 +177,18 @@
                         <div class="capy-inventory-filters"
                              role="group"
                              aria-label="Capy inventory filter">
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-secondary capy-inventory-filter"
-                                    data-filter="owned"
-                                    aria-pressed="false">
+                            <a class="btn btn-sm @(Model.SelectedInventoryFilter == "owned" ? "btn-primary" : "btn-outline-secondary") capy-inventory-filter"
+                               asp-route-category="@Model.SelectedCategory"
+                               asp-route-inventory="owned"
+                               aria-current="@(Model.SelectedInventoryFilter == "owned" ? "page" : null)">
                                 Unlocked only
-                            </button>
-                            <button type="button"
-                                    class="btn btn-sm btn-primary capy-inventory-filter"
-                                    data-filter="all"
-                                    aria-pressed="true">
+                            </a>
+                            <a class="btn btn-sm @(Model.SelectedInventoryFilter == "all" ? "btn-primary" : "btn-outline-secondary") capy-inventory-filter"
+                               asp-route-category="@Model.SelectedCategory"
+                               asp-route-inventory="all"
+                               aria-current="@(Model.SelectedInventoryFilter == "all" ? "page" : null)">
                                 Show all
-                            </button>
+                            </a>
                         </div>
                         @if (!ownsGoldCrown)
                         {
@@ -187,26 +200,41 @@
                             </button>
                         }
                     </header>
+                </section>
 
-                    <div class="capy-inventory">
-                        @foreach (var category in categories)
+                <div class="capy-inventory">
+                        @foreach (var category in displayedCategories)
                         {
                             var categoryItems = Model.CatalogueItems
                                 .Where(item => category.ItemCategories.Contains(item.Category))
                                 .ToList();
+                            var totalPages = Math.Max(
+                                1,
+                                (int)Math.Ceiling(categoryItems.Count /
+                                    (double)CalorieTracker.Pages.CustomisationModel.CategoryPageSize));
 
-                            <section class="capy-inventory-group"
+                            <section class="ct-card capy-inventory-group capy-category-card"
                                      id="capy-category-@category.Key"
                                      data-capy-category-group="@category.Key"
+                                     data-capy-page-size="@CalorieTracker.Pages.CustomisationModel.CategoryPageSize"
                                      aria-labelledby="capy-category-title-@category.Key">
                                 <header class="capy-inventory-group-heading">
-                                    <span class="capy-category-icon" aria-hidden="true">
-                                        <img src="/images/capy/ui/@category.Icon" alt="" />
-                                    </span>
-                                    <div>
-                                        <h3 id="capy-category-title-@category.Key">@category.Name</h3>
-                                        <span>@categoryItems.Count @(categoryItems.Count == 1 ? "item" : "items")</span>
-                                    </div>
+                                    <h3 id="capy-category-title-@category.Key">@category.Name</h3>
+                                    @if (totalPages > 1)
+                                    {
+                                        <nav class="capy-category-pagination"
+                                             aria-label="@category.Name pages"
+                                             data-capy-category-pagination>
+                                            <button type="button"
+                                                    data-capy-page-previous
+                                                    aria-label="Previous @category.Name page"
+                                                    disabled>‹</button>
+                                            <span data-capy-page-indicator aria-live="polite">1 / @totalPages</span>
+                                            <button type="button"
+                                                    data-capy-page-next
+                                                    aria-label="Next @category.Name page">›</button>
+                                        </nav>
+                                    }
                                 </header>
 
                                 @if (categoryItems.Count == 0)
@@ -241,24 +269,27 @@
                                                 <span class="capy-item-visual" aria-hidden="true">×</span>
                                                 <span class="capy-item-details">
                                                     <strong>@noneLabel</strong>
-                                                    <span class="capy-item-requirement">Always available</span>
                                                     <span class="capy-item-status">@(equippedItemId == null ? "Equipped" : "Unlocked")</span>
                                                 </span>
                                             </button>
                                         }
 
-                                        @foreach (var item in categoryItems)
+                                        @for (var itemIndex = 0; itemIndex < categoryItems.Count; itemIndex++)
                                         {
+                                            var item = categoryItems[itemIndex];
                                             var isOwned = ownedItemIds.Contains(item.Id);
                                             var isEquipped = getEquippedItemId(item.Category) == item.Id;
                                             var displayName = getCosmeticDisplayName(item);
+                                            var isInitiallyHidden = itemIndex >= CalorieTracker.Pages.CustomisationModel.CategoryPageSize;
 
                                             if (isOwned)
                                             {
                                                 <button type="button"
                                                         class="capy-item-tile @(isEquipped ? "is-equipped" : "")"
+                                                        data-capy-page-item
                                                         data-category="@item.Category"
                                                         data-item-id="@item.Id"
+                                                        hidden="@isInitiallyHidden"
                                                         title="@displayName"
                                                         aria-label="@displayName, @(isEquipped ? "equipped" : "unlocked")"
                                                         aria-pressed="@(isEquipped ? "true" : "false")">
@@ -267,7 +298,6 @@
                                                     </span>
                                                     <span class="capy-item-details">
                                                         <strong>@displayName</strong>
-                                                        <span class="capy-item-requirement">Included in your collection</span>
                                                         <span class="capy-item-status">@(isEquipped ? "Equipped" : "Unlocked")</span>
                                                     </span>
                                                 </button>
@@ -275,6 +305,8 @@
                                             else
                                             {
                                                 <div class="capy-item-tile capy-item-locked"
+                                                     data-capy-page-item
+                                                     hidden="@isInitiallyHidden"
                                                      title="@displayName — Locked"
                                                      role="img"
                                                      aria-label="@displayName, locked. Secret unlock requirement.">
@@ -284,7 +316,6 @@
                                                     </span>
                                                     <span class="capy-item-details">
                                                         <strong>@displayName</strong>
-                                                        <span class="capy-item-requirement">Secret unlock</span>
                                                         <span class="capy-item-status">Locked</span>
                                                     </span>
                                                 </div>
@@ -294,8 +325,7 @@
                                 }
                             </section>
                         }
-                    </div>
-                </section>
+                </div>
 
                 <section class="ct-card capy-collection-summary" aria-labelledby="capyCollectionSummaryTitle">
                     <div class="capy-collection-summary-copy">
@@ -359,6 +389,34 @@
                         <div><dt>Expression</dt><dd data-capy-loadout="@CapyCategories.Expression">@getCosmeticDisplayName(Model.CapyAppearance.Expression)</dd></div>
                         <div><dt>Title</dt><dd>Not available</dd></div>
                     </dl>
+                </section>
+
+                <section class="ct-card capy-saved-outfits" aria-labelledby="savedOutfitsTitle">
+                    <h2 id="savedOutfitsTitle">Saved outfits</h2>
+                    <form method="post" asp-page-handler="SaveOutfit" class="capy-outfit-save-form">
+                        <label asp-for="OutfitName" class="visually-hidden">Outfit name</label>
+                        <input asp-for="OutfitName" class="form-control" maxlength="60" placeholder="Outfit name" required />
+                        <button type="submit" class="btn btn-outline-primary">Save current</button>
+                    </form>
+                    @if (Model.SavedOutfits.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Save a look to return to it in one step.</p>
+                    }
+                    else
+                    {
+                        <ul class="capy-saved-outfit-list">
+                            @foreach (var outfit in Model.SavedOutfits)
+                            {
+                                <li>
+                                    <strong>@outfit.Name</strong>
+                                    <div>
+                                        <form method="post" asp-page-handler="EquipOutfit"><input type="hidden" name="outfitId" value="@outfit.Id" /><button type="submit" class="btn btn-sm btn-outline-primary">Equip</button></form>
+                                        <form method="post" asp-page-handler="DeleteOutfit"><input type="hidden" name="outfitId" value="@outfit.Id" /><button type="submit" class="btn btn-sm btn-outline-secondary">Delete</button></form>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
                 </section>
 
                 <aside class="ct-card capy-motivation-card">

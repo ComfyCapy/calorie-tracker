@@ -76,14 +76,26 @@ public class CalorieBalanceDashboardTests
         var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
 
         Assert.Contains("Good afternoon, Maya", html);
-        Assert.DoesNotContain("dashboard-hero-capy.png", html);
-        Assert.Contains("class=\"dashboard-primary-grid\"", html);
+        Assert.Contains("/images/brand/dashboard-hero-capy.png", html);
+        Assert.Contains("dashboard-primary-grid", html);
         Assert.Contains("class=\"dashboard-calorie-ring is-unset\"", html);
         Assert.Contains("id=\"dashboardMacroCards\"", html);
         Assert.Contains("href=\"/Diary/Create?date=2026-09-09\"", html);
         Assert.Contains("href=\"/Diary?date=2026-09-09\"", html);
         Assert.Contains("href=\"/Foods/Create\"", html);
         Assert.Contains("href=\"/SavedMeals\"", html);
+        Assert.Contains("dashboard-year-streak-row", html);
+        Assert.Contains("dashboard-streak-card", html);
+        Assert.Contains("Activity streak", html);
+        Assert.Contains("dashboard-streak-week", html);
+        Assert.Equal(
+            7,
+            Regex.Matches(
+                html,
+                "class=\\\"dashboard-streak-day(?: |\\\")",
+                RegexOptions.CultureInvariant).Count);
+        Assert.Contains("Longest streak", html);
+        Assert.Contains("Active days", html);
         Assert.DoesNotContain("dashboard-action-primary", html);
         Assert.Equal(4, Regex.Matches(html, "dashboard-action-icon").Count);
         Assert.DoesNotContain("PROGRESSION GOES HERE", html);
@@ -93,6 +105,43 @@ public class CalorieBalanceDashboardTests
         Assert.Contains(
             "var(--ct-calorie-ring) var(--dashboard-calorie-progress",
             siteCss);
+    }
+
+    [Fact]
+    public async Task Dashboard_ActivityStreakCardUsesExistingActivitySummary()
+    {
+        using var factory = new IntegrationTestFactory();
+        const string userId = "dashboard-streak-user";
+        using (var scope = factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+            AddUser(context, userId);
+            context.UserDailyActivities.AddRange(
+                Enumerable.Range(0, 3).Select(offset => new UserDailyActivity
+                {
+                    UserId = userId,
+                    LocalDate = CurrentDate.AddDays(-offset),
+                    RecordedAtUtc = DateTime.UtcNow,
+                    TimeZoneId = "UTC"
+                }));
+            await context.SaveChangesAsync();
+        }
+
+        using var client = AuthenticatedClient(factory, userId);
+        var html = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+
+        Assert.Contains(">3</strong>", html);
+        Assert.Contains("Longest streak", html);
+        Assert.Matches("<dd>\\s*3\\s*<span>days</span>", html);
+        Assert.Contains("<dt>Active days</dt>", html);
+        Assert.Contains("<dd>3</dd>", html);
+        Assert.Equal(
+            3,
+            Regex.Matches(
+                html,
+                "dashboard-streak-day is-active",
+                RegexOptions.CultureInvariant).Count);
     }
 
     [Fact]

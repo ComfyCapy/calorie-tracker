@@ -112,6 +112,33 @@ public class CapyNameTests
     }
 
     [Fact]
+    public async Task SavedOutfit_RoundTripsThroughMigratedSchema()
+    {
+        await using var database = await TestDatabase.CreateMigratedAsync();
+        await database.AddUserAsync("outfit-user");
+        var model = CreateModel(database, "outfit-user");
+
+        await new CapyProvisioningService(database.Context).ProvisionAsync("outfit-user");
+        var appearance = await AppearanceAsync(database, "outfit-user");
+        appearance.ClothesId = 15;
+        await database.Context.SaveChangesAsync();
+
+        model.OutfitName = "Cosy brown";
+        Assert.IsType<RedirectToPageResult>(await model.OnPostSaveOutfitAsync());
+        var outfit = await database.Context.SavedCapyOutfits.SingleAsync();
+        await model.OnGetAsync();
+        Assert.Single(model.SavedOutfits);
+
+        appearance.ClothesId = null;
+        await database.Context.SaveChangesAsync();
+        Assert.IsType<RedirectToPageResult>(await model.OnPostEquipOutfitAsync(outfit.Id));
+        Assert.Equal(15, (await AppearanceAsync(database, "outfit-user")).ClothesId);
+
+        Assert.IsType<RedirectToPageResult>(await model.OnPostDeleteOutfitAsync(outfit.Id));
+        Assert.Empty(await database.Context.SavedCapyOutfits.ToListAsync());
+    }
+
+    [Fact]
     public async Task Rename_CannotModifyAnotherUsersAppearance()
     {
         await using var database = await CreateDatabaseWithCapyAsync("user-1");
@@ -146,11 +173,25 @@ public class CapyNameTests
         client.DefaultRequestHeaders.Add("X-Test-User", userId);
 
         var customisation = await client.GetStringAsync("/Customisation");
+        var faceAccessories = await client.GetStringAsync(
+            "/Customisation?category=face-accessories");
+        var neckAccessories = await client.GetStringAsync(
+            "/Customisation?category=neck-accessories");
+        var hats = await client.GetStringAsync(
+            "/Customisation?category=hats");
+        var backgrounds = await client.GetStringAsync(
+            "/Customisation?category=backgrounds");
         var dashboard = await client.GetStringAsync("/");
 
-        Assert.Contains("capy-customisation-hero", customisation);
-        Assert.DoesNotContain("capy-customisation-hero-art", customisation);
-        Assert.DoesNotContain("/images/brand/dashboard-hero-capy.png", customisation);
+        Assert.Contains(
+            "class=\"ct-scenic-header ct-scenic-header--with-art ct-scenic-header--full-bleed-art secondary-page-hero\"",
+            customisation);
+        Assert.Contains("class=\"ct-page-title\">Customisation</h1>", customisation);
+        Assert.DoesNotContain("Make your Capy yours.", customisation);
+        Assert.DoesNotContain("ct-page-subtitle", customisation);
+        Assert.Contains("/images/brand/dashboard-hero-capy.png", customisation);
+        Assert.Contains("capy-companion-summary", customisation);
+        Assert.DoesNotContain("capy-customisation-hero", customisation);
         Assert.Contains("capy-category-tabs", customisation);
         Assert.Contains("capy-collection-card", customisation);
         Assert.Contains("capy-item-grid", customisation);
@@ -163,16 +204,83 @@ public class CapyNameTests
         Assert.Contains("data-category-filter=\"titles\"", customisation);
         Assert.Contains("data-category-filter=\"colours\"", customisation);
         Assert.Matches(
-            "data-category-filter=\\\"colours\\\"[^>]*>\\s*Expressions\\s*</button>",
+            "data-category-filter=\\\"colours\\\"[^>]*>\\s*Expressions\\s*</a>",
             customisation);
         Assert.Contains("id=\"capy-category-title-colours\">Expressions</h3>", customisation);
         Assert.Contains("<dt>Expression</dt>", customisation);
         Assert.DoesNotContain("Colours", customisation);
         Assert.DoesNotContain("<dt>Colour</dt>", customisation);
-        Assert.Contains("<strong>Aviators</strong>", customisation);
-        Assert.Contains("<strong>Green Scarf</strong>", customisation);
-        Assert.Contains("<strong>Green Bow Tie</strong>", customisation);
-        Assert.DoesNotContain("Cool Sunglasses", customisation);
+        Assert.Contains("<strong>Aviators</strong>", faceAccessories);
+        foreach (var accessory in new[]
+        {
+            ("Bandage", "capy-bandaid.png"),
+            ("Duck Bill", "capy-duckbill.png"),
+            ("Eye Patch", "capy-eyepatch.png"),
+            ("Handlebar Moustache", "capy-handlebar-mustache.png"),
+            ("Heart Glasses", "capy-heart-glasses.png"),
+            ("Heart Sticker", "capy-heart-sticker.png"),
+            ("Hypno Glasses", "capy-hypnoglasses.png"),
+            ("Pixel Glasses", "capy-pixel-glasses.png")
+        })
+        {
+            Assert.Contains($"<strong>{accessory.Item1}</strong>", faceAccessories);
+            Assert.Contains(
+                $"/images/capy/face-accessories/{accessory.Item2}",
+                faceAccessories);
+        }
+        Assert.Contains("<strong>Green Scarf</strong>", neckAccessories);
+        Assert.Contains("<strong>Green Bow Tie</strong>", neckAccessories);
+        foreach (var accessory in new[]
+        {
+            ("Flower Lei", "capy-flower-lei.png"),
+            ("Neck Goggles", "capy-goggles.png"),
+            ("Moon Pendant", "capy-moon-pendant.png"),
+            ("Ribbon Tie", "capy-ribbon.png"),
+            ("Royal Cloak", "capy-royal-cloak.png"),
+            ("Star Pendant", "capy-star-pendant.png"),
+            ("Sun Pendant", "capy-sun-pendant.png")
+        })
+        {
+            Assert.Contains($"<strong>{accessory.Item1}</strong>", neckAccessories);
+            Assert.Contains(
+                $"/images/capy/neck-accessories/{accessory.Item2}",
+                neckAccessories);
+        }
+        foreach (var hat in new[]
+        {
+            ("Cowboy Hat", "Capy-CowboyHat.png"),
+            ("Blue &amp; Yellow Party Hat", "PartyHat-BlueYellow.png"),
+            ("Gold Crown", "Capy-Crown-Gold.png"),
+            ("Orange", "capy-orange.png"),
+            ("Rain Hat", "capy-rain-hat.png"),
+            ("Frog Hat", "capy-frog-hat.png"),
+            ("Witch Hat", "capy-witch-hut.png"),
+            ("Wizard Hat", "capy-wizard-hat.png"),
+            ("White Lily", "capy-white-lily.png")
+        })
+        {
+            Assert.Contains($"<strong>{hat.Item1}</strong>", hats);
+            Assert.Contains($"/images/capy/hats-hair/{hat.Item2}", hats);
+        }
+        foreach (var background in new[]
+        {
+            ("Peach", "BG-Peach.png"),
+            ("Sage", "BG-Sage.png"),
+            ("Powder Blue", "BG-PowderBlue.png"),
+            ("Mocha", "BG-Mocha.png")
+        })
+        {
+            Assert.Contains($"<strong>{background.Item1}</strong>", backgrounds);
+            Assert.Contains(
+                $"/images/capy/backgrounds/{background.Item2}",
+                backgrounds);
+        }
+        Assert.DoesNotContain("capy-item-requirement", customisation);
+        Assert.DoesNotContain("capy-item-requirement", faceAccessories);
+        Assert.DoesNotContain("capy-item-requirement", neckAccessories);
+        Assert.DoesNotContain("capy-item-requirement", hats);
+        Assert.DoesNotContain("capy-item-requirement", backgrounds);
+        Assert.DoesNotContain("Cool Sunglasses", faceAccessories);
         Assert.DoesNotContain("Green &amp; Red Scarf", customisation);
         Assert.DoesNotContain("Red &amp; White Tie", customisation);
         Assert.Contains("data-capy-loadout=\"FaceAccessory\"", customisation);
@@ -189,6 +297,51 @@ public class CapyNameTests
         Assert.DoesNotContain(name, customisation);
         Assert.Contains("&lt;b&gt;Capy&lt;/b&gt;", dashboard);
         Assert.DoesNotContain(name, dashboard);
+    }
+
+    [Fact]
+    public async Task CustomisationRendersTShirtsForClientSideOutfitPagination()
+    {
+        const string userId = "render-tshirts-user";
+        using var factory = new IntegrationTestFactory();
+        await SeedAppearanceAsync(factory, userId, "T-Shirt Capy");
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
+        client.DefaultRequestHeaders.Add("X-Test-User", userId);
+
+        var customisation = await client.GetStringAsync("/Customisation");
+
+        Assert.Contains("id=\"capy-category-outfits\"", customisation);
+        Assert.Contains("id=\"capy-category-face-accessories\"", customisation);
+        Assert.Contains("id=\"capy-category-neck-accessories\"", customisation);
+        Assert.Contains("id=\"capy-category-hats\"", customisation);
+        Assert.Contains("id=\"capy-category-backgrounds\"", customisation);
+        Assert.Contains("id=\"capy-category-colours\"", customisation);
+        Assert.Contains("id=\"capy-category-titles\"", customisation);
+        Assert.Contains("data-capy-page-size=\"9\"", customisation);
+        Assert.Contains("aria-label=\"Outfits pages\"", customisation);
+        Assert.Contains("data-capy-page-previous", customisation);
+        Assert.Contains("data-capy-page-next", customisation);
+        Assert.Contains(">1 / 2</span>", customisation);
+        Assert.DoesNotContain("capy-category-icon", customisation);
+        Assert.DoesNotContain(" items</span>", customisation);
+        Assert.DoesNotContain(" item</span>", customisation);
+        Assert.DoesNotContain("Page 1 of", customisation);
+        Assert.DoesNotContain("outfitsPage=", customisation);
+
+        foreach (var name in new[]
+        {
+            "Brown T-Shirt", "Charcoal T-Shirt", "Comfy Capy T-Shirt",
+            "Cream T-Shirt", "Lavender T-Shirt", "Lime T-Shirt",
+            "Mustard T-Shirt", "Navy T-Shirt", "Pink T-Shirt",
+            "Sage T-Shirt", "Sky Blue T-Shirt", "White T-Shirt", "ZZZ T-Shirt"
+        })
+        {
+            Assert.Contains(name, customisation);
+        }
     }
 
     [Theory]

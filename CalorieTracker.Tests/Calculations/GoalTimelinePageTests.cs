@@ -101,7 +101,7 @@ public class GoalTimelinePageTests
 
         Assert.Contains("class=\"profile-page\"", profile);
         Assert.Contains(
-            "class=\"ct-scenic-header secondary-page-hero profile-hero\"",
+            "class=\"ct-scenic-header ct-scenic-header--with-art ct-scenic-header--full-bleed-art secondary-page-hero\"",
             profile);
         Assert.Contains("profile-body-card", profile);
         Assert.Contains("profile-activity-card", profile);
@@ -111,7 +111,7 @@ public class GoalTimelinePageTests
         Assert.Contains("profile-motivation-card", profile);
         Assert.Contains("profile-tips-card", profile);
         Assert.Contains("Small steps still move you forward.", profile);
-        Assert.DoesNotContain("dashboard-hero-capy", profile);
+        Assert.Contains("/images/brand/dashboard-hero-capy.png", profile);
         Assert.Contains("Save changes", profile);
         Assert.Contains("id=\"metricSystem\"", profile);
         Assert.Contains("id=\"imperialSystem\"", profile);

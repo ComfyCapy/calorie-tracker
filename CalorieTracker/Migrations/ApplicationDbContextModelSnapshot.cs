@@ -133,6 +133,126 @@ namespace CalorieTracker.Migrations
                         },
                         new
                         {
+                            Id = 15,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Brown.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Brown T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Charcoal.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Charcoal T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-ComfyCapy.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Comfy Capy T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Cream.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Cream T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Lavender.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Lavender T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Lime.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Lime T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Mustard.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Mustard T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Navy.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Navy T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-Sage.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Sage T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-SkyBlue.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Sky Blue T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-White.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "White T-Shirt"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Category = "Clothes",
+                            ImagePath = "/images/capy/clothes/TShirt-ZZZ.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "ZZZ T-Shirt"
+                        },
+                        new
+                        {
                             Id = 2,
                             Category = "HatHair",
                             ImagePath = "/images/capy/hats-hair/Capy-CowboyHat.png",
@@ -153,6 +273,66 @@ namespace CalorieTracker.Migrations
                         },
                         new
                         {
+                            Id = 42,
+                            Category = "HatHair",
+                            ImagePath = "/images/capy/hats-hair/capy-orange.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Orange"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            Category = "HatHair",
+                            ImagePath = "/images/capy/hats-hair/capy-rain-hat.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Rain Hat"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            Category = "HatHair",
+                            ImagePath = "/images/capy/hats-hair/capy-frog-hat.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Frog Hat"
+                        },
+                        new
+                        {
+                            Id = 45,
+                            Category = "HatHair",
+                            ImagePath = "/images/capy/hats-hair/capy-witch-hut.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Witch Hat"
+                        },
+                        new
+                        {
+                            Id = 46,
+                            Category = "HatHair",
+                            ImagePath = "/images/capy/hats-hair/capy-wizard-hat.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Wizard Hat"
+                        },
+                        new
+                        {
+                            Id = 47,
+                            Category = "HatHair",
+                            ImagePath = "/images/capy/hats-hair/capy-white-lily.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "White Lily"
+                        },
+                        new
+                        {
                             Id = 4,
                             Category = "FaceAccessory",
                             ImagePath = "/images/capy/face-accessories/Sunglasses-Cool.png",
@@ -160,6 +340,86 @@ namespace CalorieTracker.Migrations
                             IsDefault = false,
                             IsStarter = true,
                             Name = "Cool Sunglasses"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-bandaid.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Bandage"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-duckbill.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Duck Bill"
+                        },
+                        new
+                        {
+                            Id = 29,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-eyepatch.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Eye Patch"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-handlebar-mustache.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Handlebar Moustache"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-heart-glasses.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Heart Glasses"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-heart-sticker.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Heart Sticker"
+                        },
+                        new
+                        {
+                            Id = 33,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-hypnoglasses.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Hypno Glasses"
+                        },
+                        new
+                        {
+                            Id = 34,
+                            Category = "FaceAccessory",
+                            ImagePath = "/images/capy/face-accessories/capy-pixel-glasses.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Pixel Glasses"
                         },
                         new
                         {
@@ -180,6 +440,76 @@ namespace CalorieTracker.Migrations
                             IsDefault = false,
                             IsStarter = true,
                             Name = "Red & White Tie"
+                        },
+                        new
+                        {
+                            Id = 35,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-flower-lei.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Flower Lei"
+                        },
+                        new
+                        {
+                            Id = 36,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-goggles.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Neck Goggles"
+                        },
+                        new
+                        {
+                            Id = 37,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-moon-pendant.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Moon Pendant"
+                        },
+                        new
+                        {
+                            Id = 38,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-ribbon.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Ribbon Tie"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-royal-cloak.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Royal Cloak"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-star-pendant.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Star Pendant"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            Category = "NeckAccessory",
+                            ImagePath = "/images/capy/neck-accessories/capy-sun-pendant.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Sun Pendant"
                         },
                         new
                         {
@@ -250,6 +580,46 @@ namespace CalorieTracker.Migrations
                             IsDefault = true,
                             IsStarter = true,
                             Name = "White"
+                        },
+                        new
+                        {
+                            Id = 48,
+                            Category = "Background",
+                            ImagePath = "/images/capy/backgrounds/BG-Peach.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Peach"
+                        },
+                        new
+                        {
+                            Id = 49,
+                            Category = "Background",
+                            ImagePath = "/images/capy/backgrounds/BG-Sage.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Sage"
+                        },
+                        new
+                        {
+                            Id = 50,
+                            Category = "Background",
+                            ImagePath = "/images/capy/backgrounds/BG-PowderBlue.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Powder Blue"
+                        },
+                        new
+                        {
+                            Id = 51,
+                            Category = "Background",
+                            ImagePath = "/images/capy/backgrounds/BG-Mocha.png",
+                            IsActive = true,
+                            IsDefault = false,
+                            IsStarter = true,
+                            Name = "Mocha"
                         },
                         new
                         {
@@ -563,6 +933,49 @@ namespace CalorieTracker.Migrations
                     b.HasIndex("FoodId");
 
                     b.ToTable("FoodPortions");
+                });
+
+            modelBuilder.Entity("CalorieTracker.Models.SavedCapyOutfit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BackgroundId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ClothesId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ExpressionId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("FaceAccessoryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("HatHairId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("NeckAccessoryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Name");
+
+                    b.ToTable("SavedCapyOutfits");
                 });
 
             modelBuilder.Entity("CalorieTracker.Models.SavedMeal", b =>
@@ -1124,6 +1537,15 @@ namespace CalorieTracker.Migrations
                         .IsRequired();
 
                     b.Navigation("Food");
+                });
+
+            modelBuilder.Entity("CalorieTracker.Models.SavedCapyOutfit", b =>
+                {
+                    b.HasOne("CalorieTracker.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CalorieTracker.Models.SavedMeal", b =>

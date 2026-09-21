@@ -37,9 +37,9 @@ public class FoodSearchDiscoverabilityTests
         Assert.DoesNotContain("A calmer collection", html);
         Assert.Contains("class=\"foods-page\"", html);
         Assert.Contains(
-            "class=\"ct-scenic-header secondary-page-hero foods-hero\"",
+            "class=\"ct-scenic-header ct-scenic-header--with-art ct-scenic-header--full-bleed-art secondary-page-hero foods-hero\"",
             html);
-        Assert.DoesNotContain("dashboard-hero-capy.png", html);
+        Assert.Contains("/images/brand/dashboard-hero-capy.png", html);
         Assert.DoesNotContain("Search the wider food catalogue.", html);
         Assert.Contains("value=\"banana\"", html);
         Assert.Contains("diaryDate=2026-09-07", html);

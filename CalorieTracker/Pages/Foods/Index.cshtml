@@ -2,6 +2,7 @@
 @model CalorieTracker.Pages.Foods.IndexModel
 @{
     ViewData["Title"] = "My Foods";
+    ViewData["UsesScenicHeader"] = true;
 }
 
 <link rel="stylesheet"
@@ -12,9 +13,12 @@
     @await Html.PartialAsync(
         "_ScenicPageHeader",
         new CalorieTracker.Models.ScenicPageHeaderModel(
-            Title: "My Foods",
-            Subtitle: "Your favourites, custom creations, and recently logged foods — all in one calm place.",
-            CssClass: "secondary-page-hero foods-hero"))
+                Title: "My Foods",
+                ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+                ArtworkAlt: "",
+                ArtworkIsDecorative: true,
+                CssClass: "secondary-page-hero foods-hero",
+                UseFullBleedArtwork: true))
 
     <span id="food-favourite-help" class="visually-hidden">
         Favourite this food to find it faster in My Foods.

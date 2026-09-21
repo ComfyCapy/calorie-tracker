@@ -112,6 +112,8 @@ public class BrandingTests
         Assert.DoesNotContain(">there!</span>", html);
         Assert.Contains("class=\"account-nav-name\">there</span>", html);
         Assert.Contains("class=\"account-nav-level\">Level 1</span>", html);
+        Assert.Contains("class=\"app-page-account\"", html);
+        Assert.DoesNotContain("app-sidebar-account", html);
         Assert.Contains(
             "class=\"app-nav-link app-nav-link--supporting app-nav-link--danger\"",
             html);
@@ -130,7 +132,7 @@ public class BrandingTests
             "class=\"app-nav-link app-nav-link--supporting app-nav-link--danger\"",
             StringComparison.Ordinal);
         var accountIndex = html.IndexOf(
-            "class=\"app-sidebar-account\"",
+            "class=\"app-page-account\"",
             StringComparison.Ordinal);
 
         Assert.True(utilityIndex >= 0);
@@ -163,7 +165,7 @@ public class BrandingTests
     }
 
     [Fact]
-    public async Task Dashboard_UsesReusableScenicHeaderWithoutArtwork()
+    public async Task Dashboard_UsesReusableScenicHeaderWithFullBleedArtwork()
     {
         using var factory = new IntegrationTestFactory();
         using var client = CreateClient(factory);
@@ -172,14 +174,28 @@ public class BrandingTests
         var html = await client.GetStringAsync("/");
 
         Assert.Contains(
-            "class=\"ct-scenic-header dashboard-hero\"",
+            "class=\"ct-scenic-header ct-scenic-header--with-art ct-scenic-header--full-bleed-art dashboard-hero\"",
             html);
         Assert.DoesNotContain("secondary-page-hero", html);
         Assert.Contains("class=\"ct-page-title\">Good afternoon</h1>", html);
-        Assert.DoesNotContain("class=\"ct-art-slot ct-scenic-header__art\"", html);
-        Assert.DoesNotContain("dashboard-hero-capy.png", html);
+        Assert.Contains(
+            "src=\"/images/brand/dashboard-hero-capy.png",
+            html);
+        Assert.Contains("class=\"ct-art-slot ct-scenic-header__art\"", html);
+        Assert.Contains("class=\"ct-scenic-header__account\"", html);
+        Assert.DoesNotContain("app-page-account", html);
+        Assert.DoesNotContain("ct-page-subtitle", html);
+        Assert.DoesNotContain("Here’s today at a glance.", html);
+        Assert.Contains("aria-hidden=\"true\"", html);
         Assert.DoesNotContain("data-development-artwork=\"true\"", html);
         Assert.DoesNotContain("HERO ARTWORK GOES HERE", html);
+
+        var artworkResponse = await client.GetAsync(
+            "/images/brand/dashboard-hero-capy.png");
+        Assert.Equal(HttpStatusCode.OK, artworkResponse.StatusCode);
+        Assert.Equal(
+            "image/png",
+            artworkResponse.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]

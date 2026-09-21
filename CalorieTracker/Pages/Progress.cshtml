@@ -4,6 +4,7 @@
 
 @{
     ViewData["Title"] = "Achievements";
+    ViewData["UsesScenicHeader"] = true;
     var level = Model.Summary.Level;
     var activity = Model.Summary.Activity;
     var progressPercentage = level.ProgressPercentage.ToString(
@@ -16,10 +17,13 @@
     @await Html.PartialAsync(
         "_ScenicPageHeader",
         new CalorieTracker.Models.ScenicPageHeaderModel(
-            Title: "Achievements",
-            Subtitle: "Little steps add up.",
-            Eyebrow: "Your journey",
-            CssClass: "secondary-page-hero progress-hero"))
+                Title: "Achievements",
+                Eyebrow: "Your journey",
+                ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+                ArtworkAlt: "",
+                ArtworkIsDecorative: true,
+                CssClass: "secondary-page-hero progress-hero",
+                UseFullBleedArtwork: true))
 
     @if (!string.IsNullOrWhiteSpace(Model.ReconciliationMessage))
     {

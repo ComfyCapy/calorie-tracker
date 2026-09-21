@@ -2,6 +2,7 @@
 @model CalorieTracker.Pages.Diary.IndexModel
 @{
     ViewData["Title"] = "Daily Diary";
+    ViewData["UsesScenicHeader"] = true;
 }
 
 <link rel="stylesheet"
@@ -14,8 +15,11 @@
             "_ScenicPageHeader",
             new CalorieTracker.Models.ScenicPageHeaderModel(
                 Title: "Daily Diary",
-                Subtitle: "One day at a time. See what you’ve eaten and keep things comfy.",
-                CssClass: "secondary-page-hero diary-hero"))
+                ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+                ArtworkAlt: "",
+                ArtworkIsDecorative: true,
+                CssClass: "secondary-page-hero diary-hero",
+                UseFullBleedArtwork: true))
 
         <div class="d-flex align-items-center gap-2 flex-wrap diary-date-navigation">
             @if (Model.PreviousDate.HasValue)
