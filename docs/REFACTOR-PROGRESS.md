@@ -74,6 +74,16 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Added 23 PageModel cases for option/date/age errors, missing/converted imperial values, goal/weekly requirements, target mode, stale binding-error cleanup, calculated-target validation ordering and the strict 0.01 kg existing-goal tolerance.
 - Profile/Theme/GoalTimeline suite: 102 passed against unchanged application code.
 - Next: page-specific pure processing input/result while preserving existing Razor binding names/attributes. Binding-contract replacement is deliberately separate from conversion/validation extraction to avoid coupling binder changes to policy changes.
+- Characterization checkpoint: `cf07ddf`; original targeted baseline was 79 tests.
+
+## Profile continuation: processing boundary
+
+- Added page-local `ProfileFormInput`, `ProfileFormProcessor` and result/errors. Processing clones only form values, returns canonical values without mutating the submitted/existing entity, and explicitly reports field errors/cleared binding keys. No MVC/EF dependency in processing logic.
+- Preserved conversion/goal/cleanup/calculated-target ordering, including case-insensitive incoming ModelState keys, partial normalization and existing-goal tolerance. The PageModel still owns authentication, binding attributes, HTTP responses, estimates, theme endpoint, persistence, snapshots and progression.
+- Reduced Profile PageModel by 249 net lines. The processor adds approximately 340 lines including explicit input/output/mapping; this improves testability rather than minimizing total LOC.
+- Added seven direct processor cases: non-mutation/identity-safe mapping, binding-error gating, canonical imperial boundaries. Targeted Profile/Theme/GoalTimeline suite: 109 passed. Diff inspected and whitespace check passed.
+- This completes the conversion/validation extraction, not the audit's entire binding-model replacement: the public `UserProfile` binding property and its DataAnnotations intentionally remain unchanged. Replacing it needs separate HTTP binding/overposting and rendered validation coverage; do not silently claim that work complete.
+- Next priority remains executable external-login onboarding coverage before any Identity extraction. No Identity, React or CSS changes were begun in this pass; retain a validated checkpoint rather than starting another high-risk package with limited remaining budget.
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
