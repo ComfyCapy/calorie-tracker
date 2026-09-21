@@ -576,7 +576,7 @@ public sealed class ProgressionDomainHookTests
             new TestUserLocalTimeProvider(),
             Hooks(database.Context))
         {
-            UserProfile = profile
+            UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(profile)
         };
         PageModelTestContext.Attach(model, userId);
         return model;

@@ -442,7 +442,7 @@ public class DailyMaintenanceSnapshotTests
             new TestUserLocalTimeProvider(),
             PageModelTestContext.CreateProgressionHooks(database.Context))
         {
-            UserProfile = ValidProfile(userId, weightKg: weightKg)
+            UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(userId, weightKg: weightKg))
         };
         PageModelTestContext.Attach(model, userId);
         return model;

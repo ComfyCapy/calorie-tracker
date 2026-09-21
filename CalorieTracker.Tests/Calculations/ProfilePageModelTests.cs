@@ -16,7 +16,7 @@ public class ProfilePageModelTests
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
-        model.UserProfile = ValidProfile(ProfileOptions.Imperial);
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(ProfileOptions.Imperial));
         model.HeightFeet = 5;
         model.HeightInches = 10;
         model.WeightLb = 154.323583526m;
@@ -65,7 +65,7 @@ public class ProfilePageModelTests
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
-        model.UserProfile = ValidProfile(ProfileOptions.Metric);
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(ProfileOptions.Metric));
         model.UserProfile.DateOfBirth = TestTime.Today
             .AddYears(-120)
             .ToDateTime(TimeOnly.MinValue);
@@ -105,11 +105,11 @@ public class ProfilePageModelTests
         await database.Context.SaveChangesAsync();
 
         var model = CreateModel(database, "user-1");
-        model.UserProfile = GoalProfile(
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(GoalProfile(
             "user-1",
             goal,
             updatedWeight,
-            80m);
+            80m));
 
         var result = await model.OnPostAsync();
 
@@ -139,11 +139,11 @@ public class ProfilePageModelTests
         await database.Context.SaveChangesAsync();
 
         var model = CreateModel(database, "user-1");
-        model.UserProfile = GoalProfile(
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(GoalProfile(
             "user-1",
             goal,
             80d,
-            (decimal)changedGoalWeight);
+            (decimal)changedGoalWeight));
 
         var result = await model.OnPostAsync();
 
@@ -154,14 +154,14 @@ public class ProfilePageModelTests
     }
 
     [Fact]
-    public async Task ProfilePost_IgnoresSubmittedUserIdAndUsesAuthenticatedUser()
+    public async Task ProfilePost_UsesAuthenticatedUser()
     {
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("current-user", "current");
         await database.AddUserAsync("other-user", "other");
         var model = CreateModel(database, "current-user");
-        model.UserProfile = ValidProfile(ProfileOptions.Metric);
-        model.UserProfile.UserId = "other-user";
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(ProfileOptions.Metric));
+        // HTTP overposting is covered by ProfileHttpBindingTests; the input has no UserId.
 
         await model.OnPostAsync();
 
@@ -191,7 +191,7 @@ public class ProfilePageModelTests
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
-        model.UserProfile = ValidProfile(ProfileOptions.Metric);
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(ProfileOptions.Metric));
         if (scenario is "feet" or "inches" or "weight" or "short" or "light")
         {
             model.UserProfile.MeasurementSystem = ProfileOptions.Imperial;
@@ -230,7 +230,7 @@ public class ProfilePageModelTests
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
-        model.UserProfile = ValidProfile(ProfileOptions.Metric);
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(ProfileOptions.Metric));
         model.UserProfile.DateOfBirth = TestTime.Today.AddDays(1).ToDateTime(TimeOnly.MinValue);
         Assert.IsType<PageResult>(await model.OnPostAsync());
         Assert.Equal(new[] { "Date of birth cannot be in the future.", "You must be between 18 and 120 years old." },
@@ -245,7 +245,7 @@ public class ProfilePageModelTests
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
-        model.UserProfile = ValidProfile(imperial ? ProfileOptions.Imperial : ProfileOptions.Metric);
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(imperial ? ProfileOptions.Imperial : ProfileOptions.Metric));
         model.HeightFeet = 5; model.HeightInches = 10; model.WeightLb = 154;
         model.UserProfile.GoalWeightKg = 999;
         model.UserProfile.WeeklyGoalKg = 99;
@@ -275,7 +275,7 @@ public class ProfilePageModelTests
         await using var database = await TestDatabase.CreateAsync();
         await database.AddUserAsync("user-1");
         var model = CreateModel(database, "user-1");
-        model.UserProfile = ValidProfile(ProfileOptions.Metric);
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(ValidProfile(ProfileOptions.Metric));
         model.UserProfile.DateOfBirth = TestTime.Today.AddYears(-120).ToDateTime(TimeOnly.MinValue);
         model.UserProfile.HeightCm = 50;
         model.UserProfile.WeightKg = 20;
@@ -296,8 +296,8 @@ public class ProfilePageModelTests
         database.Context.UserProfiles.Add(GoalProfile("user-1", ProfileOptions.Lose, 82, 80));
         await database.Context.SaveChangesAsync();
         var model = CreateModel(database, "user-1");
-        model.UserProfile = GoalProfile("user-1", ProfileOptions.Lose, 79,
-            80 + decimal.Parse(difference, System.Globalization.CultureInfo.InvariantCulture));
+        model.UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(GoalProfile("user-1", ProfileOptions.Lose, 79,
+            80 + decimal.Parse(difference, System.Globalization.CultureInfo.InvariantCulture)));
         var result = await model.OnPostAsync();
         Assert.Equal(allowed, result is RedirectToPageResult);
     }

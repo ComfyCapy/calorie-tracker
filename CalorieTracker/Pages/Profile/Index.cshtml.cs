@@ -39,7 +39,7 @@ namespace CalorieTracker.Pages.Profile
         }
 
         [BindProperty]
-        public UserProfile UserProfile { get; set; } = new();
+        public ProfileInput UserProfile { get; set; } = new();
 
         [BindProperty]
         public bool UseCustomCalorieTarget { get; set; }
@@ -97,7 +97,7 @@ namespace CalorieTracker.Pages.Profile
                 return;
             }
 
-            UserProfile = profile;
+            UserProfile = ProfileInput.FromEntity(profile);
             EstimatesProfile = profile;
             GoalTimeline = _goalTimelineCalculator.Calculate(profile, CurrentDate);
 
@@ -136,10 +136,10 @@ namespace CalorieTracker.Pages.Profile
                 .FirstOrDefaultAsync(profile => profile.UserId == userId);
 
             var processed = ProfileFormProcessor.Process(
-                new(UserProfile, UseCustomCalorieTarget, HeightFeet, HeightInches, WeightLb, GoalWeightLb),
+                new(UserProfile.ToEntity(), UseCustomCalorieTarget, HeightFeet, HeightInches, WeightLb, GoalWeightLb),
                 existingProfile, CurrentDate,
                 ModelState.Where(field => field.Value?.Errors.Count > 0).Select(field => field.Key));
-            processed.ApplyTo(UserProfile);
+            UserProfile = ProfileInput.FromEntity(processed.CanonicalProfile);
             GoalWeightLb = processed.GoalWeightLb;
             foreach (var field in processed.ClearedFields)
                 ModelState.Remove(field);
@@ -158,9 +158,9 @@ namespace CalorieTracker.Pages.Profile
 
             if (existingProfile == null)
             {
-                UserProfile.UserId = userId;
-                _context.UserProfiles.Add(UserProfile);
-                profileToSave = UserProfile;
+                profileToSave = UserProfile.ToEntity();
+                profileToSave.UserId = userId;
+                _context.UserProfiles.Add(profileToSave);
             }
             else
             {

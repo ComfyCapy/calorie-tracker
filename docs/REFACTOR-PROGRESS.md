@@ -94,6 +94,13 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 
 ## Deferred / manual review
 
+## Binding continuation (starting at `49e9178`)
+
+- Added five executable HTTP/antiforgery Profile tests before changing binding: posted identity/navigation keys are ignored, current-user ownership is used, original validation keys/messages render, and theme is accepted on create but preserved on update.
+- Replaced the bound EF entity with page-local `ProfileInput`, keeping the property name `UserProfile` and exact editable-field annotations/defaults. Explicit mapping omits IDs/navigation. GET estimates and persistence still use entities; no view or model/schema changes.
+- Updated direct PageModel test construction to map inputs explicitly. Existing assertions retained; the old direct-assignment overposting example is now backed by actual HTTP tests.
+- Targeted Profile/Theme/GoalTimeline/DailyMaintenance/ProgressionDomainHook suite: 151 passed. Diff reviewed; checkpoint follows. Continue directly to Identity executable onboarding coverage.
+
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
 Diary measurement extraction is now implemented with policy differences preserved. Profile input processing and React state decomposition remain open and were out of scope for this continuation. Existing progression, external-food authority, deployment, and ownership policies are preserved. A local browser smoke test of Create/Edit mode switching and historical entries remains recommended; automated prepopulation/rendering tests pass, but no manual browser check was performed.
