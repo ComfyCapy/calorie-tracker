@@ -150,48 +150,49 @@ document.querySelectorAll(".capy-theme-option").forEach(button => {
     button.addEventListener("click", updateSelectedTheme);
 });
 
-document.querySelectorAll(".capy-category-tab").forEach(button => {
-    button.addEventListener("click", () => {
-        const selectedCategory = button.dataset.categoryFilter;
+document.querySelectorAll("[data-capy-category-group]").forEach(group => {
+    const items = Array.from(
+        group.querySelectorAll("[data-capy-page-item]")
+    );
+    const pagination = group.querySelector(
+        "[data-capy-category-pagination]"
+    );
 
-        document.querySelectorAll("[data-capy-category-group]").forEach(
-            group => {
-                group.hidden = selectedCategory !== "all" &&
-                    group.dataset.capyCategoryGroup !== selectedCategory;
-            }
-        );
+    if (!pagination) return;
 
-        document.querySelectorAll(".capy-category-tab").forEach(tab => {
-            const isSelected = tab === button;
-            tab.classList.toggle("is-selected", isSelected);
-            tab.setAttribute("aria-pressed", isSelected ? "true" : "false");
-        });
-    });
-});
+    const pageSize = Number.parseInt(group.dataset.capyPageSize, 10);
+    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    const previous = pagination.querySelector("[data-capy-page-previous]");
+    const next = pagination.querySelector("[data-capy-page-next]");
+    const indicator = pagination.querySelector("[data-capy-page-indicator]");
+    let currentPage = 1;
 
-document.querySelectorAll(".capy-inventory-filter").forEach(button => {
-    button.addEventListener("click", () => {
-        const filter = button.dataset.filter;
+    const renderPage = () => {
+        const firstItemIndex = (currentPage - 1) * pageSize;
+        const lastItemIndex = firstItemIndex + pageSize;
 
-        document.querySelectorAll(".capy-item-locked").forEach(item => {
-            item.style.display = filter === "owned" ? "none" : "";
+        items.forEach((item, index) => {
+            item.hidden = index < firstItemIndex || index >= lastItemIndex;
         });
 
-        document.querySelectorAll(".capy-inventory-filter").forEach(
-            filterButton => {
-                const isSelected = filterButton.dataset.filter === filter;
-                filterButton.classList.toggle("btn-primary", isSelected);
-                filterButton.classList.toggle(
-                    "btn-outline-secondary",
-                    !isSelected
-                );
-                filterButton.setAttribute(
-                    "aria-pressed",
-                    isSelected ? "true" : "false"
-                );
-            }
-        );
+        indicator.textContent = `${currentPage} / ${totalPages}`;
+        previous.disabled = currentPage === 1;
+        next.disabled = currentPage === totalPages;
+    };
+
+    previous.addEventListener("click", () => {
+        if (currentPage === 1) return;
+        currentPage -= 1;
+        renderPage();
     });
+
+    next.addEventListener("click", () => {
+        if (currentPage === totalPages) return;
+        currentPage += 1;
+        renderPage();
+    });
+
+    renderPage();
 });
 
 document.querySelectorAll(".capy-secret-crown").forEach(crown => {

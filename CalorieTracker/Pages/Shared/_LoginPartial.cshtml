@@ -2,11 +2,13 @@
 @using Microsoft.EntityFrameworkCore
 @using CalorieTracker.Data
 @using CalorieTracker.Models
-
-@model int?
+@using CalorieTracker.Services
 
 @inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext DbContext
+@inject ProgressionService ProgressionService
+@inject IUserLocalTimeProvider UserLocalTime
+@inject ILoggerFactory LoggerFactory
 
 <ul class="navbar-nav account-nav">
     @if (User.Identity?.IsAuthenticated == true)
@@ -15,8 +17,10 @@
         var greetingName = string.IsNullOrWhiteSpace(currentUser?.FirstName)
             ? "there"
             : currentUser.FirstName;
+        var userId = UserManager.GetUserId(User);
 
         UserCapyAppearance? navbarCapy = null;
+        int? progressionLevel = null;
 
         if (currentUser != null)
         {
@@ -31,8 +35,34 @@
                     appearance.UserId == currentUser.Id);
         }
 
+        if (userId != null)
+        {
+            try
+            {
+                progressionLevel = (await ProgressionService
+                    .GetSummaryAsync(
+                        userId,
+                        UserLocalTime.Today,
+                        Context.RequestAborted))
+                    .Level
+                    .CurrentLevel;
+            }
+            catch (Exception exception)
+                when (!Context.RequestAborted.IsCancellationRequested)
+            {
+                LoggerFactory
+                    .CreateLogger("AccountNavigation")
+                    .LogError(
+                        exception,
+                        "Optional account progression summary failed for " +
+                        "user {UserId}; account navigation will continue " +
+                        "without a level.",
+                        userId);
+            }
+        }
+
         <li class="nav-item account-nav-item">
-            <div class="account-nav-summary dropdown dropup">
+            <div class="account-nav-summary dropdown">
                 @if (navbarCapy != null)
                 {
                     <a asp-area=""
@@ -52,9 +82,9 @@
                         aria-label="Open account menu">
                         <span class="account-nav-copy">
                             <span class="account-nav-name">@greetingName</span>
-                            @if (Model.HasValue)
+                            @if (progressionLevel.HasValue)
                             {
-                                <span class="account-nav-level">Level @Model.Value</span>
+                                <span class="account-nav-level">Level @progressionLevel.Value</span>
                             }
                         </span>
                 </button>

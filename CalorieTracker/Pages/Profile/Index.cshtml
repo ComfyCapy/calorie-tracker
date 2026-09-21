@@ -3,6 +3,7 @@
 @using CalorieTracker.Services
 @{
     ViewData["Title"] = "Profile & Goals";
+    ViewData["UsesScenicHeader"] = true;
 }
 
 <div class="profile-page">
@@ -10,8 +11,11 @@
         "_ScenicPageHeader",
         new CalorieTracker.Models.ScenicPageHeaderModel(
             Title: "Profile & Goals",
-            Subtitle: "Set your goals, find your pace. These details help Comfy Capy estimate your daily calorie needs.",
-            CssClass: "secondary-page-hero profile-hero"))
+            ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+            ArtworkAlt: "",
+            ArtworkIsDecorative: true,
+            CssClass: "secondary-page-hero",
+            UseFullBleedArtwork: true))
 
     @if (!string.IsNullOrWhiteSpace(Model.ProfileStatusMessage))
     {

@@ -5,15 +5,10 @@
 
 @inject UserManager<ApplicationUser> UserManager
 @inject ApplicationDbContext DbContext
-@inject ProgressionService ProgressionService
-@inject IUserLocalTimeProvider UserLocalTime
-@inject ILoggerFactory LoggerFactory
 
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
     string? accountTheme = null;
-    int? sidebarProgressionLevel = null;
-    var sidebarLogger = LoggerFactory.CreateLogger("SharedLayout");
 
     if (isAuthenticated)
     {
@@ -25,27 +20,6 @@
                 .Where(profile => profile.UserId == userId)
                 .Select(profile => profile.ThemePreference)
                 .FirstOrDefaultAsync();
-
-            try
-            {
-                sidebarProgressionLevel = (await ProgressionService
-                    .GetSummaryAsync(
-                        userId,
-                        UserLocalTime.Today,
-                        Context.RequestAborted))
-                    .Level
-                    .CurrentLevel;
-            }
-            catch (Exception exception)
-                when (!Context.RequestAborted.IsCancellationRequested)
-            {
-                sidebarLogger.LogError(
-                    exception,
-                    "Optional sidebar progression summary failed for " +
-                    "user {UserId}; navigation will continue without a " +
-                    "level.",
-                    userId);
-            }
         }
     }
 
@@ -190,11 +164,6 @@
                     </div>
 
                     <partial name="_AppNavigation" />
-
-                    <div class="app-sidebar-account">
-                        <partial name="_LoginPartial"
-                                 model="sidebarProgressionLevel" />
-                    </div>
                 </div>
             </aside>
         }
@@ -257,8 +226,7 @@
                             </button>
 
                             <div id="navbarSupportedContent" class="navbar-collapse collapse d-sm-inline-flex justify-content-end flex-grow-1">
-                                <partial name="_LoginPartial"
-                                         model="sidebarProgressionLevel" />
+                                <partial name="_LoginPartial" />
                             </div>
                         </div>
                     </nav>
@@ -293,6 +261,13 @@
 
             <div class="shell-content @(isAuthenticated ? "app-content app-content-width" : "container")">
                 <main role="main" class="pb-3">
+                    @if (isAuthenticated && ViewData["UsesScenicHeader"] is not true)
+                    {
+                        <div class="app-page-account">
+                            <partial name="_LoginPartial" />
+                        </div>
+                    }
+
                     @if (TempData["UiStatusMessage"] is string statusMessage)
                     {
                         <div class="alert alert-success alert-dismissible fade show" role="status">

@@ -41,7 +41,8 @@ public sealed class ProgressPageTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("<title>Achievements", html);
         Assert.Contains("<h1 class=\"ct-page-title\">Achievements</h1>", html);
-        Assert.Contains("Little steps add up.", html);
+        Assert.DoesNotContain("Little steps add up.", html);
+        Assert.DoesNotContain("ct-page-subtitle", html);
         Assert.Matches(
             "<a(?=[^>]*href=\"/Progress\")" +
             "(?=[^>]*aria-current=\"page\")[^>]*>",

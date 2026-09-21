@@ -12,6 +12,18 @@ namespace CalorieTracker.Pages
     [Authorize]
     public class CustomisationModel : PageModel
     {
+        public const int CategoryPageSize = 9;
+        private static readonly IReadOnlyDictionary<string, string[]> CategoryFilters =
+            new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["outfits"] = [CapyCategories.Clothes],
+                ["face-accessories"] = [CapyCategories.FaceAccessory],
+                ["neck-accessories"] = [CapyCategories.NeckAccessory],
+                ["hats"] = [CapyCategories.HatHair],
+                ["backgrounds"] = [CapyCategories.Background],
+                ["colours"] = [CapyCategories.Expression],
+                ["titles"] = []
+            };
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly CapyProvisioningService _capyProvisioningService;
@@ -34,12 +46,18 @@ namespace CalorieTracker.Pages
         [BindProperty]
         public string? CapyName { get; set; }
 
+        [BindProperty]
+        public string? OutfitName { get; set; }
+
         public List<CapyItem> OwnedItems { get; set; } = [];
         public List<CapyItem> CatalogueItems { get; set; } = [];
+        public List<SavedCapyOutfit> SavedOutfits { get; set; } = [];
         public bool NeedsProvisioning { get; set; }
         public bool HasUserProfile { get; set; }
+        public string SelectedCategory { get; private set; } = "all";
+        public string SelectedInventoryFilter { get; private set; } = "all";
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(string? category = null, string? inventory = null)
         {
             var userId = _userManager.GetUserId(User);
 
@@ -83,9 +101,30 @@ namespace CalorieTracker.Pages
                 .OrderBy(item => item.Name)
                 .ToList();
 
-            CatalogueItems = await _context.CapyItems
-                .Where(item => item.IsActive)
+            SelectedCategory = CategoryFilters.ContainsKey(category ?? string.Empty)
+                ? category!
+                : "all";
+            SelectedInventoryFilter = inventory == "owned" ? "owned" : "all";
+
+            var catalogueQuery = _context.CapyItems
+                .Where(item => item.IsActive);
+
+            if (SelectedCategory != "all")
+            {
+                var itemCategories = CategoryFilters[SelectedCategory];
+                catalogueQuery = catalogueQuery.Where(item => itemCategories.Contains(item.Category));
+            }
+
+            if (SelectedInventoryFilter == "owned")
+                catalogueQuery = catalogueQuery.Where(item => ownedItemIds.Contains(item.Id));
+
+            CatalogueItems = await catalogueQuery
                 .OrderBy(item => item.Name)
+                .ToListAsync();
+
+            SavedOutfits = await _context.SavedCapyOutfits
+                .Where(outfit => outfit.UserId == userId)
+                .OrderBy(outfit => outfit.Name)
                 .ToListAsync();
         }
 
@@ -106,7 +145,7 @@ namespace CalorieTracker.Pages
             var trimmedName = CapyName?.Trim();
 
             if (!string.IsNullOrWhiteSpace(trimmedName) &&
-                trimmedName.Length > UserCapyAppearance.MaxNameLength)
+                 trimmedName.Length > UserCapyAppearance.MaxNameLength)
             {
                 ModelState.AddModelError(
                     nameof(CapyName),
@@ -292,6 +331,71 @@ namespace CalorieTracker.Pages
                 category = item.Category,
                 imagePath = item.ImagePath
             });
+        }
+
+        public async Task<IActionResult> OnPostSaveOutfitAsync()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            var name = OutfitName?.Trim();
+            if (string.IsNullOrWhiteSpace(name) || name.Length > SavedCapyOutfit.MaxNameLength)
+            {
+                TempData["UiStatusMessage"] = $"Outfit names must be between 1 and {SavedCapyOutfit.MaxNameLength} characters.";
+                return RedirectToPage();
+            }
+
+            await _capyProvisioningService.ProvisionAsync(userId);
+            var appearance = await _context.UserCapyAppearances.SingleAsync(item => item.UserId == userId);
+            _context.SavedCapyOutfits.Add(new SavedCapyOutfit
+            {
+                UserId = userId, Name = name,
+                ExpressionId = appearance.ExpressionId, HatHairId = appearance.HatHairId,
+                FaceAccessoryId = appearance.FaceAccessoryId, NeckAccessoryId = appearance.NeckAccessoryId,
+                ClothesId = appearance.ClothesId, BackgroundId = appearance.BackgroundId
+            });
+            await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = $"{name} saved.";
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostEquipOutfitAsync(int outfitId, CancellationToken cancellationToken = default)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+
+            await _capyProvisioningService.ProvisionAsync(userId);
+            var outfit = await _context.SavedCapyOutfits.SingleOrDefaultAsync(item => item.Id == outfitId && item.UserId == userId, cancellationToken);
+            if (outfit == null) return NotFound();
+            var appearance = await _context.UserCapyAppearances.SingleAsync(item => item.UserId == userId, cancellationToken);
+            var ownedActiveItems = await _context.UserCapyItems
+                .Where(item => item.UserId == userId && item.CapyItem.IsActive)
+                .Select(item => new { item.CapyItemId, item.CapyItem.Category })
+                .ToListAsync(cancellationToken);
+
+            int? AvailableItem(int? itemId, string category) => itemId.HasValue && ownedActiveItems.Any(item => item.CapyItemId == itemId && item.Category == category) ? itemId : null;
+            appearance.ExpressionId = AvailableItem(outfit.ExpressionId, CapyCategories.Expression) ?? appearance.ExpressionId;
+            appearance.BackgroundId = AvailableItem(outfit.BackgroundId, CapyCategories.Background) ?? appearance.BackgroundId;
+            appearance.HatHairId = AvailableItem(outfit.HatHairId, CapyCategories.HatHair);
+            appearance.FaceAccessoryId = AvailableItem(outfit.FaceAccessoryId, CapyCategories.FaceAccessory);
+            appearance.NeckAccessoryId = AvailableItem(outfit.NeckAccessoryId, CapyCategories.NeckAccessory);
+            appearance.ClothesId = AvailableItem(outfit.ClothesId, CapyCategories.Clothes);
+            await _context.SaveChangesAsync(cancellationToken);
+            await _progressionHooks.EvaluateCustomisationAsync(userId, cancellationToken);
+            TempData["UiStatusMessage"] = $"{outfit.Name} equipped.";
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostDeleteOutfitAsync(int outfitId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null) return Unauthorized();
+            var outfit = await _context.SavedCapyOutfits.SingleOrDefaultAsync(item => item.Id == outfitId && item.UserId == userId);
+            if (outfit == null) return NotFound();
+            _context.SavedCapyOutfits.Remove(outfit);
+            await _context.SaveChangesAsync();
+            TempData["UiStatusMessage"] = "Saved outfit deleted.";
+            return RedirectToPage();
         }
 
     }

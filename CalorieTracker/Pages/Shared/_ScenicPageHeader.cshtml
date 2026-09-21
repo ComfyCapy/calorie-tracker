@@ -4,7 +4,7 @@
     var hasArtwork =
         !string.IsNullOrWhiteSpace(Model.ArtworkPath) ||
         !string.IsNullOrWhiteSpace(Model.ArtworkPlaceholderText);
-    var classes = $"ct-scenic-header{(hasArtwork ? " ct-scenic-header--with-art" : string.Empty)}{(string.IsNullOrWhiteSpace(Model.CssClass) ? string.Empty : $" {Model.CssClass}")}";
+    var classes = $"ct-scenic-header{(hasArtwork ? " ct-scenic-header--with-art" : string.Empty)}{(hasArtwork && Model.UseFullBleedArtwork ? " ct-scenic-header--full-bleed-art" : string.Empty)}{(string.IsNullOrWhiteSpace(Model.CssClass) ? string.Empty : $" {Model.CssClass}")}";
     var artworkAlt = Model.ArtworkIsDecorative
         ? string.Empty
         : Model.ArtworkAlt ?? string.Empty;
@@ -18,12 +18,14 @@
         }
 
         <h1 class="ct-page-title">@Model.Title</h1>
-
-        @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
-        {
-            <p class="ct-page-subtitle">@Model.Subtitle</p>
-        }
     </div>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="ct-scenic-header__account">
+            <partial name="_LoginPartial" />
+        </div>
+    }
 
     @if (hasArtwork)
     {

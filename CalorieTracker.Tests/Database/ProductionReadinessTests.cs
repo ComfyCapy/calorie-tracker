@@ -28,8 +28,8 @@ public class ProductionReadinessTests
             .ToListAsync();
 
         Assert.Equal(availableMigrations, appliedMigrations);
-        Assert.Equal(36, appliedMigrations.Count);
-        Assert.Equal(14, items.Count);
+        Assert.Equal(41, appliedMigrations.Count);
+        Assert.Equal(51, items.Count);
 
         var defaultExpression = Assert.Single(items, item =>
             item.Category == CapyCategories.Expression && item.IsDefault);
@@ -54,7 +54,52 @@ public class ProductionReadinessTests
         var starterIds = items
             .Where(item => item.IsActive && item.IsStarter)
             .Select(item => item.Id);
-        Assert.Equal(Enumerable.Range(1, 13), starterIds);
+        Assert.Equal(Enumerable.Range(1, 13).Concat(Enumerable.Range(15, 37)), starterIds);
+
+        var expectedNewBackgrounds = new[]
+        {
+            (48, "Peach", "BG-Peach.png"),
+            (49, "Sage", "BG-Sage.png"),
+            (50, "Powder Blue", "BG-PowderBlue.png"),
+            (51, "Mocha", "BG-Mocha.png")
+        };
+
+        foreach (var expected in expectedNewBackgrounds)
+        {
+            var background = Assert.Single(items, item =>
+                item.ImagePath == $"/images/capy/backgrounds/{expected.Item3}");
+            Assert.Equal(expected.Item1, background.Id);
+            Assert.Equal(expected.Item2, background.Name);
+            Assert.Equal(CapyCategories.Background, background.Category);
+            Assert.True(background.IsActive);
+            Assert.True(background.IsStarter);
+            Assert.False(background.IsDefault);
+        }
+
+        var expectedHats = new[]
+        {
+            (2, "Cowboy Hat", "Capy-CowboyHat.png", true),
+            (3, "Blue & Yellow Party Hat", "PartyHat-BlueYellow.png", true),
+            (14, "Gold Crown", "Capy-Crown-Gold.png", false),
+            (42, "Orange", "capy-orange.png", true),
+            (43, "Rain Hat", "capy-rain-hat.png", true),
+            (44, "Frog Hat", "capy-frog-hat.png", true),
+            (45, "Witch Hat", "capy-witch-hut.png", true),
+            (46, "Wizard Hat", "capy-wizard-hat.png", true),
+            (47, "White Lily", "capy-white-lily.png", true)
+        };
+
+        foreach (var expected in expectedHats)
+        {
+            var hat = Assert.Single(items, item =>
+                item.ImagePath == $"/images/capy/hats-hair/{expected.Item3}");
+            Assert.Equal(expected.Item1, hat.Id);
+            Assert.Equal(expected.Item2, hat.Name);
+            Assert.Equal(CapyCategories.HatHair, hat.Category);
+            Assert.True(hat.IsActive);
+            Assert.False(hat.IsDefault);
+            Assert.Equal(expected.Item4, hat.IsStarter);
+        }
 
         var crown = Assert.Single(items, item => item.Name == "Gold Crown");
         Assert.Equal(14, crown.Id);
@@ -104,7 +149,7 @@ public class ProductionReadinessTests
 
         Assert.Equal(1, appearance.ExpressionId);
         Assert.Equal(13, appearance.BackgroundId);
-        Assert.Equal(Enumerable.Range(1, 13), ownedIds);
+        Assert.Equal(Enumerable.Range(1, 13).Concat(Enumerable.Range(15, 37)), ownedIds);
         Assert.DoesNotContain(14, ownedIds);
     }
 

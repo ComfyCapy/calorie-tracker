@@ -7,6 +7,7 @@
         "Track calories, macros and daily food with a customisable Comfy Capy.";
     ViewData["CanonicalUrl"] = "https://calories.comfycapy.com/";
     ViewData["Robots"] = "index,follow";
+    ViewData["UsesScenicHeader"] = true;
 }
 
 @section Scripts {
@@ -33,9 +34,12 @@
             "_ScenicPageHeader",
             new CalorieTracker.Models.ScenicPageHeaderModel(
                 Title: Model.DashboardGreeting,
-                Subtitle: "Here’s today at a glance. Log what you need, then get on with your day.",
                 Eyebrow: Model.CurrentDate.ToString("dddd, d MMMM"),
-                CssClass: "dashboard-hero"))
+                ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+                ArtworkAlt: "",
+                ArtworkIsDecorative: true,
+                CssClass: "dashboard-hero",
+                UseFullBleedArtwork: true))
 
         @if (!Model.HasProfileEstimates)
         {
@@ -60,7 +64,7 @@
             </div>
         }
 
-        <div class="dashboard-primary-grid">
+        <div class="dashboard-primary-grid dashboard-two-column-grid">
             <section class="dashboard-main-card"
                      aria-labelledby="dashboard-calories-heading">
                 <div class="dashboard-card-heading">
@@ -306,9 +310,12 @@
                     _ => "is-unclassified"
                 };
 
-            <section class="dashboard-year-card calorie-year-map"
-                     aria-labelledby="calorie-year-heading"
-                     data-calorie-balance-year="@balanceYear.Year">
+            var activity = Model.ProgressionSummary?.Activity;
+
+            <div class="dashboard-year-streak-row dashboard-two-column-grid">
+                <section class="dashboard-year-card calorie-year-map"
+                         aria-labelledby="calorie-year-heading"
+                         data-calorie-balance-year="@balanceYear.Year">
 
                 <div class="dashboard-year-heading">
                     <div>
@@ -531,7 +538,69 @@
                     </li>
                 </ul>
 
-            </section>
+                </section>
+
+                <section class="dashboard-streak-card"
+                         aria-labelledby="dashboard-streak-heading">
+                    <div class="dashboard-card-heading">
+                        <div>
+                            <p class="dashboard-eyebrow">Your rhythm</p>
+                            <h2 id="dashboard-streak-heading">Activity streak</h2>
+                        </div>
+                        <span class="dashboard-streak-symbol" aria-hidden="true">✦</span>
+                    </div>
+
+                    <div class="dashboard-streak-primary">
+                        @if (activity != null)
+                        {
+                            <strong>@activity.CurrentStreak</strong>
+                            <span>@(activity.CurrentStreak == 1 ? "day" : "days")</span>
+                        }
+                        else
+                        {
+                            <strong aria-label="Activity streak unavailable">—</strong>
+                        }
+                        <p>Current activity streak</p>
+                    </div>
+
+                    <div class="dashboard-streak-week"
+                         aria-label="This week's activity, Monday to Sunday">
+                        @for (var offset = 0; offset < 7; offset++)
+                        {
+                            var day = Model.ActivityWeekStart.AddDays(offset);
+                            var isActive = activity != null &&
+                                Model.ActiveActivityDates.Contains(day);
+
+                            <span class="dashboard-streak-day @(isActive ? "is-active" : "")"
+                                  aria-label="@day.ToString("dddd") @(isActive ? "active" : "not active")">
+                                <span class="dashboard-streak-day-label"
+                                      aria-hidden="true">
+                                    @day.ToString("ddd")
+                                </span>
+                                <span class="dashboard-streak-day-dot"
+                                      aria-hidden="true"></span>
+                            </span>
+                        }
+                    </div>
+
+                    <dl class="dashboard-streak-stats">
+                        <div>
+                            <dt>Longest streak</dt>
+                            <dd>
+                                @(activity?.LongestStreak.ToString() ?? "—")
+                                @if (activity != null)
+                                {
+                                    <span>@(activity.LongestStreak == 1 ? "day" : "days")</span>
+                                }
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Active days</dt>
+                            <dd>@(activity?.DistinctActiveDayCount.ToString() ?? "—")</dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
         }
 
         @if (Model.HasProfileEstimates && Model.UserProfile != null)
