@@ -66,8 +66,6 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Extraction commit: `f50ca62`. Full .NET suite: 806 passed, zero failed/skipped. Diff reviewed and `git diff dcb7358 --check` passed. No production access, push or deployment.
 - Final state: tracked work committed locally; pre-existing `docs/REFACTOR-AUDIT.md` remains untracked and untouched. This run changes only two Diary PageModels, the resolver, two Diary test files and this progress log. No half-refactor remains.
 
-## Deferred / manual review
-
 ## Profile continuation: characterization
 
 - Starting checkpoint `3d00189`; audit reread, existing tracked work clean and untracked audit preserved.
@@ -83,7 +81,18 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Reduced Profile PageModel by 249 net lines. The processor adds approximately 340 lines including explicit input/output/mapping; this improves testability rather than minimizing total LOC.
 - Added seven direct processor cases: non-mutation/identity-safe mapping, binding-error gating, canonical imperial boundaries. Targeted Profile/Theme/GoalTimeline suite: 109 passed. Diff inspected and whitespace check passed.
 - This completes the conversion/validation extraction, not the audit's entire binding-model replacement: the public `UserProfile` binding property and its DataAnnotations intentionally remain unchanged. Replacing it needs separate HTTP binding/overposting and rendered validation coverage; do not silently claim that work complete.
-- Next priority remains executable external-login onboarding coverage before any Identity extraction. No Identity, React or CSS changes were begun in this pass; retain a validated checkpoint rather than starting another high-risk package with limited remaining budget.
+- Processing checkpoint: `21fdf9c`. No Identity, React or CSS changes were begun in this pass; retain a validated checkpoint rather than starting another high-risk package with limited remaining budget.
+
+## Profile continuation: final validation / handoff
+
+- Complete .NET suite: 836 passed, zero failed/skipped (30 new cases). Node: 41 passed. ESLint passed.
+- Release build: zero warnings/errors. Explicit model compatibility/seed tests: 2 passed; EF detects no model changes. No migrations created or modified.
+- Accumulated diff from `3d00189` reviewed; `git diff 3d00189 --check` passed. Five files changed, approximately 585 additions / 259 deletions including tests/log. Production net growth: 90 lines; Profile PageModel reduced by 249 lines.
+- Tracked changes are checkpointed locally. Existing untracked audit remains untouched. No push, deployment, production access, or UI changes.
+- Recommended continuation: add HTTP form-binding/validation/overposting coverage before considering replacement of the remaining bound Profile entity. Then establish executable external-login onboarding coverage before Identity extraction. React and CSS follow only after backend checkpoints.
+- Manual local browser review remains recommended for metric/imperial switching, Maintain/custom-target switching and existing-goal edits; none was performed in this pass.
+
+## Deferred / manual review
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
