@@ -114,6 +114,14 @@ Extracted equipment validation, ownership checks, saved-outfit capture/applicati
 - Extracted the unchanged results toolbar, tiles/actions and pagination into `FoodSearchResults`; App retains all state, API calls, latest-request behavior and navigation. No extra dependency or hook/state rewrite.
 - Added rendered accessibility/busy-state and callback-argument tests. Node: 42 passed; ESLint and Vite production build passed. Rebuilt checked-in island output. Foods discoverability suite: 10 passed before final extraction correction; rerun with full suite at handoff.
 - Diff reviewed; checkpoint follows. Continue to exact-order CSS splitting; no declaration deletion or visual redesign.
+- Checkpoint: `5854ff0`. App reduced by 157 lines; state/request extraction is not required for this presentation boundary.
+
+## Conservative CSS continuation
+
+- Split existing top-level contiguous sections into `site.css` (legacy/base/component layers), `shell-scenic.css` (design system/shell/hero), and `dashboard-profile.css` (later dashboard/profile/compact overrides). All remain in the same URL directory; no relative asset URLs were present.
+- Layout loads them in exact original order between Bootstrap and generated scoped styles, with existing fingerprinting/version behavior. No declaration changed/deleted/reordered. Recombined normalized content matches original SHA-256 `19F36FA12F15ADF52CB7B5402047E7FC46283CBFDAF3E738AA58DB8214687BCB`.
+- Added executable served/fingerprinted stylesheet-order and content-hash regression test. Updated dashboard CSS assertion to read all loaded parts. Targeted Theme/Dashboard/FoodSearchDiscoverability/ProgressionActivityPageFilter suite: 90 passed.
+- Visual deletion/deduplication is not attempted: remaining overrides are intentional until proven otherwise. Desktop/mobile light/dark smoke review recommended, but exact content/order proof permits continuing with independent audit items.
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
 
