@@ -28,17 +28,20 @@ namespace CalorieTracker.Pages
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly CapyProvisioningService _capyProvisioningService;
         private readonly ProgressionAchievementHooks _progressionHooks;
+        private readonly CapyWardrobeService _wardrobe;
 
         public CustomisationModel(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             CapyProvisioningService capyProvisioningService,
-            ProgressionAchievementHooks progressionHooks)
+            ProgressionAchievementHooks progressionHooks,
+            CapyWardrobeService wardrobe)
         {
             _context = context;
             _userManager = userManager;
             _capyProvisioningService = capyProvisioningService;
             _progressionHooks = progressionHooks;
+            _wardrobe = wardrobe;
         }
 
         public UserCapyAppearance? CapyAppearance { get; set; }
@@ -204,77 +207,12 @@ namespace CalorieTracker.Pages
             if (userId == null)
                 return Unauthorized();
 
-            // Equip also self-heals legacy users instead of depending on a prior GET provisioning request.
-            await _capyProvisioningService.ProvisionAsync(userId);
+            var result = await _wardrobe.EquipAsync(userId, itemId, category);
+            if (result.Status == WardrobeEquipStatus.NotFound) return NotFound();
+            if (result.Status == WardrobeEquipStatus.InvalidCategory) return BadRequest();
+            if (result.Status == WardrobeEquipStatus.NotOwned) return Forbid();
+            var item = result.Item;
 
-            var appearance = await _context.UserCapyAppearances
-                .FirstOrDefaultAsync(appearance =>
-                    appearance.UserId == userId);
-
-            if (appearance == null)
-                return NotFound();
-
-            CapyItem? item = null;
-
-            if (itemId.HasValue)
-            {
-                item = await _context.CapyItems
-                    .FirstOrDefaultAsync(item =>
-                        item.Id == itemId.Value &&
-                        item.IsActive);
-
-                if (item == null)
-                    return NotFound();
-
-                if (item.Category != category)
-                    return BadRequest();
-
-                var userOwnsItem = await _context.UserCapyItems
-                    .AnyAsync(userItem =>
-                        userItem.UserId == userId &&
-                        userItem.CapyItemId == item.Id);
-
-                if (!userOwnsItem)
-                    return Forbid();
-            }
-
-            switch (category)
-            {
-                case CapyCategories.Background:
-                    if (item == null)
-                        return BadRequest();
-
-                    appearance.BackgroundId = item.Id;
-                    break;
-
-                case CapyCategories.Expression:
-                    if (item == null)
-                        return BadRequest();
-
-                    appearance.ExpressionId = item.Id;
-                    break;
-
-                case CapyCategories.Clothes:
-                    appearance.ClothesId = item?.Id;
-                    break;
-
-                case CapyCategories.NeckAccessory:
-                    appearance.NeckAccessoryId = item?.Id;
-                    break;
-
-                case CapyCategories.HatHair:
-                    appearance.HatHairId = item?.Id;
-                    break;
-
-                case CapyCategories.FaceAccessory:
-                    appearance.FaceAccessoryId = item?.Id;
-                    break;
-
-                default:
-                    return BadRequest();
-            }
-
-            await _context.SaveChangesAsync();
             await _progressionHooks.EvaluateCustomisationAsync(
                 userId,
                 cancellationToken);
@@ -345,16 +283,7 @@ namespace CalorieTracker.Pages
                 return RedirectToPage();
             }
 
-            await _capyProvisioningService.ProvisionAsync(userId);
-            var appearance = await _context.UserCapyAppearances.SingleAsync(item => item.UserId == userId);
-            _context.SavedCapyOutfits.Add(new SavedCapyOutfit
-            {
-                UserId = userId, Name = name,
-                ExpressionId = appearance.ExpressionId, HatHairId = appearance.HatHairId,
-                FaceAccessoryId = appearance.FaceAccessoryId, NeckAccessoryId = appearance.NeckAccessoryId,
-                ClothesId = appearance.ClothesId, BackgroundId = appearance.BackgroundId
-            });
-            await _context.SaveChangesAsync();
+            await _wardrobe.SaveOutfitAsync(userId, name);
             TempData["UiStatusMessage"] = $"{name} saved.";
             return RedirectToPage();
         }
@@ -364,25 +293,10 @@ namespace CalorieTracker.Pages
             var userId = _userManager.GetUserId(User);
             if (userId == null) return Unauthorized();
 
-            await _capyProvisioningService.ProvisionAsync(userId);
-            var outfit = await _context.SavedCapyOutfits.SingleOrDefaultAsync(item => item.Id == outfitId && item.UserId == userId, cancellationToken);
-            if (outfit == null) return NotFound();
-            var appearance = await _context.UserCapyAppearances.SingleAsync(item => item.UserId == userId, cancellationToken);
-            var ownedActiveItems = await _context.UserCapyItems
-                .Where(item => item.UserId == userId && item.CapyItem.IsActive)
-                .Select(item => new { item.CapyItemId, item.CapyItem.Category })
-                .ToListAsync(cancellationToken);
-
-            int? AvailableItem(int? itemId, string category) => itemId.HasValue && ownedActiveItems.Any(item => item.CapyItemId == itemId && item.Category == category) ? itemId : null;
-            appearance.ExpressionId = AvailableItem(outfit.ExpressionId, CapyCategories.Expression) ?? appearance.ExpressionId;
-            appearance.BackgroundId = AvailableItem(outfit.BackgroundId, CapyCategories.Background) ?? appearance.BackgroundId;
-            appearance.HatHairId = AvailableItem(outfit.HatHairId, CapyCategories.HatHair);
-            appearance.FaceAccessoryId = AvailableItem(outfit.FaceAccessoryId, CapyCategories.FaceAccessory);
-            appearance.NeckAccessoryId = AvailableItem(outfit.NeckAccessoryId, CapyCategories.NeckAccessory);
-            appearance.ClothesId = AvailableItem(outfit.ClothesId, CapyCategories.Clothes);
-            await _context.SaveChangesAsync(cancellationToken);
+            var outfitName = await _wardrobe.EquipOutfitAsync(userId, outfitId, cancellationToken);
+            if (outfitName == null) return NotFound();
             await _progressionHooks.EvaluateCustomisationAsync(userId, cancellationToken);
-            TempData["UiStatusMessage"] = $"{outfit.Name} equipped.";
+            TempData["UiStatusMessage"] = $"{outfitName} equipped.";
             return RedirectToPage();
         }
 
@@ -390,10 +304,7 @@ namespace CalorieTracker.Pages
         {
             var userId = _userManager.GetUserId(User);
             if (userId == null) return Unauthorized();
-            var outfit = await _context.SavedCapyOutfits.SingleOrDefaultAsync(item => item.Id == outfitId && item.UserId == userId);
-            if (outfit == null) return NotFound();
-            _context.SavedCapyOutfits.Remove(outfit);
-            await _context.SaveChangesAsync();
+            if (!await _wardrobe.DeleteOutfitAsync(userId, outfitId)) return NotFound();
             TempData["UiStatusMessage"] = "Saved outfit deleted.";
             return RedirectToPage();
         }

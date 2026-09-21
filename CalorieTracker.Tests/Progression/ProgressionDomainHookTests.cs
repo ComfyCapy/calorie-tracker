@@ -591,7 +591,8 @@ public sealed class ProgressionDomainHookTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             provisioning,
-            Hooks(database.Context));
+            Hooks(database.Context),
+            new CapyWardrobeService(database.Context, provisioning));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

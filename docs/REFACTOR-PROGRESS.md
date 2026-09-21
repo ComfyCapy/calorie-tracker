@@ -24,15 +24,23 @@ Moved the exact 51 seed entries to `Data/CapyItemCatalogue.cs`, returning fresh 
 - Added full seed parity test between `EnsureCreated` and the released migration chain.
 - Added `HasPendingModelChanges` regression check: false.
 - Targeted Database/Capy/Migration suite: 56 passed.
-- Diff inspected and whitespace check passed. Checkpoint commit follows this entry.
-- Next: extract wardrobe persistence and slot/ownership rules, retaining existing HTTP responses and optional progression hooks.
+- Commits: `18c9098`; whitespace-only correction `3896c5a` (no history rewritten).
 
-## Planned next packages
+## Completed: wardrobe boundary
 
-1. Isolate unchanged cosmetic seeds; check EF model equivalence.
-2. Inspect and extract a substantive presentation/domain boundary (wardrobe or Diary), with regression tests.
-3. Full .NET/Node, Release build, lint, EF model check and final diff review.
+Extracted equipment validation, ownership checks, saved-outfit capture/application/deletion into `CapyWardrobeService`. The PageModel retains authentication, input validation, HTTP/JSON responses, messages and optional progression hooks. Provisioning order, required-layer fallbacks and optional-layer clearing remain unchanged. Registered the concrete scoped service; no new interface or persistence wrapper.
+
+- Added nine direct service cases, including a migrated-database round trip, cross-user rejection, unavailable/category-invalid slots, persistence and removal.
+- Updated three existing PageModel test factories for constructor injection; assertions remain unchanged.
+- Targeted Capy/ProgressionDomainHook/Database suite: 89 passed.
+- Diff inspected; whitespace check passed. Local checkpoint follows this entry.
+
+## Next validation
+
+Run full .NET/Node suites, Release build, lint, model compatibility tests and accumulated diff review before closing this pass.
 
 ## Deferred until verified
 
 CSS reordering requires a reliable visual baseline. Identity onboarding requires executable external-login coverage. Neither will be changed mechanically.
+
+Diary measurement extraction remains a separate high-risk package: create/edit share calculations but historical snapshots make their policies non-identical. Profile input processing and React state decomposition also remain open. This pass deliberately completes three isolated boundaries rather than beginning an unvalidated broad rewrite. Existing progression, external-food authority, deployment, and ownership policies are preserved.
