@@ -29,24 +29,21 @@ public class RegisterModel : PageModel
     private readonly IUserStore<ApplicationUser> _userStore;
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
     private readonly ILogger<RegisterModel> _logger;
-    private readonly IEmailSender _emailSender;
-    private readonly CapyProvisioningService _capyProvisioningService;
+    private readonly AccountOnboardingService _onboarding;
 
     public RegisterModel(
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         SignInManager<ApplicationUser> signInManager,
         ILogger<RegisterModel> logger,
-        IEmailSender emailSender,
-        CapyProvisioningService capyProvisioningService)
+        AccountOnboardingService onboarding)
     {
         _userManager = userManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
         _signInManager = signInManager;
         _logger = logger;
-        _emailSender = emailSender;
-        _capyProvisioningService = capyProvisioningService;
+        _onboarding = onboarding;
     }
 
     /// <summary>
@@ -144,38 +141,10 @@ public class RegisterModel : PageModel
                 _logger.LogInformation("User created a new account with password.");
                 var userId = await _userManager.GetUserIdAsync(user);
 
-                await _capyProvisioningService.ProvisionAsync(userId);
-
-                var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                var callbackUrl = Url.Page(
-                    "/Account/ConfirmEmail",
-                    pageHandler: null,
-                    values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                    protocol: Request.Scheme)!;
-
-                await _emailSender.SendEmailAsync(
-                    Input.Email,
-                    "Confirm your Comfy Capy Calories account",
-                    $"""
-                    <p>Heya!</p>
-
-                    <p>This is Comfy Capy handing you your very own confirmation link!</p>
-
-                    <p>
-                        <a href="{HtmlEncoder.Default.Encode(callbackUrl)}">
-                            Confirm your email address
-                        </a>
-                    </p>
-
-                    <p>
-                        Feel free to give that link a click to confirm your account and finish setting everything up.
-                    </p>
-
-                    <p>We hope to see you soon~!</p>
-
-                    <p>~ Comfy Capy</p>
-                    """);
+                await _onboarding.ProvisionAndConfirmAsync(user, userId, Input.Email,
+                    (id, code) => Url.Page("/Account/ConfirmEmail", pageHandler: null,
+                        values: new { area = "Identity", userId = id, code, returnUrl },
+                        protocol: Request.Scheme)!);
 
                 if (_userManager.Options.SignIn.RequireConfirmedAccount)
                 {

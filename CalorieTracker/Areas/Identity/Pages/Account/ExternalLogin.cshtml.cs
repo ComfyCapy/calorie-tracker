@@ -28,25 +28,22 @@ public class ExternalLoginModel : PageModel
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUserStore<ApplicationUser> _userStore;
     private readonly IUserEmailStore<ApplicationUser> _emailStore;
-    private readonly IEmailSender _emailSender;
     private readonly ILogger<ExternalLoginModel> _logger;
-    private readonly CapyProvisioningService _capyProvisioningService;
+    private readonly AccountOnboardingService _onboarding;
 
     public ExternalLoginModel(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
         IUserStore<ApplicationUser> userStore,
         ILogger<ExternalLoginModel> logger,
-        IEmailSender emailSender,
-        CapyProvisioningService capyProvisioningService)
+        AccountOnboardingService onboarding)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
         _logger = logger;
-        _emailSender = emailSender;
-        _capyProvisioningService = capyProvisioningService;
+        _onboarding = onboarding;
     }
 
     /// <summary>
@@ -170,38 +167,10 @@ public class ExternalLoginModel : PageModel
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     await CalorieTracker.Security.AccessRoles.AssignStandardAsync(_userManager, user);
-                    await _capyProvisioningService.ProvisionAsync(userId);
-
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
-                        "/Account/ConfirmEmail",
-                        pageHandler: null,
-                        values: new { area = "Identity", userId = userId, code = code },
-                        protocol: Request.Scheme)!;
-
-                    await _emailSender.SendEmailAsync(
-                        Input.Email,
-                        "Confirm your Comfy Capy Calories account",
-                        $"""
-                        <p>Heya!</p>
-
-                        <p>This is Comfy Capy handing you your very own confirmation link!</p>
-
-                        <p>
-                            <a href="{HtmlEncoder.Default.Encode(callbackUrl)}">
-                                Confirm your email address
-                            </a>
-                        </p>
-
-                        <p>
-                            Feel free to give that link a click to confirm your account and finish setting everything up.
-                        </p>
-
-                        <p>We hope to see you soon~!</p>
-
-                        <p>~ Comfy Capy</p>
-                        """);
+                    await _onboarding.ProvisionAndConfirmAsync(user, userId, Input.Email,
+                    (id, code) => Url.Page("/Account/ConfirmEmail", pageHandler: null,
+                        values: new { area = "Identity", userId = id, code },
+                        protocol: Request.Scheme)!);
 
                     // If account confirmation is required, we need to show the link if we don't have a real email sender
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)

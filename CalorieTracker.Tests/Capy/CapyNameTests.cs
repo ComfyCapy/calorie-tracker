@@ -384,7 +384,8 @@ public class CapyNameTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             new CapyProvisioningService(database.Context),
-            PageModelTestContext.CreateProgressionHooks(database.Context));
+            PageModelTestContext.CreateProgressionHooks(database.Context),
+            new CapyWardrobeService(database.Context, new CapyProvisioningService(database.Context)));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

@@ -14,7 +14,6 @@ namespace CalorieTracker.Pages.Profile
     public class IndexModel : PageModel
     {
         private const decimal CentimetresPerInch = 2.54m;
-        private const decimal InchesPerFoot = 12m;
 
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -40,7 +39,7 @@ namespace CalorieTracker.Pages.Profile
         }
 
         [BindProperty]
-        public UserProfile UserProfile { get; set; } = new();
+        public ProfileInput UserProfile { get; set; } = new();
 
         [BindProperty]
         public bool UseCustomCalorieTarget { get; set; }
@@ -98,7 +97,7 @@ namespace CalorieTracker.Pages.Profile
                 return;
             }
 
-            UserProfile = profile;
+            UserProfile = ProfileInput.FromEntity(profile);
             EstimatesProfile = profile;
             GoalTimeline = _goalTimelineCalculator.Calculate(profile, CurrentDate);
 
@@ -136,13 +135,16 @@ namespace CalorieTracker.Pages.Profile
             var existingProfile = await _context.UserProfiles
                 .FirstOrDefaultAsync(profile => profile.UserId == userId);
 
-            // Convert alternate-unit inputs before cross-field goal checks,
-            // then apply target-mode cleanup before the final validity check.
-            ValidateBasicProfileFields();
-            ApplyImperialConversions();
-            ValidateGoalFields(existingProfile);
-            ApplyCalorieTargetMode();
-            ValidateCalculatedTarget();
+            var processed = ProfileFormProcessor.Process(
+                new(UserProfile.ToEntity(), UseCustomCalorieTarget, HeightFeet, HeightInches, WeightLb, GoalWeightLb),
+                existingProfile, CurrentDate,
+                ModelState.Where(field => field.Value?.Errors.Count > 0).Select(field => field.Key));
+            UserProfile = ProfileInput.FromEntity(processed.CanonicalProfile);
+            GoalWeightLb = processed.GoalWeightLb;
+            foreach (var field in processed.ClearedFields)
+                ModelState.Remove(field);
+            foreach (var error in processed.Errors)
+                ModelState.AddModelError(error.Field, error.Message);
 
             if (!ModelState.IsValid)
             {
@@ -156,9 +158,9 @@ namespace CalorieTracker.Pages.Profile
 
             if (existingProfile == null)
             {
-                UserProfile.UserId = userId;
-                _context.UserProfiles.Add(UserProfile);
-                profileToSave = UserProfile;
+                profileToSave = UserProfile.ToEntity();
+                profileToSave.UserId = userId;
+                _context.UserProfiles.Add(profileToSave);
             }
             else
             {
@@ -188,257 +190,6 @@ namespace CalorieTracker.Pages.Profile
             return RedirectToPage();
         }
 
-        private void ValidateBasicProfileFields()
-        {
-            if (UserProfile.MeasurementSystem != ProfileOptions.Metric &&
-                UserProfile.MeasurementSystem != ProfileOptions.Imperial)
-            {
-                ModelState.AddModelError(
-                    "UserProfile.MeasurementSystem",
-                    "Please select a valid measurement system.");
-            }
-
-            if (UserProfile.ThemePreference != ProfileOptions.SystemTheme &&
-                UserProfile.ThemePreference != ProfileOptions.LightTheme &&
-                UserProfile.ThemePreference != ProfileOptions.DarkTheme)
-            {
-                ModelState.AddModelError(
-                    "UserProfile.ThemePreference",
-                    "Please select a valid theme.");
-            }
-
-            if (UserProfile.CalculationSex != ProfileOptions.Male &&
-                UserProfile.CalculationSex != ProfileOptions.Female)
-            {
-                ModelState.AddModelError(
-                    "UserProfile.CalculationSex",
-                    "Please select a valid calculation sex.");
-            }
-
-            if (!ProfileOptions.ActivityLevels.Contains(UserProfile.ActivityLevel))
-            {
-                ModelState.AddModelError(
-                    "UserProfile.ActivityLevel",
-                    "Please select a valid activity level.");
-            }
-
-            if (!ProfileOptions.Goals.Contains(UserProfile.Goal))
-            {
-                ModelState.AddModelError(
-                    "UserProfile.Goal",
-                    "Please select a valid goal.");
-            }
-
-            if (UserProfile.DateOfBirth.HasValue &&
-                DateOnly.FromDateTime(UserProfile.DateOfBirth.Value) > CurrentDate)
-            {
-                ModelState.AddModelError(
-                    "UserProfile.DateOfBirth",
-                    "Date of birth cannot be in the future.");
-            }
-
-            if (UserProfile.DateOfBirth.HasValue &&
-                (UserProfile.CalculateAge(CurrentDate) < 18 ||
-                 UserProfile.CalculateAge(CurrentDate) > 120))
-            {
-                ModelState.AddModelError(
-                    "UserProfile.DateOfBirth",
-                    "You must be between 18 and 120 years old.");
-            }
-        }
-
-        private void ApplyImperialConversions()
-        {
-            if (UserProfile.MeasurementSystem != ProfileOptions.Imperial)
-            {
-                return;
-            }
-
-            if (!HeightFeet.HasValue)
-            {
-                ModelState.AddModelError(
-                    nameof(HeightFeet),
-                    "Please enter your height in feet.");
-            }
-
-            if (!HeightInches.HasValue)
-            {
-                ModelState.AddModelError(
-                    nameof(HeightInches),
-                    "Please enter your remaining height in inches.");
-            }
-
-            if (HeightFeet.HasValue && HeightInches.HasValue)
-            {
-                var totalInches =
-                    (HeightFeet.Value * InchesPerFoot) + HeightInches.Value;
-
-                UserProfile.HeightCm = totalInches * CentimetresPerInch;
-
-                ModelState.Remove("UserProfile.HeightCm");
-
-                if (UserProfile.HeightCm < 50 ||
-                    UserProfile.HeightCm > 300)
-                {
-                    ModelState.AddModelError(
-                        nameof(HeightFeet),
-                        "Height must convert to between 50 cm and 300 cm.");
-                }
-            }
-
-            if (!WeightLb.HasValue)
-            {
-                ModelState.AddModelError(
-                    nameof(WeightLb),
-                    "Please enter your current weight.");
-            }
-            else
-            {
-                UserProfile.WeightKg =
-                    WeightLb.Value / ProfileOptions.PoundsPerKilogram;
-
-                ModelState.Remove("UserProfile.WeightKg");
-
-                if (UserProfile.WeightKg < 20 ||
-                    UserProfile.WeightKg > 500)
-                {
-                    ModelState.AddModelError(
-                        nameof(WeightLb),
-                        "Weight must convert to between 20 kg and 500 kg.");
-                }
-            }
-
-            if (GoalWeightLb.HasValue)
-            {
-                UserProfile.GoalWeightKg =
-                    GoalWeightLb.Value / ProfileOptions.PoundsPerKilogram;
-
-                ModelState.Remove("UserProfile.GoalWeightKg");
-
-                if (UserProfile.GoalWeightKg < 20 ||
-                    UserProfile.GoalWeightKg > 500)
-                {
-                    ModelState.AddModelError(
-                        nameof(GoalWeightLb),
-                        "Goal weight must convert to between 20 kg and 500 kg.");
-                }
-            }
-            else
-            {
-                UserProfile.GoalWeightKg = null;
-                ModelState.Remove("UserProfile.GoalWeightKg");
-            }
-        }
-
-        private void ValidateGoalFields(UserProfile? existingProfile)
-        {
-            if ((UserProfile.Goal == ProfileOptions.Lose ||
-                 UserProfile.Goal == ProfileOptions.Gain) &&
-                !UserProfile.GoalWeightKg.HasValue)
-            {
-                var fieldName = UserProfile.MeasurementSystem == ProfileOptions.Imperial
-                    ? nameof(GoalWeightLb)
-                    : "UserProfile.GoalWeightKg";
-
-                ModelState.AddModelError(
-                    fieldName,
-                    "Please enter a goal weight.");
-            }
-
-            if ((UserProfile.Goal == ProfileOptions.Lose ||
-                 UserProfile.Goal == ProfileOptions.Gain) &&
-                !UserProfile.WeeklyGoalKg.HasValue)
-            {
-                ModelState.AddModelError(
-                    "UserProfile.WeeklyGoalKg",
-                    "Please select a weekly weight change.");
-            }
-
-            if (UserProfile.WeeklyGoalKg.HasValue &&
-                !ProfileOptions.WeeklyGoals.Contains(UserProfile.WeeklyGoalKg.Value))
-            {
-                ModelState.AddModelError(
-                    "UserProfile.WeeklyGoalKg",
-                    "Please select a valid weekly weight change.");
-            }
-
-            var existingGoalIsUnchanged =
-                existingProfile != null &&
-                existingProfile.Goal == UserProfile.Goal &&
-                existingProfile.GoalWeightKg.HasValue &&
-                UserProfile.GoalWeightKg.HasValue &&
-                Math.Abs(
-                    existingProfile.GoalWeightKg.Value -
-                    UserProfile.GoalWeightKg.Value) < 0.01m;
-
-            if (UserProfile.Goal == ProfileOptions.Lose &&
-                UserProfile.GoalWeightKg.HasValue &&
-                UserProfile.GoalWeightKg.Value >= UserProfile.WeightKg &&
-                !existingGoalIsUnchanged)
-            {
-                var fieldName = UserProfile.MeasurementSystem == ProfileOptions.Imperial
-                    ? nameof(GoalWeightLb)
-                    : "UserProfile.GoalWeightKg";
-
-                ModelState.AddModelError(
-                    fieldName,
-                    "Your goal weight must be lower than your current weight.");
-            }
-
-            if (UserProfile.Goal == ProfileOptions.Gain &&
-                UserProfile.GoalWeightKg.HasValue &&
-                UserProfile.GoalWeightKg.Value <= UserProfile.WeightKg &&
-                !existingGoalIsUnchanged)
-            {
-                var fieldName = UserProfile.MeasurementSystem == ProfileOptions.Imperial
-                    ? nameof(GoalWeightLb)
-                    : "UserProfile.GoalWeightKg";
-
-                ModelState.AddModelError(
-                    fieldName,
-                    "Your goal weight must be higher than your current weight.");
-            }
-        }
-
-        private void ApplyCalorieTargetMode()
-        {
-            if (UseCustomCalorieTarget &&
-                !UserProfile.CustomCalorieTarget.HasValue)
-            {
-                ModelState.AddModelError(
-                    "UserProfile.CustomCalorieTarget",
-                    "Please enter a custom calorie target.");
-            }
-            else if (!UseCustomCalorieTarget)
-            {
-                UserProfile.CustomCalorieTarget = null;
-                ModelState.Remove("UserProfile.CustomCalorieTarget");
-            }
-
-            if (UserProfile.Goal == ProfileOptions.Maintain)
-            {
-                // Maintain has no weight-change inputs; clear stale values from an earlier goal.
-                UserProfile.GoalWeightKg = null;
-                UserProfile.WeeklyGoalKg = null;
-                GoalWeightLb = null;
-                ModelState.Remove("UserProfile.GoalWeightKg");
-                ModelState.Remove("UserProfile.WeeklyGoalKg");
-                ModelState.Remove(nameof(GoalWeightLb));
-            }
-        }
-
-        private void ValidateCalculatedTarget()
-        {
-            // A custom target remains valid even when the unused calculated target is non-positive.
-            if (ModelState.IsValid &&
-                !UseCustomCalorieTarget &&
-                UserProfile.CalculateDailyCalorieTarget(CurrentDate) <= 0)
-            {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "These profile values do not produce a valid calculated calorie target.");
-            }
-        }
 
         public async Task<IActionResult> OnPostThemeAsync(string theme)
         {

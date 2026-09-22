@@ -70,8 +70,19 @@ public class AccountSecurityTests
                 source.Contains("/js/qr."))
             .ToList();
         Assert.Equal(2, qrScriptSources.Count);
+        Assert.Collection(
+            qrScriptSources,
+            source => Assert.Matches(
+                @"^/lib/qrcodejs/qrcode\.min(?:\.[A-Za-z0-9_-]+)?\.js(?:\?v=[A-Za-z0-9_-]+)?$",
+                source),
+            source => Assert.Matches(
+                @"^/js/qr(?:\.[A-Za-z0-9_-]+)?\.js(?:\?v=[A-Za-z0-9_-]+)?$",
+                source));
         Assert.All(qrScriptSources, source =>
-            Assert.False(Uri.TryCreate(source, UriKind.Absolute, out _)));
+        {
+            Assert.StartsWith("/", source);
+            Assert.False(source.StartsWith("//", StringComparison.Ordinal));
+        });
 
         Assert.Equal(
             HttpStatusCode.OK,

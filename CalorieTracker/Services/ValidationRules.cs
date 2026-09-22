@@ -34,124 +34,11 @@ namespace CalorieTracker.Services
             string prefix,
             out MeasurementDimension dimension)
         {
-            dimension = default;
-
-            if (string.IsNullOrWhiteSpace(food.Name))
-            {
-                modelState.AddModelError(
-                    $"{prefix}.Name",
-                    "Please enter a food name.");
-            }
-
-            if (food.Calories < 0)
-            {
-                modelState.AddModelError(
-                    $"{prefix}.Calories",
-                    "Calories cannot be negative.");
-            }
-
-            ValidateNonNegative(
-                food.Protein,
-                $"{prefix}.Protein",
-                "Protein",
-                modelState);
-
-            ValidateNonNegative(
-                food.Carbohydrates,
-                $"{prefix}.Carbohydrates",
-                "Carbohydrates",
-                modelState);
-
-            ValidateNonNegative(
-                food.Fat,
-                $"{prefix}.Fat",
-                "Fat",
-                modelState);
-
-            if (!Enum.IsDefined(food.ServingBasis))
-            {
-                modelState.AddModelError(
-                    $"{prefix}.ServingBasis",
-                    "Select a supported serving basis.");
-            }
-
-            if (food.ServingSize <= 0)
-            {
-                modelState.AddModelError(
-                    $"{prefix}.ServingSize",
-                    "Serving size must be greater than 0.");
-            }
-
-            if (food.ServingBasis == FoodServingBasis.Portion)
-            {
-                var portionLabel = food.PortionLabel?.Trim() ?? string.Empty;
-
-                if (portionLabel.Length == 0)
-                {
-                    modelState.AddModelError(
-                        $"{prefix}.PortionLabel",
-                        "Please enter a portion name.");
-                }
-                else if (portionLabel.Length > Food.MaxPortionLabelLength)
-                {
-                    modelState.AddModelError(
-                        $"{prefix}.PortionLabel",
-                        $"Portion name must be {Food.MaxPortionLabelLength} characters or fewer.");
-                }
-                else if (portionLabel.Any(char.IsControl))
-                {
-                    modelState.AddModelError(
-                        $"{prefix}.PortionLabel",
-                        "Portion name cannot contain line breaks or control characters.");
-                }
-                else
-                {
-                    food.PortionLabel = portionLabel;
-                }
-
-                if (food.ServingSize > 0)
-                {
-                    food.CanonicalServingSize = food.ServingSize;
-                }
-            }
-            else if (!MeasurementUnits.TryNormalize(
-                         food.ServingUnit,
-                         out var normalizedUnit,
-                         out dimension))
-            {
-                modelState.AddModelError(
-                    $"{prefix}.ServingUnit",
-                    "Select a supported serving unit.");
-            }
-            else if (!MeasurementUnits.TryToCanonical(
-                         food.ServingSize,
-                         normalizedUnit,
-                         out var canonicalServingSize,
-                         out _,
-                         out _))
-            {
-                modelState.AddModelError(
-                    $"{prefix}.ServingSize",
-                    "Serving size is too large to convert.");
-            }
-            else if (canonicalServingSize <= 0)
-            {
-                modelState.AddModelError(
-                    $"{prefix}.ServingSize",
-                    "Serving size must convert to a positive value.");
-            }
-            else
-            {
-                food.ServingUnit = normalizedUnit;
-                food.CanonicalServingSize = canonicalServingSize;
-                food.PortionLabel = null;
-            }
-
-            if (!string.IsNullOrWhiteSpace(food.Name))
-            {
-                food.Name = food.Name.Trim();
-            }
-
+            var result = FoodValidator.Validate(food);
+            result.ApplyTo(food);
+            dimension = result.Dimension;
+            foreach (var error in result.Errors)
+                modelState.AddModelError($"{prefix}.{error.Field}", error.Message);
             return modelState.IsValid;
         }
 
@@ -180,18 +67,5 @@ namespace CalorieTracker.Services
                 entry.Errors.Count > 0;
         }
 
-        private static void ValidateNonNegative(
-            decimal value,
-            string key,
-            string label,
-            ModelStateDictionary modelState)
-        {
-            if (value < 0)
-            {
-                modelState.AddModelError(
-                    key,
-                    $"{label} cannot be negative.");
-            }
-        }
     }
 }

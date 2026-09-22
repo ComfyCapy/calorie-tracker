@@ -23,7 +23,14 @@ public sealed class UsersModel(
         var term = Query?.Trim().ToUpperInvariant() ?? "";
         var matches = await db.Users.Where(x => x.NormalizedUserName!.Contains(term) || x.NormalizedEmail!.Contains(term))
             .OrderBy(x => x.UserName).Take(30).ToListAsync(ct);
-        foreach (var user in matches) Accounts.Add((user, await users.GetRolesAsync(user)));
+        var ids = matches.Select(user => user.Id).ToArray();
+        var memberships = await (from membership in db.UserRoles
+                                 join role in db.Roles on membership.RoleId equals role.Id
+                                 where ids.Contains(membership.UserId)
+                                 select new { membership.UserId, role.Name }).ToListAsync(ct);
+        var rolesByUser = memberships.ToLookup(membership => membership.UserId);
+        foreach (var user in matches)
+            Accounts.Add((user, rolesByUser[user.Id].Select(role => role.Name!).ToList()));
         return Page();
     }
     public Task<IActionResult> OnPostGrantBetaAsync(string id) => SetBeta(id, true);

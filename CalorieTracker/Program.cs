@@ -210,6 +210,8 @@ builder.Services.AddSingleton<IFoodCatalogueProvider>(provider =>
 builder.Services.AddScoped<FoodCatalogue>();
 builder.Services.AddScoped<ExternalFoodResolver>();
 builder.Services.AddScoped<CapyProvisioningService>();
+builder.Services.AddScoped<AccountOnboardingService>();
+builder.Services.AddScoped<CapyWardrobeService>();
 builder.Services.AddScoped<DailyMaintenanceSnapshotService>();
 builder.Services.AddScoped<DiaryCopyService>();
 builder.Services.AddScoped<ReusableMealService>();

@@ -3,7 +3,6 @@ using CalorieTracker.Data;
 using CalorieTracker.Models;
 using CalorieTracker.Security;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,8 +22,9 @@ public sealed class CommunityFoodService(ApplicationDbContext db, IAuthorization
         if (food == null) return null;
         var existing = await db.CommunityFoods.SingleOrDefaultAsync(x => x.SourceFoodId == foodId, ct);
         if (existing != null) return existing;
-        var validation = new ModelStateDictionary();
-        if (!ValidationRules.ValidateFood(food, validation, "Food", out _) ||
+        var validation = FoodValidator.Validate(food);
+        validation.ApplyTo(food);
+        if (!validation.IsValid ||
             food.Name.Length > 200 || food.Name.Any(char.IsControl))
             throw new ArgumentException("Check the food's name, nutrition and serving details before submitting. Names must be 200 characters or fewer.");
         var snapshot = new CommunityFood

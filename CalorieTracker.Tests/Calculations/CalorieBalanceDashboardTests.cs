@@ -101,6 +101,8 @@ public class CalorieBalanceDashboardTests
         Assert.DoesNotContain("PROGRESSION GOES HERE", html);
 
         var siteCss = await client.GetStringAsync("/css/site.css");
+        siteCss += await client.GetStringAsync("/css/shell-scenic.css");
+        siteCss += await client.GetStringAsync("/css/dashboard-profile.css");
         Assert.Contains("--ct-calorie-ring: #78a987", siteCss);
         Assert.Contains(
             "var(--ct-calorie-ring) var(--dashboard-calorie-progress",

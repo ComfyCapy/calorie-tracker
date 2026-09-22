@@ -239,7 +239,8 @@ public class CapyTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             provisioning,
-            PageModelTestContext.CreateProgressionHooks(database.Context));
+            PageModelTestContext.CreateProgressionHooks(database.Context),
+            new CapyWardrobeService(database.Context, provisioning));
         PageModelTestContext.Attach(model, userId);
         return model;
     }

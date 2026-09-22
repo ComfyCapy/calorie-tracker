@@ -576,7 +576,7 @@ public sealed class ProgressionDomainHookTests
             new TestUserLocalTimeProvider(),
             Hooks(database.Context))
         {
-            UserProfile = profile
+            UserProfile = CalorieTracker.Pages.Profile.ProfileInput.FromEntity(profile)
         };
         PageModelTestContext.Attach(model, userId);
         return model;
@@ -591,7 +591,8 @@ public sealed class ProgressionDomainHookTests
             database.Context,
             PageModelTestContext.CreateUserManager(),
             provisioning,
-            Hooks(database.Context));
+            Hooks(database.Context),
+            new CapyWardrobeService(database.Context, provisioning));
         PageModelTestContext.Attach(model, userId);
         return model;
     }
