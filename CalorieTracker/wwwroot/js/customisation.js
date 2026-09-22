@@ -133,23 +133,6 @@ customisationPage.addEventListener("click", async event => {
     }
 });
 
-function updateSelectedTheme() {
-    const selectedTheme =
-        document.documentElement.dataset.themePreference || "system";
-
-    document.querySelectorAll(".capy-theme-option").forEach(button => {
-        const isSelected = button.dataset.theme === selectedTheme;
-        button.classList.toggle("is-selected", isSelected);
-        button.setAttribute("aria-pressed", isSelected ? "true" : "false");
-    });
-}
-
-updateSelectedTheme();
-
-document.querySelectorAll(".capy-theme-option").forEach(button => {
-    button.addEventListener("click", updateSelectedTheme);
-});
-
 document.querySelectorAll("[data-capy-category-group]").forEach(group => {
     const items = Array.from(
         group.querySelectorAll("[data-capy-page-item]")

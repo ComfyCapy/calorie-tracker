@@ -79,6 +79,20 @@
             <li>
                 <a class="app-nav-link"
                    asp-area=""
+                   asp-page="/Theme"
+                   aria-current="@(currentPage == "/Theme" ? "page" : null)">
+                    <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 3.5a8.5 8.5 0 1 0 0 17h1.25a1.75 1.75 0 0 0 0-3.5H12a1.75 1.75 0 0 1 0-3.5h3.25A5.25 5.25 0 0 0 20.5 8.25C20.5 5.63 17.08 3.5 12 3.5Z" />
+                        <circle cx="7.75" cy="10" r="0.75" />
+                        <circle cx="10" cy="6.9" r="0.75" />
+                        <circle cx="14" cy="6.9" r="0.75" />
+                    </svg>
+                    <span>Theme</span>
+                </a>
+            </li>
+            <li>
+                <a class="app-nav-link"
+                   asp-area=""
                    asp-page="/Progress"
                    aria-current="@(currentPage == "/Progress" ? "page" : null)">
                     <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

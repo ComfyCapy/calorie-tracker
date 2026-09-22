@@ -8,7 +8,7 @@ namespace CalorieTracker.Tests.Theme;
 public sealed class StylesheetOrderTests
 {
     [Fact]
-    public async Task OrderedStylesheets_PreservePreSplitDeclarationsExactly()
+    public async Task OrderedStylesheets_MatchReviewedDeclarationBaseline()
     {
         using var factory = new IntegrationTestFactory();
         using var client = factory.CreateClient();
@@ -25,9 +25,9 @@ public sealed class StylesheetOrderTests
             styles.Add((await client.GetStringAsync(link.Value)).Replace("\r", "").TrimEnd());
         }
         Assert.True(html.IndexOf("/CalorieTracker.", StringComparison.Ordinal) > previous);
-        // Golden declaration stream from the pre-split stylesheet. Update only for
-        // intentional future style changes, never to conceal cascade reordering.
+        // Golden declaration stream for the reviewed stylesheet order. Update only
+        // for intentional style changes, never to conceal cascade reordering.
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n\n", styles))));
-        Assert.Equal("19F36FA12F15ADF52CB7B5402047E7FC46283CBFDAF3E738AA58DB8214687BCB", hash);
+        Assert.Equal("198F513B437350FF835C874AE7FF6C7FB4A46375F2CA95D62CE0C5D0B04325D3", hash);
     }
 }

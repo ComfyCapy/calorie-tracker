@@ -309,7 +309,24 @@
     </form>
 
     <script>
-            document.querySelectorAll(".theme-option").forEach(button => {
+            const themeOptions = document.querySelectorAll(".theme-option");
+
+            const updateSelectedTheme = selectedTheme => {
+                themeOptions.forEach(button => {
+                    const isSelected = button.dataset.theme === selectedTheme;
+                    button.classList.toggle("is-selected", isSelected);
+                    button.setAttribute(
+                        "aria-pressed",
+                        isSelected ? "true" : "false"
+                    );
+                });
+            };
+
+            updateSelectedTheme(
+                document.documentElement.dataset.themePreference || "system"
+            );
+
+            themeOptions.forEach(button => {
                 button.addEventListener("click", async () => {
                     const selectedTheme = button.dataset.theme;
 
@@ -334,6 +351,7 @@
                         "data-theme-preference",
                         selectedTheme
                     );
+                    updateSelectedTheme(selectedTheme);
 
                     // Persist signed-in choices on the account so server-rendered pages keep the preference.
                     @if (User.Identity?.IsAuthenticated == true)

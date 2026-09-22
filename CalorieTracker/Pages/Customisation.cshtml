@@ -146,6 +146,34 @@
     {
         <div class="capy-customisation-layout">
             <main class="capy-customisation-main">
+                <section class="ct-card capy-saved-outfits" aria-labelledby="savedOutfitsTitle">
+                    <h2 id="savedOutfitsTitle">Saved outfits</h2>
+                    <form method="post" asp-page-handler="SaveOutfit" class="capy-outfit-save-form">
+                        <label asp-for="OutfitName" class="visually-hidden">Outfit name</label>
+                        <input asp-for="OutfitName" class="form-control" maxlength="60" placeholder="Outfit name" required />
+                        <button type="submit" class="btn btn-outline-primary">Save current</button>
+                    </form>
+                    @if (Model.SavedOutfits.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Save a look to return to it in one step.</p>
+                    }
+                    else
+                    {
+                        <ul class="capy-saved-outfit-list">
+                            @foreach (var outfit in Model.SavedOutfits)
+                            {
+                                <li>
+                                    <strong>@outfit.Name</strong>
+                                    <div>
+                                        <form method="post" asp-page-handler="EquipOutfit"><input type="hidden" name="outfitId" value="@outfit.Id" /><button type="submit" class="btn btn-sm btn-outline-primary">Equip</button></form>
+                                        <form method="post" asp-page-handler="DeleteOutfit"><input type="hidden" name="outfitId" value="@outfit.Id" /><button type="submit" class="btn btn-sm btn-outline-secondary">Delete</button></form>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+
                 <nav class="capy-category-tabs" aria-label="Cosmetic categories">
                     <a class="capy-category-tab @(Model.SelectedCategory == "all" ? "is-selected" : "")"
                        data-category-filter="all"
@@ -338,7 +366,8 @@
             </main>
 
             <aside class="capy-customisation-sidebar" aria-label="Your Comfy Capy">
-                <section class="ct-card capy-preview-panel" aria-labelledby="capyPreviewTitle">
+                <div class="capy-editing-companion">
+                    <section class="ct-card capy-preview-panel" aria-labelledby="capyPreviewTitle">
                     <header class="capy-sidebar-heading">
                         <div>
                             <p class="ct-eyebrow">Right now</p>
@@ -376,92 +405,21 @@
                             <button type="submit" class="btn btn-outline-primary mt-2">Save name</button>
                         </form>
                     </details>
-                </section>
+                    </section>
 
-                <section class="ct-card capy-loadout-card" aria-labelledby="capyLoadoutTitle">
-                    <h2 id="capyLoadoutTitle">Current loadout</h2>
-                    <dl class="capy-loadout-list">
-                        <div><dt>Hat</dt><dd data-capy-loadout="@CapyCategories.HatHair">@getCosmeticDisplayName(Model.CapyAppearance.HatHair)</dd></div>
-                        <div><dt>Outfit</dt><dd data-capy-loadout="@CapyCategories.Clothes">@getCosmeticDisplayName(Model.CapyAppearance.Clothes)</dd></div>
-                        <div><dt>Neck accessory</dt><dd data-capy-loadout="@CapyCategories.NeckAccessory">@getCosmeticDisplayName(Model.CapyAppearance.NeckAccessory)</dd></div>
-                        <div><dt>Face accessory</dt><dd data-capy-loadout="@CapyCategories.FaceAccessory">@getCosmeticDisplayName(Model.CapyAppearance.FaceAccessory)</dd></div>
-                        <div><dt>Background</dt><dd data-capy-loadout="@CapyCategories.Background">@getCosmeticDisplayName(Model.CapyAppearance.Background)</dd></div>
-                        <div><dt>Expression</dt><dd data-capy-loadout="@CapyCategories.Expression">@getCosmeticDisplayName(Model.CapyAppearance.Expression)</dd></div>
-                        <div><dt>Title</dt><dd>Not available</dd></div>
-                    </dl>
-                </section>
-
-                <section class="ct-card capy-saved-outfits" aria-labelledby="savedOutfitsTitle">
-                    <h2 id="savedOutfitsTitle">Saved outfits</h2>
-                    <form method="post" asp-page-handler="SaveOutfit" class="capy-outfit-save-form">
-                        <label asp-for="OutfitName" class="visually-hidden">Outfit name</label>
-                        <input asp-for="OutfitName" class="form-control" maxlength="60" placeholder="Outfit name" required />
-                        <button type="submit" class="btn btn-outline-primary">Save current</button>
-                    </form>
-                    @if (Model.SavedOutfits.Count == 0)
-                    {
-                        <p class="text-muted mb-0">Save a look to return to it in one step.</p>
-                    }
-                    else
-                    {
-                        <ul class="capy-saved-outfit-list">
-                            @foreach (var outfit in Model.SavedOutfits)
-                            {
-                                <li>
-                                    <strong>@outfit.Name</strong>
-                                    <div>
-                                        <form method="post" asp-page-handler="EquipOutfit"><input type="hidden" name="outfitId" value="@outfit.Id" /><button type="submit" class="btn btn-sm btn-outline-primary">Equip</button></form>
-                                        <form method="post" asp-page-handler="DeleteOutfit"><input type="hidden" name="outfitId" value="@outfit.Id" /><button type="submit" class="btn btn-sm btn-outline-secondary">Delete</button></form>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    }
-                </section>
-
-                <aside class="ct-card capy-motivation-card">
-                    <span aria-hidden="true">🌿</span>
-                    <div>
-                        <p class="ct-eyebrow">A Comfy reminder</p>
-                        <strong>Progress isn’t perfection.</strong>
-                    </div>
-                </aside>
-
-                <section class="ct-card capy-theme-section" aria-labelledby="capyThemeTitle">
-                    <h2 id="capyThemeTitle" class="capy-theme-title">Theme</h2>
-                    <p class="text-muted">Choose how Comfy Capy Calories looks.</p>
-
-                    <div class="capy-theme-options">
-                        <button type="button"
-                                class="capy-theme-option theme-option"
-                                data-theme="light"
-                                aria-pressed="false">
-                            <span class="capy-theme-option-title">Light</span>
-                            <span class="capy-theme-option-description">Always use light mode</span>
-                        </button>
-                        <button type="button"
-                                class="capy-theme-option theme-option"
-                                data-theme="dark"
-                                aria-pressed="false">
-                            <span class="capy-theme-option-title">Dark</span>
-                            <span class="capy-theme-option-description">Always use dark mode</span>
-                        </button>
-                        <button type="button"
-                                class="capy-theme-option theme-option"
-                                data-theme="system"
-                                aria-pressed="false">
-                            <span class="capy-theme-option-title">System</span>
-                            <span class="capy-theme-option-description">Match your device setting</span>
-                        </button>
-                    </div>
-
-                    @if (!Model.HasUserProfile)
-                    {
-                        <p class="text-body-secondary small mt-2 mb-0">
-                            Your browser theme is saved now; complete your profile to also save it to your account.
-                        </p>
-                    }
-                </section>
+                    <section class="ct-card capy-loadout-card" aria-labelledby="capyLoadoutTitle">
+                        <h2 id="capyLoadoutTitle">Current loadout</h2>
+                        <dl class="capy-loadout-list">
+                            <div><dt>Hat</dt><dd data-capy-loadout="@CapyCategories.HatHair">@getCosmeticDisplayName(Model.CapyAppearance.HatHair)</dd></div>
+                            <div><dt>Outfit</dt><dd data-capy-loadout="@CapyCategories.Clothes">@getCosmeticDisplayName(Model.CapyAppearance.Clothes)</dd></div>
+                            <div><dt>Neck accessory</dt><dd data-capy-loadout="@CapyCategories.NeckAccessory">@getCosmeticDisplayName(Model.CapyAppearance.NeckAccessory)</dd></div>
+                            <div><dt>Face accessory</dt><dd data-capy-loadout="@CapyCategories.FaceAccessory">@getCosmeticDisplayName(Model.CapyAppearance.FaceAccessory)</dd></div>
+                            <div><dt>Background</dt><dd data-capy-loadout="@CapyCategories.Background">@getCosmeticDisplayName(Model.CapyAppearance.Background)</dd></div>
+                            <div><dt>Expression</dt><dd data-capy-loadout="@CapyCategories.Expression">@getCosmeticDisplayName(Model.CapyAppearance.Expression)</dd></div>
+                            <div><dt>Title</dt><dd>Not available</dd></div>
+                        </dl>
+                    </section>
+                </div>
             </aside>
         </div>
     }

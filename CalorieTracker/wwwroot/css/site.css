@@ -1815,6 +1815,7 @@ html[data-development-banner-dismissed="true"] .development-banner {
 
 .capy-customisation-main,
 .capy-customisation-sidebar,
+.capy-editing-companion,
 .capy-inventory,
 .capy-inventory-group {
     display: grid;
@@ -1828,6 +1829,22 @@ html[data-development-banner-dismissed="true"] .development-banner {
 
 .capy-customisation-sidebar {
     align-self: start;
+}
+
+.capy-editing-companion {
+    gap: var(--ct-space-4);
+    align-self: start;
+}
+
+@media (min-width: 1100px) {
+    .capy-customisation-sidebar {
+        align-self: stretch;
+    }
+
+    .capy-editing-companion {
+        position: sticky;
+        top: var(--ct-space-4);
+    }
 }
 
 .capy-category-tabs {
@@ -2197,7 +2214,6 @@ button.capy-item-tile {
 
 .capy-preview-panel,
 .capy-loadout-card,
-.capy-motivation-card,
 .capy-theme-section,
 .capy-collection-summary {
     min-width: 0;
@@ -2329,26 +2345,6 @@ button.capy-item-tile {
     filter: none;
 }
 
-.capy-motivation-card {
-    display: flex;
-    align-items: center;
-    gap: var(--ct-space-3);
-    background:
-        linear-gradient(135deg, rgba(120, 169, 135, 0.14), transparent 72%),
-        var(--ct-surface);
-}
-
-.capy-motivation-card > span {
-    font-size: 1.5rem;
-}
-
-.capy-motivation-card strong {
-    display: block;
-    margin-top: var(--ct-space-1);
-    color: var(--ct-text);
-    font-size: 1rem;
-}
-
 .capy-theme-section {
     max-width: none;
     padding: var(--ct-space-5);
@@ -2396,6 +2392,69 @@ button.capy-item-tile {
     box-shadow: none;
 }
 
+.theme-page {
+    display: grid;
+    width: min(100%, 88rem);
+    min-width: 0;
+    gap: var(--ct-space-5);
+    margin-inline: auto;
+    padding-bottom: var(--ct-space-5);
+}
+
+.theme-selection-card {
+    width: min(100%, 72rem);
+    margin: 0 auto;
+    border-top: 1px solid var(--ct-border);
+}
+
+.theme-selection-heading {
+    margin-bottom: var(--ct-space-4);
+}
+
+.theme-selection-heading .capy-theme-title {
+    margin-top: var(--ct-space-1);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.theme-selection-heading > p:last-child {
+    margin: var(--ct-space-2) 0 0;
+}
+
+.theme-page-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ct-space-3);
+}
+
+.theme-page .capy-theme-option {
+    min-height: 9rem;
+    align-content: start;
+    gap: var(--ct-space-2);
+    padding: var(--ct-space-4);
+    border-radius: var(--ct-radius-lg);
+}
+
+.theme-option-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ct-space-2);
+}
+
+.theme-option-selected {
+    padding: 0.18rem 0.48rem;
+    border-radius: var(--ct-radius-pill);
+    background: rgba(var(--bs-primary-rgb), 0.14);
+    color: var(--ct-primary-strong);
+    font-size: 0.7rem;
+    font-weight: 800;
+    opacity: 0;
+}
+
+.capy-theme-option.is-selected .theme-option-selected {
+    opacity: 1;
+}
+
 .capy-unlock-message {
     width: 100%;
     margin: 0;
@@ -2407,24 +2466,18 @@ button.capy-item-tile {
     }
 
     .capy-customisation-sidebar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: start;
+        grid-template-columns: 1fr;
     }
 
-    .capy-preview-panel,
-    .capy-theme-section {
-        grid-row: span 2;
+    .capy-editing-companion {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 767.98px) {
-    .capy-customisation-sidebar {
+    .capy-editing-companion,
+    .theme-page-options {
         grid-template-columns: 1fr;
-    }
-
-    .capy-preview-panel,
-    .capy-theme-section {
-        grid-row: auto;
     }
 }
 
@@ -2491,7 +2544,6 @@ button.capy-item-tile {
 
     .capy-preview-panel,
     .capy-loadout-card,
-    .capy-motivation-card,
     .capy-theme-section,
     .capy-collection-summary {
         padding: var(--ct-space-4);
