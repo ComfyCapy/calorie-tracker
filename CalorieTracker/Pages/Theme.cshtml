@@ -1,0 +1,68 @@
+@page
+@model CalorieTracker.Pages.ThemeModel
+
+@{
+    ViewData["Title"] = "Theme";
+    ViewData["UsesScenicHeader"] = true;
+}
+
+<div class="theme-page">
+    @await Html.PartialAsync(
+        "_ScenicPageHeader",
+        new CalorieTracker.Models.ScenicPageHeaderModel(
+            Title: "Theme",
+            Eyebrow: "YOUR SPACE",
+            ArtworkPath: "~/images/brand/dashboard-hero-capy.png",
+            ArtworkAlt: "",
+            ArtworkIsDecorative: true,
+            CssClass: "secondary-page-hero",
+            UseFullBleedArtwork: true))
+
+    <section class="ct-card capy-theme-section theme-selection-card"
+             aria-labelledby="themeSelectionTitle">
+        <div class="theme-selection-heading">
+            <p class="ct-eyebrow">Choose your theme</p>
+            <h2 id="themeSelectionTitle" class="capy-theme-title">
+                Make Comfy Capy Calories feel like home
+            </h2>
+            <p class="text-muted">
+                Your choice applies immediately and stays with you in this browser.
+            </p>
+        </div>
+
+        <div class="capy-theme-options theme-page-options"
+             role="group"
+             aria-label="Theme preference">
+            <button type="button"
+                    class="capy-theme-option theme-option"
+                    data-theme="light"
+                    aria-pressed="false">
+                <span class="theme-option-heading">
+                    <span class="capy-theme-option-title">Light</span>
+                    <span class="theme-option-selected" aria-hidden="true">Selected</span>
+                </span>
+                <span class="capy-theme-option-description">Always use light mode</span>
+            </button>
+            <button type="button"
+                    class="capy-theme-option theme-option"
+                    data-theme="dark"
+                    aria-pressed="false">
+                <span class="theme-option-heading">
+                    <span class="capy-theme-option-title">Dark</span>
+                    <span class="theme-option-selected" aria-hidden="true">Selected</span>
+                </span>
+                <span class="capy-theme-option-description">Always use dark mode</span>
+            </button>
+            <button type="button"
+                    class="capy-theme-option theme-option"
+                    data-theme="system"
+                    aria-pressed="false">
+                <span class="theme-option-heading">
+                    <span class="capy-theme-option-title">System</span>
+                    <span class="theme-option-selected" aria-hidden="true">Selected</span>
+                </span>
+                <span class="capy-theme-option-description">Match your device setting</span>
+            </button>
+        </div>
+    </section>
+</div>

@@ -51,7 +51,7 @@ public sealed class ProgressPageTests
         var expectedNavigation = new[]
         {
             "/", "/Diary", "/Foods", "/SavedMeals", "/Profile",
-            "/Customisation", "/Progress"
+            "/Customisation", "/Theme", "/Progress"
         };
         var previousIndex = -1;
 

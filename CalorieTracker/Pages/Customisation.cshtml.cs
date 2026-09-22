@@ -56,7 +56,6 @@ namespace CalorieTracker.Pages
         public List<CapyItem> CatalogueItems { get; set; } = [];
         public List<SavedCapyOutfit> SavedOutfits { get; set; } = [];
         public bool NeedsProvisioning { get; set; }
-        public bool HasUserProfile { get; set; }
         public string SelectedCategory { get; private set; } = "all";
         public string SelectedInventoryFilter { get; private set; } = "all";
 
@@ -66,9 +65,6 @@ namespace CalorieTracker.Pages
 
             if (userId == null)
                 return;
-
-            HasUserProfile = await _context.UserProfiles
-                .AnyAsync(profile => profile.UserId == userId);
 
             CapyAppearance = await _context.UserCapyAppearances
                 .Include(appearance => appearance.Expression)

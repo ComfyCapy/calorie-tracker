@@ -15,36 +15,99 @@ public class ThemeTests
     private const string UserId = "theme-user";
 
     [Fact]
-    public async Task CustomisationThemeOptionsUseBrowserStorageWithoutProfile()
+    public async Task ThemePage_RequiresAuthentication()
+    {
+        using var factory = new IntegrationTestFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
+
+        var response = await client.GetAsync("/Theme");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ThemePage_UsesExistingBrowserStorageAndActiveNavigation()
     {
         using var factory = new IntegrationTestFactory();
         await ProvisionCapyAsync(factory);
         using var client = CreateClient(factory);
 
-        var response = await client.GetAsync("/Customisation");
+        var response = await client.GetAsync("/Theme");
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<title>Theme", html);
+        Assert.Contains("class=\"theme-page\"", html);
         Assert.Contains("data-theme=\"light\"", html);
         Assert.Contains("data-theme=\"dark\"", html);
         Assert.Contains("data-theme=\"system\"", html);
+        Assert.Contains("Always use light mode", html);
+        Assert.Contains("Always use dark mode", html);
+        Assert.Contains("Match your device setting", html);
         Assert.DoesNotContain(
             "class=\"capy-theme-option theme-option\" disabled",
+            html);
+        Assert.Matches(
+            "<a(?=[^>]*href=\"/Theme\")" +
+            "(?=[^>]*aria-current=\"page\")[^>]*>\\s*" +
+            "<svg class=\"app-nav-icon\"",
             html);
         Assert.Contains("localStorage.getItem(\"theme\")", html);
         Assert.Contains("localStorage.setItem(\"theme\", savedTheme)", html);
         Assert.Contains("localStorage.setItem(\"theme\", selectedTheme)", html);
+        Assert.Contains("updateSelectedTheme(selectedTheme)", html);
         Assert.Contains("prefers-color-scheme: dark", html);
     }
 
     [Fact]
-    public async Task ThemeHandlerPersistsValidThemeForCurrentUser()
+    public async Task Customisation_KeepsSavedOutfitsInMainAndOmitsThemeAndReminder()
+    {
+        using var factory = new IntegrationTestFactory();
+        await ProvisionCapyAsync(factory);
+        using var client = CreateClient(factory);
+
+        var html = await client.GetStringAsync("/Customisation");
+        var mainIndex = html.IndexOf(
+            "<main class=\"capy-customisation-main\">",
+            StringComparison.Ordinal);
+        var savedOutfitsIndex = html.IndexOf(
+            "class=\"ct-card capy-saved-outfits\"",
+            StringComparison.Ordinal);
+        var categoriesIndex = html.IndexOf(
+            "class=\"capy-category-tabs\"",
+            StringComparison.Ordinal);
+        var sidebarIndex = html.IndexOf(
+            "class=\"capy-customisation-sidebar\"",
+            StringComparison.Ordinal);
+
+        Assert.True(mainIndex >= 0);
+        Assert.True(savedOutfitsIndex > mainIndex);
+        Assert.True(categoriesIndex > savedOutfitsIndex);
+        Assert.True(sidebarIndex > categoriesIndex);
+        Assert.Contains("handler=SaveOutfit", html);
+        Assert.Contains("class=\"capy-editing-companion\"", html);
+        Assert.Contains("Live Capy preview", html);
+        Assert.Contains("Current loadout", html);
+        Assert.DoesNotContain("data-theme=\"light\"", html);
+        Assert.DoesNotContain("A Comfy reminder", html);
+        Assert.DoesNotContain("Progress isn’t perfection.", html);
+    }
+
+    [Theory]
+    [InlineData(ProfileOptions.LightTheme)]
+    [InlineData(ProfileOptions.DarkTheme)]
+    [InlineData(ProfileOptions.SystemTheme)]
+    public async Task ThemeHandlerPersistsValidThemeForCurrentUser(string theme)
     {
         using var factory = new IntegrationTestFactory();
         await SeedProfileAsync(factory, ProfileOptions.SystemTheme);
         using var client = CreateClient(factory);
 
-        var getResponse = await client.GetAsync("/Customisation");
+        var getResponse = await client.GetAsync("/Theme");
         var token = ExtractAntiforgeryToken(
             await getResponse.Content.ReadAsStringAsync());
 
@@ -55,7 +118,7 @@ public class ThemeTests
             Content = new FormUrlEncodedContent(
                 new Dictionary<string, string>
                 {
-                    ["theme"] = ProfileOptions.DarkTheme
+                    ["theme"] = theme
                 })
         };
         request.Headers.Add("X-CSRF-TOKEN", token);
@@ -67,7 +130,7 @@ public class ThemeTests
         var context = scope.ServiceProvider
             .GetRequiredService<ApplicationDbContext>();
         Assert.Equal(
-            ProfileOptions.DarkTheme,
+            theme,
             (await context.UserProfiles.SingleAsync()).ThemePreference);
     }
 
